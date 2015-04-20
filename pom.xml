@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.dematic.labs</groupId>
+    <artifactId>toolkit</artifactId>
+    <version>1.0-SNAPSHOT</version>
+    <packaging>jar</packaging>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>com.dematic.labs</groupId>
+                <artifactId>common-dep</artifactId>
+                <version>1.0-SNAPSHOT</version>
+                <scope>import</scope>
+                <type>pom</type>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.amazonaws</groupId>
+            <artifactId>aws-java-sdk</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>joda-time</groupId>
+            <artifactId>joda-time</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-classic</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>jcl-over-slf4j</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.jayway.awaitility</groupId>
+            <artifactId>awaitility</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.hamcrest</groupId>
+            <artifactId>hamcrest-junit</artifactId>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <defaultGoal>clean install</defaultGoal>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.2</version>
+                <configuration>
+                    <source>1.8</source>
+                    <target>1.8</target>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>2.2</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>test-jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+
+    <distributionManagement>
+        <repository>
+            <id>nexus</id>
+            <name>Releases</name>
+            <url>http://nexus.dematiclabs.com:8081/nexus/content/repositories/releases/</url>
+        </repository>
+        <snapshotRepository>
+            <id>nexus</id>
+            <name>Snapshots</name>
+            <url>http://nexus.dematiclabs.com:8081/nexus/content/repositories/snapshots/</url>
+        </snapshotRepository>
+    </distributionManagement>
+
+</project>
