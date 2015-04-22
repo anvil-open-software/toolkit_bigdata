@@ -10,7 +10,7 @@
     <version>1.0-SNAPSHOT</version>
     <packaging>pom</packaging>
 
-    <!-- common dependencies for all projects -->
+    <!-- common dependencies for all projects t -->
     <name>Common Bill of Materials</name>
 
     <properties>
