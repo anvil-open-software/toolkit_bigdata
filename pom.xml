@@ -21,7 +21,7 @@
 
     <dependencyManagement>
         <dependencies>
-            <!-- AWS dependencies -->
+            <!-- AWS dependencies  ddd-->
             <dependency>
                 <groupId>org.apache.httpcomponents</groupId>
                 <artifactId>httpclient</artifactId>
