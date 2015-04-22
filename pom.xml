@@ -11,7 +11,7 @@
     <packaging>pom</packaging>
 
     <!-- common dependencies for all projects -->
-    <name>The Common Bill of Materials</name>
+    <name>Common Bill of Materials</name>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
