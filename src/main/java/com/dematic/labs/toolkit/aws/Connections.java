@@ -39,32 +39,34 @@ public final class Connections {
                                             final int kinesisStreamShardCount) {
         if (kinesisStreamsExist(kinesisClient, kinesisStream)) {
             final String state = kinesisStreamState(kinesisClient, kinesisStream);
-            switch (state) {
-                case "DELETING":
-                    final long startTime = System.currentTimeMillis();
-                    final long endTime = startTime + 1000 * 120;
-                    while (System.currentTimeMillis() < endTime && kinesisStreamsExist(kinesisClient, kinesisStream)) {
-                        try {
-                            LOGGER.info("...deleting Stream " + kinesisStream + "...");
-                            Thread.sleep(1000 * 10);
-                        } catch (final InterruptedException ignore) {
+            if (state != null) {
+                switch (state) {
+                    case "DELETING":
+                        final long startTime = System.currentTimeMillis();
+                        final long endTime = startTime + 1000 * 120;
+                        while (System.currentTimeMillis() < endTime && kinesisStreamsExist(kinesisClient, kinesisStream)) {
+                            try {
+                                LOGGER.info("...deleting Stream " + kinesisStream + "...");
+                                Thread.sleep(1000 * 10);
+                            } catch (final InterruptedException ignore) {
+                            }
                         }
-                    }
-                    if (kinesisStreamsExist(kinesisClient, kinesisStream)) {
-                        LOGGER.error("kinesisUtils timed out waiting for stream " + kinesisStream + " to delete");
-                        throw new IllegalStateException("KinesisUtils timed out waiting for stream " + kinesisStream
-                                + " to delete");
-                    }
-                case "ACTIVE":
-                    LOGGER.info("Stream " + kinesisStream + " is ACTIVE");
-                    return;
-                case "CREATING":
-                    break;
-                case "UPDATING":
-                    LOGGER.info("stream " + kinesisStream + " is UPDATING");
-                    return;
-                default:
-                    throw new IllegalStateException("illegal stream state: " + state);
+                        if (kinesisStreamsExist(kinesisClient, kinesisStream)) {
+                            LOGGER.error("kinesisUtils timed out waiting for stream " + kinesisStream + " to delete");
+                            throw new IllegalStateException("KinesisUtils timed out waiting for stream " + kinesisStream
+                                    + " to delete");
+                        }
+                    case "ACTIVE":
+                        LOGGER.info("Stream " + kinesisStream + " is ACTIVE");
+                        return;
+                    case "CREATING":
+                        break;
+                    case "UPDATING":
+                        LOGGER.info("stream " + kinesisStream + " is UPDATING");
+                        return;
+                    default:
+                        throw new IllegalStateException("illegal stream state: " + state);
+                }
             }
         } else {
             final CreateStreamRequest createStreamRequest = new CreateStreamRequest();
@@ -82,7 +84,7 @@ public final class Connections {
             }
             try {
                 final String streamStatus = kinesisStreamState(kinesisClient, kinesisStream);
-                if (streamStatus.equals("ACTIVE")) {
+                if (streamStatus != null && streamStatus.equals("ACTIVE")) {
                     LOGGER.info("stream " + kinesisStream + " is ACTIVE");
                     return;
                 }
