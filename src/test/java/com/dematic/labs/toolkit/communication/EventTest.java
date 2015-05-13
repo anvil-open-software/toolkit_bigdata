@@ -17,7 +17,7 @@ public final class EventTest {
         final String jsonEvent = EventUtils.eventToJson(rawEvent);
         final Event fromJson = EventUtils.jsonToEvent(jsonEvent);
         assertThat(rawEvent.getEventId(), is(fromJson.getEventId()));
-        assertThat(rawEvent.getJobId(), is(fromJson.getJobId()));
+        assertThat(rawEvent.getOrderId(), is(fromJson.getOrderId()));
         assertThat(rawEvent.getNodeId(), is(fromJson.getNodeId()));
         assertThat(rawEvent.getTimestamp(), is(fromJson.getTimestamp()));
         assertThat(rawEvent.getValue(), is(fromJson.getValue()));

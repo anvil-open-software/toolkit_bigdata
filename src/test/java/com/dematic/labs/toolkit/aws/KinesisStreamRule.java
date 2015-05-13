@@ -5,7 +5,6 @@ import com.amazonaws.services.kinesis.AmazonKinesisClient;
 import com.amazonaws.services.kinesis.model.PutRecordRequest;
 import com.amazonaws.services.kinesis.model.PutRecordResult;
 import com.dematic.labs.toolkit.communication.Event;
-import com.dematic.labs.toolkit.communication.EventUtils;
 import com.jayway.awaitility.Awaitility;
 import org.joda.time.DateTime;
 import org.junit.rules.ExternalResource;
@@ -14,10 +13,14 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import static com.dematic.labs.toolkit.aws.Connections.*;
+import static com.dematic.labs.toolkit.communication.EventUtils.eventToJsonByteArray;
 import static org.junit.Assert.assertTrue;
 
 public final class KinesisStreamRule extends ExternalResource {
@@ -67,19 +70,33 @@ public final class KinesisStreamRule extends ExternalResource {
                 until(() -> assertTrue(!dynamoTableExists(dynamoDBClient, Event.TABLE_NAME)));
     }
 
-    public void generateEventsAndPush(final int count) throws IOException {
+    public List<Event> generateEvents(final int numberOfEvents, final int nodeSize, final int orderSize) {
+        final Random randomGenerator = new Random();
+        final List<Event> events = new ArrayList<>();
+        // todo: figure out the random values
+        for (int i = 0; i < numberOfEvents; i++) {
+            final Event event = new Event(UUID.randomUUID(), randomGenerator.nextInt(nodeSize) + 1,
+                    randomGenerator.nextInt(orderSize) + 1, DateTime.now(),
+                    (int) Math.round(randomGenerator.nextGaussian() * 1 + 0));
+            events.add(event);
+        }
+        return events;
+    }
+
+    public void pushEvents(final  List<Event> events) {
         final String kinesisEndpoint = System.getProperty("kinesisEndpoint");
         final String kinesisInputStream = System.getProperty("kinesisInputStream");
-        // push events to a Kinesis stream
-        for (int i = 1; i <= count; i++) {
+        events.stream().forEach(event -> {
             final PutRecordRequest putRecordRequest = new PutRecordRequest();
-            putRecordRequest.setStreamName(kinesisInputStream);
-            final Event event = new Event(UUID.randomUUID(), i, i, DateTime.now(), i);
-            putRecordRequest.setData(ByteBuffer.wrap(EventUtils.eventToJsonByteArray(event)));
-            // partition key = which shard to send the request,
-            putRecordRequest.setPartitionKey("1");
-            final PutRecordResult putRecordResult = getAmazonKinesisClient(kinesisEndpoint).putRecord(putRecordRequest);
-            LOGGER.info("pushed event >{}< : status: {}", event.getEventId(), putRecordResult.toString());
-        }
+            try {
+                putRecordRequest.setData(ByteBuffer.wrap(eventToJsonByteArray(event)));
+                putRecordRequest.setPartitionKey("1");
+                final PutRecordResult putRecordResult =
+                        getAmazonKinesisClient(kinesisEndpoint).putRecord(putRecordRequest);
+                LOGGER.info("pushed event >{}< : status: {}", event.getEventId(), putRecordResult.toString());
+            } catch (final IOException ioe) {
+                LOGGER.error("unable to push event >{}< to the kinesis stream", event, ioe);
+            }
+        });
     }
 }
