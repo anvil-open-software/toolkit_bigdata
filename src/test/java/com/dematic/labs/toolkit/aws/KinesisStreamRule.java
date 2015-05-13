@@ -88,6 +88,7 @@ public final class KinesisStreamRule extends ExternalResource {
         final String kinesisInputStream = System.getProperty("kinesisInputStream");
         events.stream().forEach(event -> {
             final PutRecordRequest putRecordRequest = new PutRecordRequest();
+            putRecordRequest.setStreamName(kinesisInputStream);
             try {
                 putRecordRequest.setData(ByteBuffer.wrap(eventToJsonByteArray(event)));
                 putRecordRequest.setPartitionKey("1");
