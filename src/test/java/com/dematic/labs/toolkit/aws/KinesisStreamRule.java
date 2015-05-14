@@ -26,6 +26,9 @@ import static org.junit.Assert.assertTrue;
 public final class KinesisStreamRule extends ExternalResource {
     private static final Logger LOGGER = LoggerFactory.getLogger(KinesisStreamRule.class);
 
+    final int MEAN = 1000 * 60; // 1 minutes
+    final int STD_DEV = 1000 * 30; // 30 seconds
+
     @Override
     protected void before() throws Throwable {
         final String kinesisEndpoint = System.getProperty("kinesisEndpoint");
@@ -57,33 +60,34 @@ public final class KinesisStreamRule extends ExternalResource {
                     pollDelay(30, TimeUnit.SECONDS).await().
                     until(() -> assertTrue(!kinesisStreamsExist(kinesisClient, kinesisInputStream)));
         } catch (final Throwable any) {
-            LOGGER.error(String.format("error deleting stream >%s<",kinesisInputStream), any);
+            LOGGER.error(String.format("error deleting stream >%s<", kinesisInputStream), any);
         }
         // delete the dynamo db lease table created using spark's streaming, the lease table is always within the east region
         final AmazonDynamoDBClient dynamoDBClient = getAmazonDynamoDBClient("https://dynamodb.us-east-1.amazonaws.com");
         // todo: make table configurable
-        deleteDynamoLeaseManagerTable(dynamoDBClient, Event.TABLE_NAME);
-        // ensure table removed
-        // now poll
-        Awaitility.with().pollInterval(2, TimeUnit.SECONDS).and().with().
-                pollDelay(30, TimeUnit.SECONDS).await().
-                until(() -> assertTrue(!dynamoTableExists(dynamoDBClient, Event.TABLE_NAME)));
+        if (dynamoTableExists(dynamoDBClient, Event.TABLE_NAME)) {
+            deleteDynamoLeaseManagerTable(dynamoDBClient, Event.TABLE_NAME);
+            // ensure table removed
+            // now poll
+            Awaitility.with().pollInterval(2, TimeUnit.SECONDS).and().with().
+                    pollDelay(30, TimeUnit.SECONDS).await().
+                    until(() -> assertTrue(!dynamoTableExists(dynamoDBClient, Event.TABLE_NAME)));
+        }
     }
 
     public List<Event> generateEvents(final int numberOfEvents, final int nodeSize, final int orderSize) {
         final Random randomGenerator = new Random();
         final List<Event> events = new ArrayList<>();
-        // todo: figure out the random values
         for (int i = 0; i < numberOfEvents; i++) {
             final Event event = new Event(UUID.randomUUID(), randomGenerator.nextInt(nodeSize) + 1,
                     randomGenerator.nextInt(orderSize) + 1, DateTime.now(),
-                    (int) Math.round(randomGenerator.nextGaussian() * 1 + 0));
+                    (int) Math.round(randomGenerator.nextGaussian() * STD_DEV + MEAN));
             events.add(event);
         }
         return events;
     }
 
-    public void pushEvents(final  List<Event> events) {
+    public void pushEvents(final List<Event> events) {
         final String kinesisEndpoint = System.getProperty("kinesisEndpoint");
         final String kinesisInputStream = System.getProperty("kinesisInputStream");
         events.stream().forEach(event -> {
