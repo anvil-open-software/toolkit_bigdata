@@ -53,7 +53,7 @@ public final class EventUtils {
             jsonGenerator.writeStartObject();
             jsonGenerator.writeStringField("eventId", event.getEventId().toString());
             jsonGenerator.writeNumberField("nodeId", event.getNodeId());
-            jsonGenerator.writeNumberField("jobId", event.getJobId());
+            jsonGenerator.writeNumberField("orderId", event.getOrderId());
             jsonGenerator.writeStringField("timestamp", event.getTimestamp().toString());
             jsonGenerator.writeNumberField("value", event.getValue());
             jsonGenerator.writeEndObject();
@@ -70,27 +70,32 @@ public final class EventUtils {
                 throw new IllegalStateException("Event does not have an eventId");
             }
             final UUID uuid = UUID.fromString(eventIdNode.asText());
+
             final JsonNode nodeIdNode = jsonNode.get("nodeId");
             if(nodeIdNode == null || nodeIdNode.asInt() == 0) {
                 throw new IllegalStateException("Event does not have a nodeId assigned");
             }
             final int nodeId = nodeIdNode.asInt();
-            final JsonNode jobIdNode = jsonNode.get("jobId");
-            if(jobIdNode == null || jobIdNode.asInt() == 0) {
-                throw new IllegalStateException("Event does not have a jobId assigned");
+
+            final JsonNode orderIdNode = jsonNode.get("orderId");
+            if(orderIdNode == null || orderIdNode.asInt() == 0) {
+                throw new IllegalStateException("Event does not have a orderId assigned");
             }
-            final int jobId = jobIdNode.asInt();
+            final int orderId = orderIdNode.asInt();
+
             final JsonNode timestampNode = jsonNode.get("timestamp");
             if (timestampNode == null || isNullOrEmpty(timestampNode.asText())) {
                 throw new IllegalStateException("Event does not have an generated timestamp");
             }
             final DateTime timestamp = new DateTime(timestampNode.asText());
+
             final JsonNode valueNode = jsonNode.get("value");
             if(valueNode == null || valueNode.asDouble() == 0) {
                 throw new IllegalStateException("Event does not have a value assigned");
             }
             final double value = valueNode.asDouble();
-            return new Event(uuid, nodeId, jobId, timestamp, value);
+
+            return new Event(uuid, nodeId, orderId, timestamp, value);
         }
 
         // use a lib

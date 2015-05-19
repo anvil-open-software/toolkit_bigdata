@@ -19,17 +19,17 @@ public final class Event {
 
     private UUID eventId;
     private int nodeId; // node 1 - 5
-    private int jobId; // job 1 - 9
+    private int orderId; // job/order 1 - 9
     private ReadableInstant timestamp; // time events are generated
     private double value; // random value
 
     public Event() {
     }
 
-    public Event(final UUID eventId, final int nodeId, final int jobId, final ReadableInstant timestamp, final double value) {
+    public Event(final UUID eventId, final int nodeId, final int orderId, final ReadableInstant timestamp, final double value) {
         this.eventId = eventId;
         this.nodeId = nodeId;
-        this.jobId = jobId;
+        this.orderId = orderId;
         this.timestamp = timestamp;
         this.value = value;
     }
@@ -54,12 +54,12 @@ public final class Event {
     }
 
     @DynamoDBAttribute
-    public int getJobId() {
-        return jobId;
+    public int getOrderId() {
+        return orderId;
     }
 
-    public void setJobId(final int jobId) {
-        this.jobId = jobId;
+    public void setOrderId(final int orderId) {
+        this.orderId = orderId;
     }
 
     @DynamoDBMarshalling(marshallerClass = ReadableInstantMarshaller.class)
@@ -86,7 +86,7 @@ public final class Event {
         return "Event{" +
                 "eventId=" + eventId +
                 ", nodeId=" + nodeId +
-                ", jobId=" + jobId +
+                ", orderId=" + orderId +
                 ", timestamp=" + timestamp +
                 ", value=" + value +
                 '}';
