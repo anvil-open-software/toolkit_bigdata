@@ -7,21 +7,17 @@ import com.amazonaws.services.kinesis.model.PutRecordResult;
 import com.dematic.labs.toolkit.communication.Event;
 import com.jayway.awaitility.Awaitility;
 import com.jayway.awaitility.core.ConditionTimeoutException;
-import org.joda.time.DateTime;
 import org.junit.rules.ExternalResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
-import java.util.UUID;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.IntStream;
 
 import static com.dematic.labs.toolkit.aws.Connections.*;
+import static com.dematic.labs.toolkit.communication.EventTestingUtils.generateEvents;
 import static com.dematic.labs.toolkit.communication.EventUtils.eventToJsonByteArray;
 import static org.junit.Assert.assertTrue;
 
@@ -74,30 +70,22 @@ public final class KinesisStreamRule extends ExternalResource {
         }
     }
 
-    public List<Event> generateEvents(final int numberOfEvents, final int nodeSize, final int orderSize) {
-        final Random randomGenerator = new Random();
-        return IntStream.range(1, numberOfEvents)
-                .parallel() //supplier, accumulator, combiner
-                .mapToObj(value -> new Event(UUID.randomUUID(), randomGenerator.nextInt(nodeSize) + 1,
-                        randomGenerator.nextInt(orderSize) + 1, DateTime.now(),
-                        Math.abs((int) Math.round(randomGenerator.nextGaussian() * orderSize + nodeSize))))
-                .collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
-    }
-
-    public void pushEvents(final int batchSize, final int nodeSize, final int orderSize, final TimeUnit unit,
-                           final long timeValue) {
+    public boolean pushEventsToKinesis(final int batchSize, final int nodeSize, final int orderSize,
+                                       final long timeValue, final TimeUnit unit) {
         try {
             Awaitility.waitAtMost(timeValue, unit).until(() -> {
-                System.out.println(new DateTime());
-                pushEvents(generateEvents(batchSize, nodeSize, orderSize));
+                pushEventsToKinesis(generateEvents(batchSize, nodeSize, orderSize));
+                LOGGER.info("pushed >{}< events to kinesis", batchSize);
                 return false;
             });
         } catch (final ConditionTimeoutException ignore) {
             // we've reached the maximum time allocated
         }
+        // completed
+        return true;
     }
 
-    public void pushEvents(final List<Event> events) {
+    public void pushEventsToKinesis(final List<Event> events) {
         final String kinesisEndpoint = System.getProperty("kinesisEndpoint");
         final String kinesisInputStream = System.getProperty("kinesisInputStream");
         events.stream()
