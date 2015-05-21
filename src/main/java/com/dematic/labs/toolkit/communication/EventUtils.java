@@ -90,7 +90,9 @@ public final class EventUtils {
             final DateTime timestamp = new DateTime(timestampNode.asText());
 
             final JsonNode valueNode = jsonNode.get("value");
-            if(valueNode == null || valueNode.asDouble() == 0) {
+            // todo: for now we are using random dist of numbers, so some may be negitive, put a positive number check,
+            // todo: when this is changed
+            if(valueNode == null) {
                 throw new IllegalStateException("Event does not have a value assigned");
             }
             final double value = valueNode.asDouble();
