@@ -7,6 +7,7 @@ import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBRangeKey;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBTable;
 import org.joda.time.ReadableInstant;
 
+import java.io.Serializable;
 import java.util.UUID;
 
 /**
@@ -14,7 +15,7 @@ import java.util.UUID;
  */
 @SuppressWarnings("UnusedDeclaration")
 @DynamoDBTable(tableName = Event.TABLE_NAME)
-public final class Event {
+public final class Event implements Serializable {
     public static final String TABLE_NAME = "Events";
 
     private UUID eventId;
