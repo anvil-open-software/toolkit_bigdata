@@ -18,6 +18,8 @@ import com.amazonaws.services.kinesis.model.DescribeStreamRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static com.amazonaws.util.StringUtils.isNullOrEmpty;
+
 public final class Connections {
     private static final Logger LOGGER = LoggerFactory.getLogger(Connections.class);
 
@@ -138,17 +140,19 @@ public final class Connections {
         return dynamoDBClient;
     }
 
-    public static void createDynamoTable(final String awsEndpointUrl, final Class<?> clazz) {
+    public static String createDynamoTable(final String awsEndpointUrl, final Class<?> clazz, final String tablePrefix) {
         final AmazonDynamoDBClient dynamoDBClient = getAmazonDynamoDBClient(awsEndpointUrl);
         final DynamoDBMapper dynamoDBMapper = new DynamoDBMapper(dynamoDBClient);
         final CreateTableRequest createTableRequest = dynamoDBMapper.generateCreateTableRequest(clazz);
-        final String tableName = createTableRequest.getTableName();
+        final String tableName = isNullOrEmpty(tablePrefix) ? createTableRequest.getTableName() :
+                String.format("%s%s", tablePrefix, createTableRequest.getTableName());
         if (dynamoTableExists(dynamoDBClient, tableName)) {
             waitForActive(dynamoDBClient, tableName);
-            return;
+            return tableName;
         }
         try {
             // just using default read/write provisioning, will need to use a service to monitor and scale accordingly
+            createTableRequest.setTableName(tableName);
             createTableRequest.setProvisionedThroughput(new ProvisionedThroughput(10L, 10L));
             dynamoDBClient.createTable(createTableRequest);
         } catch (com.amazonaws.services.autoscaling.model.ResourceInUseException e) {
@@ -156,6 +160,7 @@ public final class Connections {
         }
         LOGGER.info("table " + tableName + " created");
         waitForActive(dynamoDBClient, tableName);
+        return tableName;
     }
 
     public static boolean dynamoTableExists(final AmazonDynamoDBClient dynamoDBClient, final String tableName) {
