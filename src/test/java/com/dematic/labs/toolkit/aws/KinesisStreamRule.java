@@ -1,6 +1,7 @@
 package com.dematic.labs.toolkit.aws;
 
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
+import com.amazonaws.services.dynamodbv2.model.ListTablesResult;
 import com.amazonaws.services.kinesis.AmazonKinesisClient;
 import com.amazonaws.services.kinesis.model.PutRecordRequest;
 import com.amazonaws.services.kinesis.model.PutRecordResult;
@@ -35,7 +36,7 @@ public final class KinesisStreamRule extends ExternalResource {
         Awaitility.setDefaultTimeout(3, TimeUnit.MINUTES);
         // now poll
         Awaitility.with().pollInterval(2, TimeUnit.SECONDS).and().with().
-                pollDelay(30, TimeUnit.SECONDS).await().
+                pollDelay(10, TimeUnit.SECONDS).await().
                 until(() -> assertTrue(kinesisStreamsExist(kinesisClient, kinesisInputStream)));
     }
 
@@ -52,21 +53,28 @@ public final class KinesisStreamRule extends ExternalResource {
             Awaitility.setDefaultTimeout(3, TimeUnit.MINUTES);
             // now poll
             Awaitility.with().pollInterval(2, TimeUnit.SECONDS).and().with().
-                    pollDelay(30, TimeUnit.SECONDS).await().
+                    pollDelay(10, TimeUnit.SECONDS).await().
                     until(() -> assertTrue(!kinesisStreamsExist(kinesisClient, kinesisInputStream)));
         } catch (final Throwable any) {
             LOGGER.error(String.format("error deleting stream >%s<", kinesisInputStream), any);
         }
+        deleteDynamoLeaseTable();
+    }
+
+    private static void deleteDynamoLeaseTable() {
         // delete the dynamo db lease table created using spark's streaming, the lease table is always within the east region
         final AmazonDynamoDBClient dynamoDBClient = getAmazonDynamoDBClient("https://dynamodb.us-east-1.amazonaws.com");
-        // todo: make table configurable
-        if (dynamoTableExists(dynamoDBClient, Event.TABLE_NAME)) {
-            deleteDynamoLeaseManagerTable(dynamoDBClient, Event.TABLE_NAME);
-            // ensure table removed
-            // now poll
-            Awaitility.with().pollInterval(2, TimeUnit.SECONDS).and().with().
-                    pollDelay(30, TimeUnit.SECONDS).await().
-                    until(() -> assertTrue(!dynamoTableExists(dynamoDBClient, Event.TABLE_NAME)));
+        final ListTablesResult listTablesResult = dynamoDBClient.listTables();
+        final List<String> tableNames = listTablesResult.getTableNames();
+        for (final String tableName : tableNames) {
+            if (tableName.endsWith("_LT") && dynamoTableExists(dynamoDBClient, tableName)) {
+                deleteDynamoLeaseManagerTable(dynamoDBClient, tableName);
+                // ensure table removed
+                // now poll
+                Awaitility.with().pollInterval(2, TimeUnit.SECONDS).and().with().
+                        pollDelay(10, TimeUnit.SECONDS).await().
+                        until(() -> assertTrue(!dynamoTableExists(dynamoDBClient, tableName)));
+            }
         }
     }
 
