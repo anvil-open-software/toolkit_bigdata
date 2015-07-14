@@ -92,7 +92,8 @@ public final class KinesisStreamRule extends ExternalResource {
                     try {
                         putRecordRequest.setData(ByteBuffer.wrap(eventToJsonByteArray(event)));
                         // move to the next shard
-                        putRecordRequest.setPartitionKey(shardCircular.getOne().getShardId());
+                        final String shardId = shardCircular.getOne().getShardId();
+                        putRecordRequest.setPartitionKey(shardId);
                         final PutRecordResult putRecordResult =
                                 amazonKinesisClient.putRecord(putRecordRequest);
                         LOGGER.info("pushed event >{}< : status: {}", event.getEventId(), putRecordResult.toString());
