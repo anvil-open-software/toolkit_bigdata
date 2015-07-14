@@ -1,8 +1,11 @@
 package com.dematic.labs.toolkit.aws;
 
 import com.amazonaws.services.kinesis.AmazonKinesisClient;
+import com.amazonaws.services.kinesis.model.DescribeStreamResult;
 import com.amazonaws.services.kinesis.model.PutRecordRequest;
 import com.amazonaws.services.kinesis.model.PutRecordResult;
+import com.amazonaws.services.kinesis.model.Shard;
+import com.dematic.labs.toolkit.Circular;
 import com.dematic.labs.toolkit.communication.Event;
 import com.jayway.awaitility.Awaitility;
 import com.jayway.awaitility.core.ConditionTimeoutException;
@@ -76,6 +79,11 @@ public final class KinesisStreamRule extends ExternalResource {
     public void pushEventsToKinesis(final List<Event> events) {
         final String kinesisEndpoint = System.getProperty("kinesisEndpoint");
         final String kinesisInputStream = System.getProperty("kinesisInputStream");
+        final AmazonKinesisClient amazonKinesisClient = getAmazonKinesisClient(kinesisEndpoint);
+        final DescribeStreamResult describeStreamResult = amazonKinesisClient.describeStream(kinesisInputStream);
+        final List<Shard> shards = describeStreamResult.getStreamDescription().getShards();
+        // move to the next shard in the list
+        final Circular<Shard> shardCircular = new Circular<>(shards);
         events.stream()
                 .parallel()
                 .forEach(event -> {
@@ -83,9 +91,11 @@ public final class KinesisStreamRule extends ExternalResource {
                     putRecordRequest.setStreamName(kinesisInputStream);
                     try {
                         putRecordRequest.setData(ByteBuffer.wrap(eventToJsonByteArray(event)));
-                        putRecordRequest.setPartitionKey("1");
+                        // move to the next shard
+                        final String shardId = shardCircular.getOne().getShardId();
+                        putRecordRequest.setPartitionKey(shardId);
                         final PutRecordResult putRecordResult =
-                                getAmazonKinesisClient(kinesisEndpoint).putRecord(putRecordRequest);
+                                amazonKinesisClient.putRecord(putRecordRequest);
                         LOGGER.info("pushed event >{}< : status: {}", event.getEventId(), putRecordResult.toString());
                     } catch (final IOException ioe) {
                         LOGGER.error("unable to push event >{}< to the kinesis stream", event, ioe);
