@@ -14,11 +14,14 @@ import org.joda.time.DateTime;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
 import java.util.UUID;
+import java.util.stream.LongStream;
 
 /**
  * Utility class to support events.
- *
  */
 public final class EventUtils {
     private final static ObjectMapper objectMapper;
@@ -46,6 +49,26 @@ public final class EventUtils {
         return eventToJson(event).getBytes(Charset.defaultCharset());
     }
 
+    /**
+     * Generate analytic system events.
+     *
+     * @param numberOfEvents -- # of events to generate
+     * @param nodeSize       -- amount of nodes
+     * @param orderSize      -- amout of orders
+     * @return List<Event>   -- list of generated events
+     */
+    public static List<Event> generateEvents(final long numberOfEvents, final int nodeSize, final int orderSize) {
+        final Random randomGenerator = new Random();
+        // startInclusive the (inclusive) initial value, endExclusive the exclusive upper bound
+        return LongStream.range(1, numberOfEvents + 1)
+                .parallel()
+                .mapToObj(value -> new Event(UUID.randomUUID(), randomGenerator.nextInt(nodeSize) + 1,
+                        randomGenerator.nextInt(orderSize) + 1, DateTime.now(),
+                        Math.abs((int) Math.round(randomGenerator.nextGaussian() * orderSize + nodeSize))))
+                        //supplier, accumulator, combiner
+                .collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
+    }
+
     private final static class EventSerializer extends JsonSerializer<Event> {
         @Override
         public void serialize(final Event event, final JsonGenerator jsonGenerator, final SerializerProvider provider)
@@ -66,19 +89,19 @@ public final class EventUtils {
             final ObjectCodec codec = jp.getCodec();
             final JsonNode jsonNode = codec.readTree(jp);
             final JsonNode eventIdNode = jsonNode.get("eventId");
-            if (eventIdNode == null || isNullOrEmpty(eventIdNode.asText()) ) {
+            if (eventIdNode == null || isNullOrEmpty(eventIdNode.asText())) {
                 throw new IllegalStateException("Event does not have an eventId");
             }
             final UUID uuid = UUID.fromString(eventIdNode.asText());
 
             final JsonNode nodeIdNode = jsonNode.get("nodeId");
-            if(nodeIdNode == null || nodeIdNode.asInt() == 0) {
+            if (nodeIdNode == null || nodeIdNode.asInt() == 0) {
                 throw new IllegalStateException("Event does not have a nodeId assigned");
             }
             final int nodeId = nodeIdNode.asInt();
 
             final JsonNode orderIdNode = jsonNode.get("orderId");
-            if(orderIdNode == null || orderIdNode.asInt() == 0) {
+            if (orderIdNode == null || orderIdNode.asInt() == 0) {
                 throw new IllegalStateException("Event does not have a orderId assigned");
             }
             final int orderId = orderIdNode.asInt();
@@ -92,7 +115,7 @@ public final class EventUtils {
             final JsonNode valueNode = jsonNode.get("value");
             // todo: for now we are using random dist of numbers, so some may be negitive, put a positive number check,
             // todo: when this is changed
-            if(valueNode == null) {
+            if (valueNode == null) {
                 throw new IllegalStateException("Event does not have a value assigned");
             }
             final double value = valueNode.asDouble();
