@@ -29,7 +29,7 @@ public final class EventTest {
     public void generateEvents() {
         final long numberOfEvents = 1000000;
         // test generation of events
-        final List<Event> events = EventTestingUtils.generateEvents(numberOfEvents, 20, 50);
+        final List<Event> events = EventUtils.generateEvents(numberOfEvents, 20, 50);
         assertEquals(numberOfEvents, events.size());
     }
 }
