@@ -32,7 +32,7 @@ public final class KinesisStreamRule extends ExternalResource {
         final String kinesisInputStream = System.getProperty("kinesisInputStream");
         final AmazonKinesisClient kinesisClient = getAmazonKinesisClient(kinesisEndpoint);
         // create the kinesis stream and ensure active
-        createKinesisStreams(kinesisClient, kinesisInputStream, 10);
+        createKinesisStreams(kinesisClient, kinesisInputStream, 1);
         // set the defaults
         Awaitility.setDefaultTimeout(3, TimeUnit.MINUTES);
         // now poll
