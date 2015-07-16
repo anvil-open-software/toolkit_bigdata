@@ -51,7 +51,7 @@ public class KinesisEventClient {
     }
 
     public static void main(final String[] args) {
-        if(args == null || args.length > 5) {
+        if(args == null || args.length != 5) {
             throw new IllegalArgumentException(
                     "ensure all the following are set {kinesisEndpoint, kinesisInputStream, numberOfEvents, nodeSize, " +
                             "orderSize");
