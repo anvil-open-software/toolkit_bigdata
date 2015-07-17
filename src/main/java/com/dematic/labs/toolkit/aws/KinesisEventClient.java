@@ -7,6 +7,7 @@ import com.amazonaws.services.kinesis.model.PutRecordResult;
 import com.amazonaws.services.kinesis.model.Shard;
 import com.dematic.labs.toolkit.Circular;
 import com.dematic.labs.toolkit.communication.Event;
+import com.google.common.collect.Lists;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,7 +31,7 @@ public class KinesisEventClient {
         final DescribeStreamResult describeStreamResult = amazonKinesisClient.describeStream(kinesisInputStream);
         final List<Shard> shards = describeStreamResult.getStreamDescription().getShards();
         // move to the next shard in the list
-        final Circular<Shard> shardCircular = new Circular<>(shards);
+        final Circular<String> partitionKey = new Circular<>(partitionKeys(shards.size(), 100));
         events.stream()
                 .parallel()
                 .forEach(event -> {
@@ -38,16 +39,29 @@ public class KinesisEventClient {
                     putRecordRequest.setStreamName(kinesisInputStream);
                     try {
                         putRecordRequest.setData(ByteBuffer.wrap(eventToJsonByteArray(event)));
-                        // move to the next shard
-                        final String shardId = shardCircular.getOne().getShardId();
-                        putRecordRequest.setPartitionKey(shardId);
+                        // group by partitionKey
+                        putRecordRequest.setPartitionKey(partitionKey.getOne());
                         final PutRecordResult putRecordResult =
                                 amazonKinesisClient.putRecord(putRecordRequest);
-                        LOGGER.info("pushed event >{}< : status: {}", event.getEventId(), putRecordResult.toString());
+                        LOGGER.info("pushed event >{}< pk >{}< : status: {}", event.getEventId(),
+                                putRecordRequest.getPartitionKey(), putRecordResult.toString());
                     } catch (final IOException ioe) {
                         LOGGER.error("unable to push event >{}< to the kinesis stream", event, ioe);
                     }
                 });
+    }
+
+    private static List<String> partitionKeys(final int numberOfShards, final int partitionKeyBuffer) {
+        // As a result of this hashing mechanism, all data records with the same partition key map to the same shard within the stream.
+        // However, if the number of partition keys exceeds the number of shards, some shards necessarily contain records with different
+        // partition keys. From a design standpoint, to ensure that all your shards are well utilized, the number of shards
+        // (specified by the setShardCount method of CreateStreamRequest) should be substantially less than the number of unique
+        // partition keys, and the amount of data flowing to a single partition key should be substantially less than the capacity of the shard.
+        final List<String> partitionKeys = Lists.newArrayList();
+        for(int i = 0; i < numberOfShards + partitionKeyBuffer; i++) {
+            partitionKeys.add("pk-" + i);
+        }
+        return partitionKeys;
     }
 
     public static void main(final String[] args) {
