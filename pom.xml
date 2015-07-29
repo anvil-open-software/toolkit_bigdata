@@ -105,6 +105,54 @@
                     </execution>
                 </executions>
             </plugin>
+            <!-- build ubar kinesis test jar -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <version>2.3</version>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                        <configuration>
+                            <shadedArtifactAttached>true</shadedArtifactAttached>
+                            <shadedClassifierName>client</shadedClassifierName>
+                            <filters>
+                                <filter>
+                                    <artifact>*:*</artifact>
+                                    <excludes>
+                                        <exclude>META-INF/*.SF</exclude>
+                                        <exclude>META-INF/*.DSA</exclude>
+                                        <exclude>META-INF/*.RSA</exclude>
+                                        <exclude>junit:junit</exclude>
+                                        <exclude>jmock:*</exclude>
+                                        <exclude>*:xml-apis</exclude>
+                                        <!-- todo: not being excluded -->
+                                        <exclude>com.dematic.labs:common:test-jar:tests</exclude>
+                                    </excludes>
+                                </filter>
+                            </filters>
+                            <artifactSet>
+                                <excludes>
+                                    <exclude>commons-httpclient:commons-httpclient</exclude>
+                                    <exclude>junit:junit</exclude>
+                                    <exclude>jmock:*</exclude>
+                                    <exclude>*:xml-apis</exclude>
+                                    <exclude>*:tests</exclude>
+                                    <exclude>*:test-jar:tests</exclude>
+                                </excludes>
+                            </artifactSet>
+                            <transformers>
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                                    <mainClass>com.dematic.labs.toolkit.aws.KinesisEventClient</mainClass>
+                                </transformer>
+                            </transformers>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
     </build>
 
