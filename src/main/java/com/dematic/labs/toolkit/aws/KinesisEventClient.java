@@ -1,12 +1,9 @@
 package com.dematic.labs.toolkit.aws;
 
-import com.amazonaws.regions.RegionUtils;
-import com.amazonaws.services.kinesis.producer.KinesisProducer;
-import com.amazonaws.services.kinesis.producer.KinesisProducerConfiguration;
-import com.amazonaws.services.kinesis.producer.Metric;
-import com.amazonaws.services.kinesis.producer.UserRecordResult;
+import com.amazonaws.services.kinesis.AmazonKinesisClient;
+import com.amazonaws.services.kinesis.model.PutRecordRequest;
+import com.amazonaws.services.kinesis.model.PutRecordResult;
 import com.dematic.labs.toolkit.communication.Event;
-import com.google.common.util.concurrent.ListenableFuture;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -16,7 +13,9 @@ import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ForkJoinPool;
 
+import static com.dematic.labs.toolkit.aws.Connections.getAmazonKinesisClient;
 import static com.dematic.labs.toolkit.communication.EventUtils.eventToJsonByteArray;
 import static com.dematic.labs.toolkit.communication.EventUtils.generateEvents;
 
@@ -24,7 +23,7 @@ import static com.dematic.labs.toolkit.communication.EventUtils.generateEvents;
  * Client will push generated events to a kinesis stream.
  * <p/>
  * <p/>
- * NOTE: does not handle any failures, that is, will just log and continue
+ * NOTE: does not handle any failures, retries, .... that is, will just log and continue
  */
 public class KinesisEventClient {
     private static final Logger LOGGER = LoggerFactory.getLogger(KinesisEventClient.class);
@@ -34,37 +33,28 @@ public class KinesisEventClient {
 
     public static void pushEventsToKinesis(final String kinesisEndpoint, final String kinesisInputStream,
                                            final List<Event> events) {
-        final KinesisProducerConfiguration kinesisProducerConfiguration = new KinesisProducerConfiguration();
-        // get the region from the URL
-        kinesisProducerConfiguration.setRegion(RegionUtils.getRegionByEndpoint(kinesisEndpoint).getName());
-        kinesisProducerConfiguration.setRateLimit(9223372036854775807L);
-        // max connection is 128
-        kinesisProducerConfiguration.setMaxConnections(128);
-        final KinesisProducer kinesisProducer = new KinesisProducer(kinesisProducerConfiguration);
+        final AmazonKinesisClient amazonKinesisClient = getAmazonKinesisClient(kinesisEndpoint);
+        //todo: think about join pool and batch size, make configurable
+        final ForkJoinPool forkJoinPool = new ForkJoinPool(100);
 
-        events.stream()
-                .parallel()
-                .forEach(event -> {
-                            try {
-                                final ListenableFuture<UserRecordResult> userRecordResult =
-                                        kinesisProducer.addUserRecord(kinesisInputStream, randomExplicitHashKey(),
-                                                ByteBuffer.wrap(eventToJsonByteArray(event)));
-                                LOGGER.debug("event sent to shard >{}<", userRecordResult.get().getShardId());
-                            } catch (final IOException | InterruptedException | ExecutionException ioe) {
-                                LOGGER.error("unable to push event >{}< to the kinesis stream", event, ioe);
-                            }
-                        }
-                );
         try {
-            kinesisProducer.flushSync();
-            final List<Metric> metrics = kinesisProducer.getMetrics();
-            for (final Metric metric : metrics) {
-                LOGGER.info(metric.toString());
-            }
-        } catch (final InterruptedException | ExecutionException ioe) {
-            LOGGER.error("unable to get metrics", ioe);
-        } finally {
-            kinesisProducer.destroy();
+            forkJoinPool.submit(() -> FixedBatchSpliterator.withBatchSize(events.stream(), 1000).
+                    parallel().
+                    forEach(event -> {
+                        final PutRecordRequest putRecordRequest = new PutRecordRequest();
+                        putRecordRequest.setStreamName(kinesisInputStream);
+                        try {
+                            putRecordRequest.setData(ByteBuffer.wrap(eventToJsonByteArray(event)));
+                            putRecordRequest.setPartitionKey(randomPartitionKey());
+                            final PutRecordResult putRecordResult =
+                                    amazonKinesisClient.putRecord(putRecordRequest);
+                            LOGGER.debug("pushed event >{}< : status: {}", event.getEventId(), putRecordResult.toString());
+                        } catch (final IOException ioe) {
+                            LOGGER.error("unable to push event >{}< to the kinesis stream", event, ioe);
+                        }
+                    })).get();
+        } catch (final InterruptedException | ExecutionException ex) {
+            LOGGER.error("unexpected exception:", ex);
         }
     }
 
@@ -90,7 +80,7 @@ public class KinesisEventClient {
     /**
      * @return A random unsigned 128-bit int converted to a decimal string.
      */
-    public static String randomExplicitHashKey() {
+    public static String randomPartitionKey() {
         return new BigInteger(128, RANDOM).toString(10);
     }
 }
