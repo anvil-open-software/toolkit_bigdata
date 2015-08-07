@@ -39,11 +39,6 @@
             <groupId>com.amazonaws</groupId>
             <artifactId>aws-java-sdk</artifactId>
         </dependency>
-        <dependency>
-            <groupId>com.amazonaws</groupId>
-            <artifactId>amazon-kinesis-producer</artifactId>
-            <version>0.10.0</version>
-        </dependency>
         <!-- json/xml -->
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
