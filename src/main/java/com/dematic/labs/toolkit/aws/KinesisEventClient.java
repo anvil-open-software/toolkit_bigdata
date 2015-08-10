@@ -82,6 +82,11 @@ public class KinesisEventClient {
                             }
                             if (putRecordsResult != null && putRecordsResult.getFailedRecordCount() > 0) {
                                 LOGGER.info("failed pushed events: {}", putRecordsResult.getFailedRecordCount());
+                                final List<PutRecordsResultEntry> records = putRecordsResult.getRecords();
+                                records.stream().parallel().forEach(record -> {
+                                    LOGGER.error("reason: {} : {} --> {}", record.getErrorCode(),
+                                            record.getErrorMessage(), record.getShardId());
+                                });
                             }
                         });
             }).get();
