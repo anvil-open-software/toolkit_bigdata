@@ -5,18 +5,15 @@ import com.amazonaws.auth.AWSCredentialsProvider;
 import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
-import com.amazonaws.services.dynamodbv2.model.CreateTableRequest;
-import com.amazonaws.services.dynamodbv2.model.DeleteTableRequest;
-import com.amazonaws.services.dynamodbv2.model.DescribeTableRequest;
-import com.amazonaws.services.dynamodbv2.model.DescribeTableResult;
-import com.amazonaws.services.dynamodbv2.model.ProvisionedThroughput;
-import com.amazonaws.services.dynamodbv2.model.ResourceNotFoundException;
-import com.amazonaws.services.dynamodbv2.model.TableStatus;
+import com.amazonaws.services.dynamodbv2.model.*;
+import com.amazonaws.services.kinesis.AmazonKinesisAsyncClient;
 import com.amazonaws.services.kinesis.AmazonKinesisClient;
 import com.amazonaws.services.kinesis.model.CreateStreamRequest;
 import com.amazonaws.services.kinesis.model.DescribeStreamRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.concurrent.Executors;
 
 import static com.amazonaws.util.StringUtils.isNullOrEmpty;
 
@@ -33,6 +30,24 @@ public final class Connections {
 
     public static AmazonKinesisClient getAmazonKinesisClient(final String awsEndpointUrl) {
         final AmazonKinesisClient kinesisClient = new AmazonKinesisClient(getAWSCredentialsProvider());
+        kinesisClient.setEndpoint(awsEndpointUrl);
+        return kinesisClient;
+    }
+
+    /**
+     * Creates an async kinesis client.
+     *
+     * @param awsEndpointUrl -- aws endpoint
+     * @param parallelism    -- creates a thread pool that maintains enough threads to support the given parallelism
+     *                       level, and may use multiple queues to reduce contention. The parallelism level corresponds
+     *                       to the maximum number of threads actively engaged in, or available to engage in, task
+     *                       processing. The actual number of threads may grow and shrink dynamically. A work-stealing
+     *                       pool makes no guarantees about the order in which submitted tasks are executed.
+     * @return AmazonKinesisAsyncClient
+     */
+    public static AmazonKinesisAsyncClient getAmazonAsyncKinesisClient(final String awsEndpointUrl, final int parallelism) {
+        final AmazonKinesisAsyncClient kinesisClient = new AmazonKinesisAsyncClient(getAWSCredentialsProvider(),
+                Executors.newWorkStealingPool(parallelism));
         kinesisClient.setEndpoint(awsEndpointUrl);
         return kinesisClient;
     }
