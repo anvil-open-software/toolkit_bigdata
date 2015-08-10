@@ -1,8 +1,8 @@
 package com.dematic.labs.toolkit.aws;
 
+import com.amazonaws.services.kinesis.AmazonKinesisAsyncClient;
 import com.amazonaws.services.kinesis.AmazonKinesisClient;
-import com.amazonaws.services.kinesis.model.PutRecordRequest;
-import com.amazonaws.services.kinesis.model.PutRecordResult;
+import com.amazonaws.services.kinesis.model.*;
 import com.dematic.labs.toolkit.communication.Event;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,9 +12,11 @@ import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Random;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.*;
+import java.util.stream.Collectors;
+import java.util.stream.LongStream;
 
+import static com.dematic.labs.toolkit.aws.Connections.getAmazonAsyncKinesisClient;
 import static com.dematic.labs.toolkit.aws.Connections.getAmazonKinesisClient;
 import static com.dematic.labs.toolkit.communication.EventUtils.eventToJsonByteArray;
 import static com.dematic.labs.toolkit.communication.EventUtils.generateEvents;
@@ -34,45 +36,76 @@ public class KinesisEventClient {
     public static void pushEventsToKinesis(final String kinesisEndpoint, final String kinesisInputStream,
                                            final List<Event> events) {
         final AmazonKinesisClient amazonKinesisClient = getAmazonKinesisClient(kinesisEndpoint);
-        //todo: think about join pool and batch size, make configurable
-        final ForkJoinPool forkJoinPool = new ForkJoinPool(100);
+        events.stream()
+                .parallel()
+                .forEach(event -> {
+                    final PutRecordRequest putRecordRequest = new PutRecordRequest();
+                    putRecordRequest.setStreamName(kinesisInputStream);
+                    try {
+                        putRecordRequest.setData(ByteBuffer.wrap(eventToJsonByteArray(event)));
+                        // group by partitionKey
+                        putRecordRequest.setPartitionKey(randomPartitionKey());
+                        final PutRecordResult putRecordResult =
+                                amazonKinesisClient.putRecord(putRecordRequest);
+                        LOGGER.info("pushed event >{}< to shard>{}<", event.getEventId(), putRecordResult.getShardId());
+                    } catch (final IOException ioe) {
+                        LOGGER.error("unable to push event >{}< to the kinesis stream", event, ioe);
+                    }
+                });
+    }
+
+    public static void pushEventsToKinesisAsync(final String kinesisEndpoint, final String kinesisInputStream,
+                                                final long numberOfEvents, final int nodeSize, final int orderSize,
+                                                final int kinesisRecordsPerRequest, final int streamChunkingSize,
+                                                final int parallelism) {
+        final AmazonKinesisAsyncClient amazonKinesisClient = getAmazonAsyncKinesisClient(kinesisEndpoint, parallelism);
+        final ForkJoinPool forkJoinPool = new ForkJoinPool(parallelism);
 
         try {
-            forkJoinPool.submit(() -> FixedBatchSpliterator.withBatchSize(events.stream(), 1000).
-                    parallel().
-                    forEach(event -> {
-                        final PutRecordRequest putRecordRequest = new PutRecordRequest();
-                        putRecordRequest.setStreamName(kinesisInputStream);
-                        try {
-                            putRecordRequest.setData(ByteBuffer.wrap(eventToJsonByteArray(event)));
-                            putRecordRequest.setPartitionKey(randomPartitionKey());
-                            final PutRecordResult putRecordResult =
-                                    amazonKinesisClient.putRecord(putRecordRequest);
-                            LOGGER.debug("pushed event >{}< : status: {}", event.getEventId(), putRecordResult.toString());
-                        } catch (final IOException ioe) {
-                            LOGGER.error("unable to push event >{}< to the kinesis stream", event, ioe);
-                        }
-                    })).get();
+            forkJoinPool.submit(() -> {
+                FixedBatchSpliterator.withBatchSize(LongStream.range(1, numberOfEvents + 1).boxed(), streamChunkingSize).
+                        parallel().
+                        forEach(event -> {
+                            final PutRecordsRequest putRecordsRequest = new PutRecordsRequest();
+                            putRecordsRequest.setStreamName(kinesisInputStream);
+                            final List<PutRecordsRequestEntry> putRecordsRequestEntries =
+                                    generatePutRecordsRequestEntries(kinesisRecordsPerRequest, nodeSize, orderSize);
+                            putRecordsRequest.setRecords(putRecordsRequestEntries);
+
+                            final Future<PutRecordsResult> futurePutRecordsResult =
+                                    amazonKinesisClient.putRecordsAsync(putRecordsRequest);
+                            PutRecordsResult putRecordsResult = null;
+                            try {
+                                putRecordsResult = futurePutRecordsResult.get(1, TimeUnit.MINUTES);
+                            } catch (final InterruptedException | ExecutionException | TimeoutException resultEx) {
+                                LOGGER.error("unable to retrieve kinesis results in under a 1 minute", resultEx);
+                            }
+                            if (putRecordsResult != null && putRecordsResult.getFailedRecordCount() > 0) {
+                                LOGGER.info("failed pushed events: {}", putRecordsResult.getFailedRecordCount());
+                            }
+                        });
+            }).get();
         } catch (final InterruptedException | ExecutionException ex) {
             LOGGER.error("unexpected exception:", ex);
+        } finally {
+            forkJoinPool.shutdownNow();
+            amazonKinesisClient.shutdown();
         }
     }
 
-    public static void main(final String[] args) {
-        if (args == null || args.length != 5) {
-            throw new IllegalArgumentException(
-                    "ensure all the following are set {kinesisEndpoint, kinesisInputStream, numberOfEvents, nodeSize, " +
-                            "orderSize");
-        }
-        final String kinesisEndpoint = args[0];
-        final String kinesisInputStream = args[1];
-
-        final long numberOfEvents = Long.valueOf(args[2]);
-        final int nodeSize = Integer.valueOf(args[3]);
-        final int orderSize = Integer.valueOf(args[4]);
-
-        //generate events and push to Kinesis
-        pushEventsToKinesis(kinesisEndpoint, kinesisInputStream, generateEvents(numberOfEvents, nodeSize, orderSize));
+    private static List<PutRecordsRequestEntry> generatePutRecordsRequestEntries(final int numberOfEvents,
+                                                                                 final int nodeSize,
+                                                                                 final int orderSize) {
+        return generateEvents(numberOfEvents, nodeSize, orderSize).parallelStream().map(event -> {
+            final PutRecordsRequestEntry putRecordsRequestEntry = new PutRecordsRequestEntry();
+            try {
+                putRecordsRequestEntry.setData(ByteBuffer.wrap(eventToJsonByteArray(event)));
+            } catch (final IOException ignore) {
+                LOGGER.error("unable to transform >{}< into a byte buffer", event);
+            }
+            putRecordsRequestEntry.setPartitionKey(randomPartitionKey());
+            return putRecordsRequestEntry;
+        }).collect(Collectors.toList());
     }
 
     private static final Random RANDOM = new Random();
@@ -82,5 +115,26 @@ public class KinesisEventClient {
      */
     public static String randomPartitionKey() {
         return new BigInteger(128, RANDOM).toString(10);
+    }
+
+    public static void main(final String[] args) {
+        if (args == null || args.length != 8) {
+            throw new IllegalArgumentException(
+                    "ensure all the following are set {kinesisEndpoint, kinesisInputStream, numberOfEvents, nodeSize, " +
+                            "orderSize, kinesisRecordsPerRequest, streamChunkSize, levelOfParallelism");
+        }
+        final String kinesisEndpoint = args[0];
+        final String kinesisInputStream = args[1];
+
+        final long numberOfEvents = Long.valueOf(args[2]);
+        final int nodeSize = Integer.valueOf(args[3]);
+        final int orderSize = Integer.valueOf(args[4]);
+        final int kinesisRecordsPerRequest = Integer.valueOf(args[5]);
+        final int streamChunkSize = Integer.valueOf(args[6]);
+        final int parallelism = Integer.valueOf(args[7]);
+
+        //generate events and push to Kinesis , 50, 1000, 100
+        pushEventsToKinesisAsync(kinesisEndpoint, kinesisInputStream, numberOfEvents, nodeSize, orderSize,
+                kinesisRecordsPerRequest, streamChunkSize, parallelism);
     }
 }
