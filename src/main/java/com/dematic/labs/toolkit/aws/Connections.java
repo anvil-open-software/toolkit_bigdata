@@ -1,6 +1,7 @@
 package com.dematic.labs.toolkit.aws;
 
 import com.amazonaws.AmazonServiceException;
+import com.amazonaws.ClientConfiguration;
 import com.amazonaws.auth.AWSCredentialsProvider;
 import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
@@ -47,7 +48,7 @@ public final class Connections {
      */
     public static AmazonKinesisAsyncClient getAmazonAsyncKinesisClient(final String awsEndpointUrl, final int parallelism) {
         final AmazonKinesisAsyncClient kinesisClient = new AmazonKinesisAsyncClient(getAWSCredentialsProvider(),
-                Executors.newWorkStealingPool(parallelism));
+                new ClientConfiguration().withMaxConnections(150), Executors.newWorkStealingPool(parallelism));
         kinesisClient.setEndpoint(awsEndpointUrl);
         return kinesisClient;
     }

@@ -23,7 +23,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 import java.util.stream.LongStream;
 
@@ -70,8 +69,8 @@ public class KinesisEventClient {
                                                  final int nodeSize, final int orderSize,
                                                  final int kinesisRecordsPerRequest, final int streamChunkingSize,
                                                  final int parallelism) {
-        final ForkJoinPool forkJoinPool = new ForkJoinPool(parallelism);
-
+        final ForkJoinPool forkJoinPool = new ForkJoinPool(parallelism, ForkJoinPool.defaultForkJoinWorkerThreadFactory,
+                null, true);
         try {
             forkJoinPool.submit(() -> {
                 FixedBatchSpliterator.withBatchSize(LongStream.range(1, numberOfEvents + 1).boxed(), streamChunkingSize).
@@ -87,9 +86,10 @@ public class KinesisEventClient {
                                     amazonKinesisClient.putRecordsAsync(putRecordsRequest);
                             PutRecordsResult putRecordsResult = null;
                             try {
-                                putRecordsResult = futurePutRecordsResult.get(1, TimeUnit.MINUTES);
-                            } catch (final InterruptedException | ExecutionException | TimeoutException resultEx) {
-                                LOGGER.error("unable to retrieve kinesis results in under a 1 minute", resultEx);
+                                putRecordsResult = futurePutRecordsResult.get();
+                            } catch (final InterruptedException | ExecutionException resultEx) {
+                                LOGGER.error("unable to retrieve kinesis results: forkJoinPool {}",
+                                        forkJoinPool.toString(), resultEx);
                             }
                             if (putRecordsResult != null && putRecordsResult.getFailedRecordCount() > 0) {
                                 LOGGER.error("failed pushed events: {}", putRecordsResult.getFailedRecordCount());
@@ -107,7 +107,6 @@ public class KinesisEventClient {
             LOGGER.error("unexpected exception:", ex);
         } finally {
             forkJoinPool.shutdownNow();
-            amazonKinesisClient.shutdown();
         }
     }
 
