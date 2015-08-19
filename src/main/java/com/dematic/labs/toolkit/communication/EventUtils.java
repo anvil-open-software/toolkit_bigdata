@@ -62,11 +62,23 @@ public final class EventUtils {
         // startInclusive the (inclusive) initial value, endExclusive the exclusive upper bound
         return LongStream.range(1, numberOfEvents + 1)
                 .parallel()
-                .mapToObj(value -> new Event(UUID.randomUUID(), randomGenerator.nextInt(nodeSize) + 1,
-                        randomGenerator.nextInt(orderSize) + 1, DateTime.now(),
-                        Math.abs((int) Math.round(randomGenerator.nextGaussian() * orderSize + nodeSize))))
+                .mapToObj(value -> new Event(UUID.randomUUID(), generateNode(nodeSize, randomGenerator),
+                        generateOrder(orderSize, randomGenerator), DateTime.now(),
+                        generateValue(nodeSize, orderSize, randomGenerator)))
                         //supplier, accumulator, combiner
                 .collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
+    }
+
+    public static int generateNode(final int nodeSize, final Random randomGenerator) {
+        return randomGenerator.nextInt(nodeSize) + 1;
+    }
+
+    public static int generateOrder(final int orderSize, final Random randomGenerator) {
+        return randomGenerator.nextInt(orderSize) + 1;
+    }
+
+    public static double generateValue(final int nodeSize, final int orderSize, final Random randomGenerator) {
+        return Math.abs((int) Math.round(randomGenerator.nextGaussian() * orderSize + nodeSize));
     }
 
     private final static class EventSerializer extends JsonSerializer<Event> {
