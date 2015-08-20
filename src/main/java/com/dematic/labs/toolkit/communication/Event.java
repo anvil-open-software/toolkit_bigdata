@@ -5,10 +5,12 @@ import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBHashKey;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMarshalling;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBRangeKey;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBTable;
+import org.joda.time.DateTime;
 import org.joda.time.ReadableInstant;
 
 import java.io.Serializable;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Event needs to be defined,
@@ -36,7 +38,7 @@ public final class Event implements Serializable {
     }
 
     @DynamoDBMarshalling(marshallerClass = UUIDMarshaller.class)
-    @DynamoDBHashKey(attributeName="id")
+    @DynamoDBHashKey(attributeName = "id")
     public UUID getEventId() {
         return eventId;
     }
@@ -80,6 +82,25 @@ public final class Event implements Serializable {
 
     public void setValue(final double value) {
         this.value = value;
+    }
+
+    public String aggregateBy(final TimeUnit unit) {
+        final String aggregateTime;
+        switch (unit) {
+            case MINUTES: {
+                aggregateTime = new DateTime(getTimestamp()).minuteOfHour().roundFloorCopy().toDateTimeISO().toString();
+                break;
+            }
+            case HOURS: {
+                aggregateTime = new DateTime(getTimestamp()).hourOfDay().roundFloorCopy().toDateTimeISO().toString();
+                break;
+            }
+            default: {
+                throw new IllegalArgumentException(String.format(">%s< needs to be either {MINUTES, HOURS}",
+                        unit));
+            }
+        }
+        return aggregateTime;
     }
 
     @Override
