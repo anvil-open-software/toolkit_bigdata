@@ -56,6 +56,10 @@ public final class Event implements Serializable {
         return sequence;
     }
 
+    public void setSequence(final long sequence) {
+        this.sequence = sequence;
+    }
+
     @DynamoDBAttribute
     public int getNodeId() {
         return nodeId;
