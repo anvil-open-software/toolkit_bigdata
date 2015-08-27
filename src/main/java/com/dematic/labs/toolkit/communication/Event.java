@@ -21,12 +21,14 @@ public final class Event implements Serializable {
     public static final String TABLE_NAME = "Events";
 
     private UUID eventId;
+    private long sequence;
     private int nodeId; // node 1 - 5
     private int orderId; // job/order 1 - 9
     private ReadableInstant timestamp; // time events are generated
     private double value; // random value
 
     public Event() {
+        sequence = EventSequenceNumber.next();
     }
 
     public Event(final UUID eventId, final int nodeId, final int orderId, final ReadableInstant timestamp, final double value) {
@@ -35,6 +37,7 @@ public final class Event implements Serializable {
         this.orderId = orderId;
         this.timestamp = timestamp;
         this.value = value;
+        sequence = EventSequenceNumber.next();
     }
 
     @DynamoDBMarshalling(marshallerClass = UUIDMarshaller.class)
@@ -45,6 +48,11 @@ public final class Event implements Serializable {
 
     public void setEventId(final UUID eventId) {
         this.eventId = eventId;
+    }
+
+    @DynamoDBAttribute
+    public long getSequence() {
+        return sequence;
     }
 
     @DynamoDBAttribute
@@ -107,6 +115,7 @@ public final class Event implements Serializable {
     public String toString() {
         return "Event{" +
                 "eventId=" + eventId +
+                ", sequence=" + sequence +
                 ", nodeId=" + nodeId +
                 ", orderId=" + orderId +
                 ", timestamp=" + timestamp +
