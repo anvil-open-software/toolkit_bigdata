@@ -15,10 +15,11 @@ public final class EventTest {
     @Test
     public void convertEventToJson() throws IOException {
         // test event to json then to event
-        final Event rawEvent = new Event(UUID.randomUUID(), 1, 5, DateTime.now(), 1234.34);
+        final Event rawEvent = new Event(UUID.randomUUID(), EventSequenceNumber.next(), 1, 5, DateTime.now(), 1234.34);
         final String jsonEvent = EventUtils.eventToJson(rawEvent);
         final Event fromJson = EventUtils.jsonToEvent(jsonEvent);
         assertThat(rawEvent.getEventId(), is(fromJson.getEventId()));
+        assertThat(rawEvent.getSequence(), is(fromJson.getSequence()));
         assertThat(rawEvent.getOrderId(), is(fromJson.getOrderId()));
         assertThat(rawEvent.getNodeId(), is(fromJson.getNodeId()));
         assertThat(rawEvent.getTimestamp(), is(fromJson.getTimestamp()));
