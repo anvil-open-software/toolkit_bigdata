@@ -31,13 +31,14 @@ public final class Event implements Serializable {
         sequence = EventSequenceNumber.next();
     }
 
-    public Event(final UUID eventId, final int nodeId, final int orderId, final ReadableInstant timestamp, final double value) {
+    public Event(final UUID eventId, final long sequence, final int nodeId, final int orderId,
+                 final ReadableInstant timestamp, final double value) {
         this.eventId = eventId;
+        this.sequence = sequence;
         this.nodeId = nodeId;
         this.orderId = orderId;
         this.timestamp = timestamp;
         this.value = value;
-        sequence = EventSequenceNumber.next();
     }
 
     @DynamoDBMarshalling(marshallerClass = UUIDMarshaller.class)
