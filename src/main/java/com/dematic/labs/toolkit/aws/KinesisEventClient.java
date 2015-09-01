@@ -133,7 +133,7 @@ public class KinesisEventClient {
                             final String errorCode = failed.get(i).getErrorCode();
                             // only retry accepeted error codes
                             if (errorCode != null && RETRYABLE_ERR_CODES.contains(errorCode)) {
-                                LOGGER.debug("known failure: >{}<", failed.get(i).toString());
+                                LOGGER.error("known failure: >{}<", failed.get(i).toString());
                                 return Optional.of(retry);
                             } else {
                                 // these are unknown error, we will try them anyway
@@ -251,14 +251,14 @@ public class KinesisEventClient {
                                 "kinesisRecordsPerRequest, streamChunkSize, levelOfParallelism}");
             }
         } finally {
-            if (amazonKinesisClient != null) {
-                amazonKinesisClient.shutdown();
-            }
-
             LOGGER.info("Total Events ATTEMPTED: {}", TOTAL_EVENTS.get());
             LOGGER.info("Total Events FAILED: {}", SYSTEM_ERROR.get() + KINESIS_ERROR.get());
             LOGGER.info("Total System Events FAILED: {}", SYSTEM_ERROR.get());
             LOGGER.info("Total Kinesis Events FAILED: {}", KINESIS_ERROR.get());
+
+            if (amazonKinesisClient != null) {
+                amazonKinesisClient.shutdown();
+            }
             System.exit(0);
         }
     }
