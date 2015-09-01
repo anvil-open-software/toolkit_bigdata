@@ -81,7 +81,7 @@ public class KinesisEventClient {
                             // 1) generate batched events and dispatch request
                             final List<PutRecordsRequestEntry> putRecordsRequestEntries =
                                     generatePutRecordsRequestEntries(kinesisRecordsPerRequest, nodeSize, orderSize);
-                            dispatch(amazonKinesisClient, kinesisInputStream, putRecordsRequestEntries, 5);
+                            dispatch(amazonKinesisClient, kinesisInputStream, putRecordsRequestEntries, 10);
                         });
             }).get();
         } catch (final InterruptedException | ExecutionException ex) {
@@ -98,9 +98,8 @@ public class KinesisEventClient {
         putRecordsRequest.setStreamName(stream);
         putRecordsRequest.setRecords(putRecordsRequestEntries);
         PutRecordsResult putRecordsResult = null;
-        
-        do {
 
+        do {
             try {
                 final Future<PutRecordsResult> futurePutRecordsResult =
                         amazonKinesisClient.putRecordsAsync(putRecordsRequest);
@@ -128,9 +127,12 @@ public class KinesisEventClient {
                             final String errorCode = failed.get(i).getErrorCode();
                             // only retry accepeted error codes
                             if (errorCode != null && RETRYABLE_ERR_CODES.contains(errorCode)) {
+                                LOGGER.debug("known failure: >{}<", failed.get(i).toString());
                                 return Optional.of(retry);
                             } else {
-                                return Optional.<PutRecordsRequestEntry>empty();
+                                // these are unknown error, we will try them anyway
+                                LOGGER.debug("unknown failure: no error code >{}<", failed.get(i).toString());
+                                return Optional.of(retry);
                             }
                         })
                         .filter(Optional::isPresent)
