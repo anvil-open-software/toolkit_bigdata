@@ -133,7 +133,7 @@ public class KinesisEventClient {
                             final String errorCode = failed.get(i).getErrorCode();
                             // only retry accepeted error codes
                             if (errorCode != null && RETRYABLE_ERR_CODES.contains(errorCode)) {
-                                LOGGER.error("known failure: >{}<", failed.get(i).toString());
+                                LOGGER.debug("known failure: >{}<", failed.get(i).toString());
                                 return Optional.of(retry);
                             } else {
                                 // these are unknown error, we will try them anyway
