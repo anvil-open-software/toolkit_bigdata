@@ -141,10 +141,15 @@ public class KinesisEventClient {
                 // set the failed request to be tried again
                 putRecordsRequest.setRecords(retries);
             }
-        } while (putRecordsResult != null && putRecordsResult.getFailedRecordCount() > 0 && count < numberOfTries);
+        } while ((putRecordsResult == null && count > 0 && count < numberOfTries)  ||  (putRecordsResult != null && putRecordsResult.getFailedRecordCount() > 0 && count < numberOfTries));
+
+        // failed to dispatch because of issues associated with not being able to connect to kineses
+        if (putRecordsResult == null) {
+            LOGGER.error("unable to dispatch: {} events (system error)", putRecordsRequest.getRecords().size());
+        }
 
         if (putRecordsResult != null && putRecordsResult.getFailedRecordCount() > 0) {
-            LOGGER.error("unable to dispatch: {} events", putRecordsResult.getFailedRecordCount());
+            LOGGER.error("unable to dispatch: {} events (kinesis error)", putRecordsResult.getFailedRecordCount());
         }
     }
 
