@@ -23,6 +23,7 @@ import java.util.Optional;
 import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -254,11 +255,23 @@ public class KinesisEventClient {
                                 "kinesisRecordsPerRequest, streamChunkSize, levelOfParallelism}");
             }
         } finally {
+            // shutdown client
+            if (amazonKinesisClient != null) {
+                try {
+                    final ExecutorService executorService = amazonKinesisClient.getExecutorService();
+                    executorService.shutdown();
+                    executorService.awaitTermination(2, TimeUnit.MINUTES);
+                } catch (final Throwable throwable) {
+                    LOGGER.error("unexpected error shutting down amazon kinesis client", throwable);
+                }
+            }
+
             if (forkJoinPool != null) {
                 try {
                     // shutdown and wait for jobs to be finished
                     forkJoinPool.shutdown();
-                    forkJoinPool.awaitTermination(5, TimeUnit.MINUTES);
+                    forkJoinPool.awaitQuiescence(5, TimeUnit.MINUTES);
+                    forkJoinPool.awaitTermination(2, TimeUnit.MINUTES);
                     System.out.println();
                 } catch (final Throwable throwable) {
                     LOGGER.error("unexpected error shutting down forkJoinPook", throwable);
@@ -269,14 +282,7 @@ public class KinesisEventClient {
             LOGGER.info("Total Events FAILED: {}", SYSTEM_ERROR.get() + KINESIS_ERROR.get());
             LOGGER.info("Total System Events FAILED: {}", SYSTEM_ERROR.get());
             LOGGER.info("Total Kinesis Events FAILED: {}", KINESIS_ERROR.get());
-            // shutdown client
-            if (amazonKinesisClient != null) {
-                try {
-                    amazonKinesisClient.shutdown();
-                } catch (final Throwable throwable) {
-                    LOGGER.error("unexpected error shutting down amazon kinesis client", throwable);
-                }
-            }
+
             System.exit(0);
         }
     }
