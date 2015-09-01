@@ -2,7 +2,12 @@ package com.dematic.labs.toolkit.aws;
 
 import com.amazonaws.services.kinesis.AmazonKinesisAsyncClient;
 import com.amazonaws.services.kinesis.AmazonKinesisClient;
-import com.amazonaws.services.kinesis.model.*;
+import com.amazonaws.services.kinesis.model.PutRecordRequest;
+import com.amazonaws.services.kinesis.model.PutRecordResult;
+import com.amazonaws.services.kinesis.model.PutRecordsRequest;
+import com.amazonaws.services.kinesis.model.PutRecordsRequestEntry;
+import com.amazonaws.services.kinesis.model.PutRecordsResult;
+import com.amazonaws.services.kinesis.model.PutRecordsResultEntry;
 import com.dematic.labs.toolkit.communication.Event;
 import com.google.common.collect.ImmutableSet;
 import com.jayway.awaitility.Awaitility;
@@ -75,9 +80,7 @@ public class KinesisEventClient {
                                                  final String kinesisInputStream, final long numberOfEvents,
                                                  final int nodeSize, final int orderSize,
                                                  final int kinesisRecordsPerRequest, final int streamChunkingSize,
-                                                 final int parallelism) {
-        final ForkJoinPool forkJoinPool = new ForkJoinPool(parallelism, ForkJoinPool.defaultForkJoinWorkerThreadFactory,
-                null, true);
+                                                 final ForkJoinPool forkJoinPool) {
         try {
             forkJoinPool.submit(() -> {
                 FixedBatchSpliterator.withBatchSize(LongStream.range(1, numberOfEvents + 1).boxed(), streamChunkingSize).
@@ -86,13 +89,33 @@ public class KinesisEventClient {
                             // 1) generate batched events and dispatch request
                             final List<PutRecordsRequestEntry> putRecordsRequestEntries =
                                     generatePutRecordsRequestEntries(kinesisRecordsPerRequest, nodeSize, orderSize);
-                            dispatch(amazonKinesisClient, kinesisInputStream, putRecordsRequestEntries, 20);
+                            dispatch(amazonKinesisClient, kinesisInputStream, putRecordsRequestEntries, 10);
                         });
             }).get();
         } catch (final InterruptedException | ExecutionException ex) {
             LOGGER.error("unexpected exception:", ex);
-        } finally {
-            forkJoinPool.shutdownNow();
+        }
+    }
+
+    private static void pushEventsToKinesisAsync(final AmazonKinesisAsyncClient amazonKinesisClient,
+                                                 final String kinesisInputStream, final int nodeSize,
+                                                 final int orderSize, final TimeUnit unit, final long time,
+                                                 final int kinesisRecordsPerRequest, final int streamChunkingSize,
+                                                 final ForkJoinPool forkJoinPool) {
+        try {
+            Awaitility.waitAtMost(time, unit).until(() -> {
+                        //noinspection InfiniteLoopStatement
+                        for (;;) {
+                            //todo: picked a very large number of events to slow pushing down, need to be able to
+                            // todo: throttle this
+                            pushEventsToKinesisAsync(amazonKinesisClient, kinesisInputStream, 1000000, nodeSize, orderSize,
+                                    kinesisRecordsPerRequest, streamChunkingSize, forkJoinPool);
+                        }
+                    }
+            );
+        } catch (final ConditionTimeoutException ignore) {
+            // we've reached the maximum time allocated
+            LOGGER.info("finished pushing events for {} {}", time, unit);
         }
     }
 
@@ -112,7 +135,7 @@ public class KinesisEventClient {
                 putRecordsResult = futurePutRecordsResult.get();
                 // deal with any type of system, connection exception, etc...
             } catch (final Throwable any) {
-                LOGGER.error("unexpected exception dispatching to kinesis, trying again : count = {}", count, any);
+                LOGGER.debug("unexpected exception dispatching to kinesis, trying again : count = {}", count, any);
             } finally {
                 count++;
             }
@@ -164,28 +187,6 @@ public class KinesisEventClient {
         }
     }
 
-    private static void pushEventsToKinesisAsync(final AmazonKinesisAsyncClient amazonKinesisClient,
-                                                 final String kinesisInputStream, final int nodeSize,
-                                                 final int orderSize, final TimeUnit unit, final long time,
-                                                 final int kinesisRecordsPerRequest, final int streamChunkingSize,
-                                                 final int parallelism) {
-        try {
-            Awaitility.waitAtMost(time, unit).until(() -> {
-                        //noinspection InfiniteLoopStatement
-                        for (;;) {
-                            //todo: picked a very large number of events to slow pushing down, need to be able to
-                            // todo: throttle this
-                            pushEventsToKinesisAsync(amazonKinesisClient, kinesisInputStream, 1000000, nodeSize, orderSize,
-                                    kinesisRecordsPerRequest, streamChunkingSize, parallelism);
-                        }
-                    }
-            );
-        } catch (final ConditionTimeoutException ignore) {
-            // we've reached the maximum time allocated
-            LOGGER.info("finished pushing events for {} {}", time, unit);
-        }
-    }
-
     private static List<PutRecordsRequestEntry> generatePutRecordsRequestEntries(final int numberOfEvents,
                                                                                  final int nodeSize,
                                                                                  final int orderSize) {
@@ -212,6 +213,7 @@ public class KinesisEventClient {
 
     public static void main(final String[] args) {
         AmazonKinesisAsyncClient amazonKinesisClient = null;
+        ForkJoinPool forkJoinPool = null;
 
         //noinspection finally
         try {
@@ -225,9 +227,10 @@ public class KinesisEventClient {
                 final int streamChunkSize = Integer.valueOf(args[6]);
                 final int parallelism = Integer.valueOf(args[7]);
                 amazonKinesisClient = getAmazonAsyncKinesisClient(kinesisEndpoint, parallelism);
+                forkJoinPool = new ForkJoinPool(parallelism, ForkJoinPool.defaultForkJoinWorkerThreadFactory, null, true);
                 //generate events and push to Kinesis
                 pushEventsToKinesisAsync(amazonKinesisClient, kinesisInputStream, numberOfEvents, nodeSize, orderSize,
-                        kinesisRecordsPerRequest, streamChunkSize, parallelism);
+                        kinesisRecordsPerRequest, streamChunkSize, forkJoinPool);
             } else if (args != null && args.length == 9) {
                 final String kinesisEndpoint = args[0];
                 final String kinesisInputStream = args[1];
@@ -238,11 +241,11 @@ public class KinesisEventClient {
                 final int kinesisRecordsPerRequest = Integer.valueOf(args[6]);
                 final int streamChunkSize = Integer.valueOf(args[7]);
                 final int parallelism = Integer.valueOf(args[8]);
-
                 amazonKinesisClient = getAmazonAsyncKinesisClient(kinesisEndpoint, parallelism);
+                forkJoinPool = new ForkJoinPool(parallelism, ForkJoinPool.defaultForkJoinWorkerThreadFactory, null, true);
                 //generate events and push to Kinesis
                 pushEventsToKinesisAsync(amazonKinesisClient, kinesisInputStream, nodeSize, orderSize, unit, time,
-                        kinesisRecordsPerRequest, streamChunkSize, parallelism);
+                        kinesisRecordsPerRequest, streamChunkSize, forkJoinPool);
             } else {
                 throw new IllegalArgumentException(
                         "ensure all the following are set {kinesisEndpoint, kinesisInputStream, numberOfEvents, nodeSize, " +
@@ -251,13 +254,28 @@ public class KinesisEventClient {
                                 "kinesisRecordsPerRequest, streamChunkSize, levelOfParallelism}");
             }
         } finally {
+            if (forkJoinPool != null) {
+                try {
+                    // shutdown and wait for jobs to be finished
+                    forkJoinPool.shutdown();
+                    forkJoinPool.awaitTermination(5, TimeUnit.MINUTES);
+                    System.out.println();
+                } catch (final Throwable throwable) {
+                    LOGGER.error("unexpected error shutting down forkJoinPook", throwable);
+                }
+            }
+            // log stats
             LOGGER.info("Total Events ATTEMPTED: {}", TOTAL_EVENTS.get());
             LOGGER.info("Total Events FAILED: {}", SYSTEM_ERROR.get() + KINESIS_ERROR.get());
             LOGGER.info("Total System Events FAILED: {}", SYSTEM_ERROR.get());
             LOGGER.info("Total Kinesis Events FAILED: {}", KINESIS_ERROR.get());
-
+            // shutdown client
             if (amazonKinesisClient != null) {
-                amazonKinesisClient.shutdown();
+                try {
+                    amazonKinesisClient.shutdown();
+                } catch (final Throwable throwable) {
+                    LOGGER.error("unexpected error shutting down amazon kinesis client", throwable);
+                }
             }
             System.exit(0);
         }
