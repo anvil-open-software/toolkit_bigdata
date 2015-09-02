@@ -8,10 +8,9 @@ import com.amazonaws.services.kinesis.model.PutRecordsRequest;
 import com.amazonaws.services.kinesis.model.PutRecordsRequestEntry;
 import com.amazonaws.services.kinesis.model.PutRecordsResult;
 import com.amazonaws.services.kinesis.model.PutRecordsResultEntry;
+import com.dematic.labs.toolkit.CountdownTimer;
 import com.dematic.labs.toolkit.communication.Event;
 import com.google.common.collect.ImmutableSet;
-import com.jayway.awaitility.Awaitility;
-import com.jayway.awaitility.core.ConditionTimeoutException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -90,7 +89,8 @@ public class KinesisEventClient {
                             // 1) generate batched events and dispatch request
                             final List<PutRecordsRequestEntry> putRecordsRequestEntries =
                                     generatePutRecordsRequestEntries(kinesisRecordsPerRequest, nodeSize, orderSize);
-                            dispatch(amazonKinesisClient, kinesisInputStream, putRecordsRequestEntries, 10);
+                            // todo: come back to retries and deal w duplicates
+                            dispatch(amazonKinesisClient, kinesisInputStream, putRecordsRequestEntries, 0);
                         });
             }).get();
         } catch (final InterruptedException | ExecutionException ex) {
@@ -103,21 +103,21 @@ public class KinesisEventClient {
                                                  final int orderSize, final TimeUnit unit, final long time,
                                                  final int kinesisRecordsPerRequest, final int streamChunkingSize,
                                                  final ForkJoinPool forkJoinPool) {
-        try {
-            Awaitility.waitAtMost(time, unit).until(() -> {
-                        //noinspection InfiniteLoopStatement
-                        for (;;) {
-                            //todo: picked a very large number of events to slow pushing down, need to be able to
-                            // todo: throttle this
-                            pushEventsToKinesisAsync(amazonKinesisClient, kinesisInputStream, 1000000, nodeSize, orderSize,
-                                    kinesisRecordsPerRequest, streamChunkingSize, forkJoinPool);
-                        }
-                    }
-            );
-        } catch (final ConditionTimeoutException ignore) {
-            // we've reached the maximum time allocated
-            LOGGER.info("finished pushing events for {} {}", time, unit);
+        // i know we could lose persision, but in this case, its ok
+        int numberOfMinutes = TimeUnit.HOURS == unit ? Long.valueOf(unit.toMinutes(time)).intValue() :
+                Long.valueOf(time).intValue();
+        final CountdownTimer countdownTimer = new CountdownTimer();
+        countdownTimer.countDown(numberOfMinutes);
+
+        while (true) {
+            pushEventsToKinesisAsync(amazonKinesisClient, kinesisInputStream, 1000, nodeSize, orderSize,
+                    kinesisRecordsPerRequest, streamChunkingSize, forkJoinPool);
+            if(countdownTimer.isFinished()) {
+                break;
+            }
         }
+        // we've reached the maximum time allocated
+        LOGGER.info("finished pushing events for {} {}", time, unit);
     }
 
     private static void dispatch(final AmazonKinesisAsyncClient amazonKinesisClient, final String stream,
@@ -136,7 +136,7 @@ public class KinesisEventClient {
                 putRecordsResult = futurePutRecordsResult.get();
                 // deal with any type of system, connection exception, etc...
             } catch (final Throwable any) {
-                LOGGER.debug("unexpected exception dispatching to kinesis, trying again : count = {}", count, any);
+                LOGGER.error("unexpected exception dispatching to kinesis, trying again : count = {}", count, any);
             } finally {
                 count++;
             }
@@ -254,31 +254,32 @@ public class KinesisEventClient {
                                 "{kinesisEndpoint, kinesisInputStream, nodeSize, orderSize, timeUnit, time, " +
                                 "kinesisRecordsPerRequest, streamChunkSize, levelOfParallelism}");
             }
+
+        } catch (final Throwable any) {
+            LOGGER.error("unexpected error running kinesis client", any);
         } finally {
+            if (forkJoinPool != null) {
+                try {
+                    // shutdown and wait for jobs to be finished
+                    forkJoinPool.shutdown();
+                    forkJoinPool.awaitTermination(5, TimeUnit.MINUTES);
+                } catch (final Throwable throwable) {
+                    LOGGER.error("unexpected error shutting down forkJoinPook", throwable);
+                }
+            }
             // shutdown client
             if (amazonKinesisClient != null) {
                 try {
                     final ExecutorService executorService = amazonKinesisClient.getExecutorService();
                     executorService.shutdown();
-                    executorService.awaitTermination(2, TimeUnit.MINUTES);
+                    executorService.awaitTermination(5, TimeUnit.MINUTES);
                 } catch (final Throwable throwable) {
                     LOGGER.error("unexpected error shutting down amazon kinesis client", throwable);
                 }
             }
-
-            if (forkJoinPool != null) {
-                try {
-                    // shutdown and wait for jobs to be finished
-                    forkJoinPool.shutdown();
-                    forkJoinPool.awaitQuiescence(5, TimeUnit.MINUTES);
-                    forkJoinPool.awaitTermination(2, TimeUnit.MINUTES);
-                    System.out.println();
-                } catch (final Throwable throwable) {
-                    LOGGER.error("unexpected error shutting down forkJoinPook", throwable);
-                }
-            }
             // log stats
             LOGGER.info("Total Events ATTEMPTED: {}", TOTAL_EVENTS.get());
+            LOGGER.info("Total Events SUCCEEDED: {}",TOTAL_EVENTS.get() - (SYSTEM_ERROR.get() + KINESIS_ERROR.get()));
             LOGGER.info("Total Events FAILED: {}", SYSTEM_ERROR.get() + KINESIS_ERROR.get());
             LOGGER.info("Total System Events FAILED: {}", SYSTEM_ERROR.get());
             LOGGER.info("Total Kinesis Events FAILED: {}", KINESIS_ERROR.get());
