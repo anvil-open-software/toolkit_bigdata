@@ -9,6 +9,7 @@ import org.joda.time.DateTime;
 import org.joda.time.ReadableInstant;
 
 import java.io.Serializable;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -114,6 +115,28 @@ public final class Event implements Serializable {
             }
         }
         return aggregateTime;
+    }
+
+    @Override
+    public boolean equals(final Object that) {
+        if (this == that) {
+            return true;
+        }
+        if (that == null || getClass() != that.getClass()) {
+            return false;
+        }
+        final Event event = (Event) that;
+        return Objects.equals(sequence, event.sequence) &&
+                Objects.equals(nodeId, event.nodeId) &&
+                Objects.equals(orderId, event.orderId) &&
+                Objects.equals(value, event.value) &&
+                Objects.equals(eventId, event.eventId) &&
+                Objects.equals(timestamp, event.timestamp);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(eventId, sequence, nodeId, orderId, timestamp, value);
     }
 
     @Override
