@@ -62,7 +62,8 @@ public final class EventUtils {
         // startInclusive the (inclusive) initial value, endExclusive the exclusive upper bound
         return LongStream.range(1, numberOfEvents + 1)
                 .parallel()
-                .mapToObj(value -> new Event(UUID.randomUUID(), generateNode(nodeSize, randomGenerator),
+                .mapToObj(value -> new Event(UUID.randomUUID(), EventSequenceNumber.next(),
+                        generateNode(nodeSize, randomGenerator),
                         generateOrder(orderSize, randomGenerator), DateTime.now(),
                         generateValue(nodeSize, orderSize, randomGenerator)))
                         //supplier, accumulator, combiner
@@ -87,6 +88,7 @@ public final class EventUtils {
                 throws IOException {
             jsonGenerator.writeStartObject();
             jsonGenerator.writeStringField("eventId", event.getEventId().toString());
+            jsonGenerator.writeNumberField("sequence", event.getSequence());
             jsonGenerator.writeNumberField("nodeId", event.getNodeId());
             jsonGenerator.writeNumberField("orderId", event.getOrderId());
             jsonGenerator.writeStringField("timestamp", event.getTimestamp().toString());
@@ -105,6 +107,12 @@ public final class EventUtils {
                 throw new IllegalStateException("Event does not have an eventId");
             }
             final UUID uuid = UUID.fromString(eventIdNode.asText());
+
+            final JsonNode sequenceNode = jsonNode.get("sequence");
+            if (sequenceNode == null || sequenceNode.asLong() == 0) {
+                throw new IllegalStateException("Event does not have a sequence number assigned");
+            }
+            final long sequence = sequenceNode.asLong();
 
             final JsonNode nodeIdNode = jsonNode.get("nodeId");
             if (nodeIdNode == null || nodeIdNode.asInt() == 0) {
@@ -132,7 +140,7 @@ public final class EventUtils {
             }
             final double value = valueNode.asDouble();
 
-            return new Event(uuid, nodeId, orderId, timestamp, value);
+            return new Event(uuid, sequence, nodeId, orderId, timestamp, value);
         }
 
         // use a lib

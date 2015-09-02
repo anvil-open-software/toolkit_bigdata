@@ -9,6 +9,7 @@ import org.joda.time.DateTime;
 import org.joda.time.ReadableInstant;
 
 import java.io.Serializable;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -21,16 +22,20 @@ public final class Event implements Serializable {
     public static final String TABLE_NAME = "Events";
 
     private UUID eventId;
+    private long sequence;
     private int nodeId; // node 1 - 5
     private int orderId; // job/order 1 - 9
     private ReadableInstant timestamp; // time events are generated
     private double value; // random value
 
     public Event() {
+        sequence = EventSequenceNumber.next();
     }
 
-    public Event(final UUID eventId, final int nodeId, final int orderId, final ReadableInstant timestamp, final double value) {
+    public Event(final UUID eventId, final long sequence, final int nodeId, final int orderId,
+                 final ReadableInstant timestamp, final double value) {
         this.eventId = eventId;
+        this.sequence = sequence;
         this.nodeId = nodeId;
         this.orderId = orderId;
         this.timestamp = timestamp;
@@ -45,6 +50,15 @@ public final class Event implements Serializable {
 
     public void setEventId(final UUID eventId) {
         this.eventId = eventId;
+    }
+
+    @DynamoDBAttribute
+    public long getSequence() {
+        return sequence;
+    }
+
+    public void setSequence(final long sequence) {
+        this.sequence = sequence;
     }
 
     @DynamoDBAttribute
@@ -104,9 +118,32 @@ public final class Event implements Serializable {
     }
 
     @Override
+    public boolean equals(final Object that) {
+        if (this == that) {
+            return true;
+        }
+        if (that == null || getClass() != that.getClass()) {
+            return false;
+        }
+        final Event event = (Event) that;
+        return Objects.equals(sequence, event.sequence) &&
+                Objects.equals(nodeId, event.nodeId) &&
+                Objects.equals(orderId, event.orderId) &&
+                Objects.equals(value, event.value) &&
+                Objects.equals(eventId, event.eventId) &&
+                Objects.equals(timestamp, event.timestamp);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(eventId, sequence, nodeId, orderId, timestamp, value);
+    }
+
+    @Override
     public String toString() {
         return "Event{" +
                 "eventId=" + eventId +
+                ", sequence=" + sequence +
                 ", nodeId=" + nodeId +
                 ", orderId=" + orderId +
                 ", timestamp=" + timestamp +
