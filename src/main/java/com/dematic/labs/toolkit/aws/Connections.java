@@ -4,9 +4,16 @@ import com.amazonaws.AmazonServiceException;
 import com.amazonaws.ClientConfiguration;
 import com.amazonaws.auth.AWSCredentialsProvider;
 import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
+import com.amazonaws.retry.PredefinedRetryPolicies;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
-import com.amazonaws.services.dynamodbv2.model.*;
+import com.amazonaws.services.dynamodbv2.model.CreateTableRequest;
+import com.amazonaws.services.dynamodbv2.model.DeleteTableRequest;
+import com.amazonaws.services.dynamodbv2.model.DescribeTableRequest;
+import com.amazonaws.services.dynamodbv2.model.DescribeTableResult;
+import com.amazonaws.services.dynamodbv2.model.ProvisionedThroughput;
+import com.amazonaws.services.dynamodbv2.model.ResourceNotFoundException;
+import com.amazonaws.services.dynamodbv2.model.TableStatus;
 import com.amazonaws.services.kinesis.AmazonKinesisAsyncClient;
 import com.amazonaws.services.kinesis.AmazonKinesisClient;
 import com.amazonaws.services.kinesis.model.CreateStreamRequest;
@@ -48,7 +55,8 @@ public final class Connections {
      */
     public static AmazonKinesisAsyncClient getAmazonAsyncKinesisClient(final String awsEndpointUrl, final int parallelism) {
         final AmazonKinesisAsyncClient kinesisClient = new AmazonKinesisAsyncClient(getAWSCredentialsProvider(),
-                new ClientConfiguration().withMaxConnections(150), Executors.newWorkStealingPool(parallelism));
+                new ClientConfiguration().withMaxConnections(150).withRetryPolicy(PredefinedRetryPolicies.NO_RETRY_POLICY),
+                Executors.newWorkStealingPool(parallelism));
         kinesisClient.setEndpoint(awsEndpointUrl);
         return kinesisClient;
     }
