@@ -49,6 +49,7 @@ public class KinesisEventClient {
             "InternalFailure", "ServiceUnavailable");
 
     private static final AtomicLong TOTAL_EVENTS = new AtomicLong(0);
+    private static final AtomicLong SUCCESS = new AtomicLong(0);
     private static final AtomicLong SYSTEM_ERROR = new AtomicLong(0);
     private static final AtomicLong KINESIS_ERROR = new AtomicLong(0);
 
@@ -144,6 +145,10 @@ public class KinesisEventClient {
             // deal with kinesis exception, provision...
             if (putRecordsResult == null) {
                 continue;
+            }
+
+            if(putRecordsResult.getFailedRecordCount() == 0) {
+                SUCCESS.getAndAdd(putRecordsRequestEntries.size());
             }
 
             if (putRecordsResult.getFailedRecordCount() > 0) {
@@ -279,7 +284,9 @@ public class KinesisEventClient {
             }
             // log stats
             LOGGER.info("Total Events ATTEMPTED: {}", TOTAL_EVENTS.get());
-            LOGGER.info("Total Events SUCCEEDED: {}",TOTAL_EVENTS.get() - (SYSTEM_ERROR.get() + KINESIS_ERROR.get()));
+            LOGGER.info("Total Events ATTEMPTED - FAILED: {}",
+                    TOTAL_EVENTS.get() - (SYSTEM_ERROR.get() + KINESIS_ERROR.get()));
+            LOGGER.info("Total Events SUCCEEDED: {}", SUCCESS.get());
             LOGGER.info("Total Events FAILED: {}", SYSTEM_ERROR.get() + KINESIS_ERROR.get());
             LOGGER.info("Total System Events FAILED: {}", SYSTEM_ERROR.get());
             LOGGER.info("Total Kinesis Events FAILED: {}", KINESIS_ERROR.get());
