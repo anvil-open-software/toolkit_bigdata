@@ -1,5 +1,6 @@
 package com.dematic.labs.toolkit.aws;
 
+import com.amazonaws.handlers.AsyncHandler;
 import com.amazonaws.services.kinesis.AmazonKinesisAsyncClient;
 import com.amazonaws.services.kinesis.AmazonKinesisClient;
 import com.amazonaws.services.kinesis.model.PutRecordRequest;
@@ -38,8 +39,8 @@ import static com.dematic.labs.toolkit.communication.EventUtils.generateEvents;
 
 /**
  * Client will push generated events to a kinesis stream.
- * <p/>
- * <p/>
+ * <p>
+ * <p>
  * NOTE: does not handle any failures, retries, .... that is, will just log and continue
  */
 public class KinesisEventClient {
@@ -113,7 +114,7 @@ public class KinesisEventClient {
         while (true) {
             pushEventsToKinesisAsync(amazonKinesisClient, kinesisInputStream, 1000, nodeSize, orderSize,
                     kinesisRecordsPerRequest, streamChunkingSize, forkJoinPool);
-            if(countdownTimer.isFinished()) {
+            if (countdownTimer.isFinished()) {
                 break;
             }
         }
@@ -133,7 +134,30 @@ public class KinesisEventClient {
         do {
             try {
                 final Future<PutRecordsResult> futurePutRecordsResult =
-                        amazonKinesisClient.putRecordsAsync(putRecordsRequest);
+                        amazonKinesisClient.putRecordsAsync(putRecordsRequest, new AsyncHandler<PutRecordsRequest,
+                                PutRecordsResult>() {
+                    @Override
+                    public void onError(final Exception exception) {
+                        final long error = SYSTEM_ERROR.addAndGet(putRecordsRequest.getRecords().size());
+                        LOGGER.error("unable to dispatch: {} events (system error)", error, exception);
+                    }
+
+                    @Override
+                    public void onSuccess(final PutRecordsRequest request, final PutRecordsResult putRecordsResult) {
+                        if (putRecordsResult.getFailedRecordCount() == 0) {
+                            SUCCESS.getAndAdd(request.getRecords().size());
+                        }
+
+                        if (putRecordsResult.getFailedRecordCount() > 0) {
+                            final Integer failedRecordCount = putRecordsResult.getFailedRecordCount();
+                            // add the records that succeeded
+                            SUCCESS.getAndAdd(request.getRecords().size() - failedRecordCount);
+                            // add failures
+                            KINESIS_ERROR.getAndAdd(failedRecordCount);
+                            LOGGER.error("unable to dispatch: {} events (kinesis error)", failedRecordCount);
+                        }
+                    }
+                });
                 putRecordsResult = futurePutRecordsResult.get();
                 // deal with any type of system, connection exception, etc...
             } catch (final Throwable any) {
@@ -145,10 +169,6 @@ public class KinesisEventClient {
             // deal with kinesis exception, provision...
             if (putRecordsResult == null) {
                 continue;
-            }
-
-            if(putRecordsResult.getFailedRecordCount() == 0) {
-                SUCCESS.getAndAdd(putRecordsRequestEntries.size());
             }
 
             if (putRecordsResult.getFailedRecordCount() > 0) {
@@ -178,19 +198,6 @@ public class KinesisEventClient {
             }
         } while ((putRecordsResult == null && count > 0 && count < numberOfTries) ||
                 (putRecordsResult != null && putRecordsResult.getFailedRecordCount() > 0 && count < numberOfTries));
-
-        // failed to dispatch because of issues associated with not being able to connect to kineses
-        if (putRecordsResult == null) {
-            final int systemError = putRecordsRequest.getRecords().size();
-            SYSTEM_ERROR.getAndAdd(systemError);
-            LOGGER.error("unable to dispatch: {} events (system error)", systemError);
-        }
-
-        if (putRecordsResult != null && putRecordsResult.getFailedRecordCount() > 0) {
-            final int failedRecordCount = putRecordsResult.getFailedRecordCount();
-            KINESIS_ERROR.getAndAdd(failedRecordCount);
-            LOGGER.error("unable to dispatch: {} events (kinesis and unknown error)", failedRecordCount);
-        }
     }
 
     private static List<PutRecordsRequestEntry> generatePutRecordsRequestEntries(final int numberOfEvents,
@@ -284,8 +291,6 @@ public class KinesisEventClient {
             }
             // log stats
             LOGGER.info("Total Events ATTEMPTED: {}", TOTAL_EVENTS.get());
-            LOGGER.info("Total Events ATTEMPTED - FAILED: {}",
-                    TOTAL_EVENTS.get() - (SYSTEM_ERROR.get() + KINESIS_ERROR.get()));
             LOGGER.info("Total Events SUCCEEDED: {}", SUCCESS.get());
             LOGGER.info("Total Events FAILED: {}", SYSTEM_ERROR.get() + KINESIS_ERROR.get());
             LOGGER.info("Total System Events FAILED: {}", SYSTEM_ERROR.get());
