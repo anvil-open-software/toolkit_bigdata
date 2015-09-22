@@ -6,6 +6,9 @@ import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.net.Inet4Address;
+import java.net.UnknownHostException;
+
 
 /**
  * Summary Row in Dynamodb is created after Kinesis Event Generator run is completed
@@ -20,7 +23,16 @@ public class KinesisEventSummary {
     public KinesisEventSummary(EventRunParms runParms) {
         this.runParms = runParms;
 
+        try {
+            user = System.getenv("USER");
+            this.clientAddress = Inet4Address.getLocalHost().getHostAddress();
+        } catch (Throwable e) {
+            // go on since this field is only for diagnostics
+            LOGGER.error("Failed to get machine address: " + e);
+        }
     }
+
+
 
     @DynamoDBHashKey()
     public String getKinesisStream() {
@@ -52,9 +64,22 @@ public class KinesisEventSummary {
         } else return null;
     }
 
+    @DynamoDBAttribute
+    public String getClientAddress() {
+        return clientAddress;
+    }
 
     @DynamoDBAttribute
-    public Long getDurationInMinutes() {
+    public String getUser() {
+        return user;
+    }
+
+    /**
+     *
+     * todo either add duration time unit or normalize
+     */
+    @DynamoDBAttribute
+    public Long getDuration() {
         return runParms.getDuration();
     }
 
@@ -125,7 +150,7 @@ public class KinesisEventSummary {
         if (!getRunStartTime().equals(that.getRunStartTime())) return false;
         if (getRunEndTime() != null ? !getRunEndTime().equals(that.getRunEndTime()) : that.getRunEndTime() != null) return false;
         if (!version.equals(that.version)) return false;
-        return getDurationInMinutes().equals(that.getDurationInMinutes());
+        return getDuration().equals(that.getDuration());
 
     }
 
@@ -135,7 +160,7 @@ public class KinesisEventSummary {
         result = 31 * result + getRunStartTime().hashCode();
         result = 31 * result + (getRunEndTime() != null ? getRunEndTime().hashCode() : 0);
         result = 31 * result + version.hashCode();
-        result = 31 * result + getDurationInMinutes().hashCode();
+        result = 31 * result + getDuration().hashCode();
         return result;
     }
 
@@ -182,8 +207,9 @@ public class KinesisEventSummary {
     private Long totalEventsFailedSystemErrors;
     private Long totalEventsFailedKinesisErrors;
 
+    private String clientAddress;
     private EventRunParms runParms;
-
+    private String user;
     private static final Logger LOGGER = LoggerFactory.getLogger(KinesisEventSummaryPersister.class);
 
 }
