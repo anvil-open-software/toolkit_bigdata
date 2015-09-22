@@ -10,8 +10,11 @@ import com.amazonaws.services.kinesis.model.PutRecordsRequestEntry;
 import com.amazonaws.services.kinesis.model.PutRecordsResult;
 import com.amazonaws.services.kinesis.model.PutRecordsResultEntry;
 import com.dematic.labs.toolkit.CountdownTimer;
+import com.dematic.labs.toolkit.aws.summary.KinesisEventSummary;
+import com.dematic.labs.toolkit.aws.summary.KinesisEventSummaryPersister;
 import com.dematic.labs.toolkit.communication.Event;
 import com.google.common.collect.ImmutableSet;
+import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -228,11 +231,13 @@ public class KinesisEventClient {
         AmazonKinesisAsyncClient amazonKinesisClient = null;
         ForkJoinPool forkJoinPool = null;
 
+        EventRunParms runParms = new EventRunParms(args);
+
         //noinspection finally
         try {
             if (args != null && args.length == 8) {
                 final String kinesisEndpoint = args[0];
-                final String kinesisInputStream = args[1];
+                runParms.setKinesisInputStream(args[1]);
                 final long numberOfEvents = Long.valueOf(args[2]);
                 final int nodeSize = Integer.valueOf(args[3]);
                 final int orderSize = Integer.valueOf(args[4]);
@@ -242,22 +247,24 @@ public class KinesisEventClient {
                 amazonKinesisClient = getAmazonAsyncKinesisClient(kinesisEndpoint, parallelism);
                 forkJoinPool = new ForkJoinPool(parallelism, ForkJoinPool.defaultForkJoinWorkerThreadFactory, null, true);
                 //generate events and push to Kinesis
-                pushEventsToKinesisAsync(amazonKinesisClient, kinesisInputStream, numberOfEvents, nodeSize, orderSize,
+                pushEventsToKinesisAsync(amazonKinesisClient, runParms.getKinesisInputStream(),
+                        numberOfEvents, nodeSize, orderSize,
                         kinesisRecordsPerRequest, streamChunkSize, forkJoinPool);
             } else if (args != null && args.length == 9) {
                 final String kinesisEndpoint = args[0];
-                final String kinesisInputStream = args[1];
+                runParms.setKinesisInputStream(args[1]);
                 final int nodeSize = Integer.valueOf(args[2]);
                 final int orderSize = Integer.valueOf(args[3]);
                 final TimeUnit unit = TimeUnit.valueOf(args[4]);
                 final long time = Long.valueOf(args[5]);
+                runParms.setDuration(time);
                 final int kinesisRecordsPerRequest = Integer.valueOf(args[6]);
                 final int streamChunkSize = Integer.valueOf(args[7]);
                 final int parallelism = Integer.valueOf(args[8]);
                 amazonKinesisClient = getAmazonAsyncKinesisClient(kinesisEndpoint, parallelism);
                 forkJoinPool = new ForkJoinPool(parallelism, ForkJoinPool.defaultForkJoinWorkerThreadFactory, null, true);
                 //generate events and push to Kinesis
-                pushEventsToKinesisAsync(amazonKinesisClient, kinesisInputStream, nodeSize, orderSize, unit, time,
+                pushEventsToKinesisAsync(amazonKinesisClient, runParms.getKinesisInputStream(), nodeSize, orderSize, unit, time,
                         kinesisRecordsPerRequest, streamChunkSize, forkJoinPool);
             } else {
                 throw new IllegalArgumentException(
@@ -287,16 +294,31 @@ public class KinesisEventClient {
                     executorService.awaitTermination(5, TimeUnit.MINUTES);
                 } catch (final Throwable throwable) {
                     LOGGER.error("unexpected error shutting down amazon kinesis client", throwable);
+                } finally {
+                    summarizeEventResults(runParms);
                 }
             }
-            // log stats
-            LOGGER.info("Total Events ATTEMPTED: {}", TOTAL_EVENTS.get());
-            LOGGER.info("Total Events SUCCEEDED: {}", SUCCESS.get());
-            LOGGER.info("Total Events FAILED: {}", SYSTEM_ERROR.get() + KINESIS_ERROR.get());
-            LOGGER.info("Total System Events FAILED: {}", SYSTEM_ERROR.get());
-            LOGGER.info("Total Kinesis Events FAILED: {}", KINESIS_ERROR.get());
 
             System.exit(0);
         }
     }
+
+    /**
+     *
+     * push summary results to dynamodb
+     */
+    public static void summarizeEventResults(EventRunParms eventRunParms) {
+        eventRunParms.setRunEndTime(DateTime.now());
+        KinesisEventSummary summary = new KinesisEventSummary(eventRunParms);
+        summary.setTotalEventsAttempted(TOTAL_EVENTS.get());
+        summary.setTotalEventsSucceeded(SUCCESS.get());
+        summary.setTotalEventsAttemptedFailed(SYSTEM_ERROR.get() + KINESIS_ERROR.get());
+        summary.setTotalEventsFailedKinesisErrors(KINESIS_ERROR.get());
+        summary.setTotalEventsFailedSystemErrors(SYSTEM_ERROR.get());
+
+        summary.logSummaryStats(); // output to console
+        KinesisEventSummaryPersister reporter= new KinesisEventSummaryPersister(eventRunParms.getDynamoDBEndPoint(),null);
+        reporter.persistSummary(summary);
+    }
+
 }
