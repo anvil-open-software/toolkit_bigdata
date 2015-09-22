@@ -64,6 +64,10 @@ public class EventRunParms {
         this.duration = duration;
     }
 
+    public String[] getRawArgs() {
+        return rawArgs;
+    }
+
     @Override
     public String toString() {
         return "EventRunParms{" +

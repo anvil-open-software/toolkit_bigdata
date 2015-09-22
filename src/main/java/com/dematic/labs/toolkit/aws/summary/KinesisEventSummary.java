@@ -7,7 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.Inet4Address;
-import java.net.UnknownHostException;
+import java.util.Arrays;
 
 
 /**
@@ -79,7 +79,7 @@ public class KinesisEventSummary {
      * todo either add duration time unit or normalize
      */
     @DynamoDBAttribute
-    public Long getDuration() {
+    public Long getSpecifiedDuration() {
         return runParms.getDuration();
     }
 
@@ -138,6 +138,14 @@ public class KinesisEventSummary {
         this.totalEventsFailedKinesisErrors = totalEventsFailedKinesisErrors;
     }
 
+    /**
+     * preserve the run arguments in case we are looking at performance
+     * @return
+     */
+    @DynamoDBAttribute
+    public String getRawJavaArgs() {
+        return Arrays.toString(fetchRunParms().getRawArgs());
+    }
 
     @Override
     public boolean equals(Object o) {
@@ -150,7 +158,7 @@ public class KinesisEventSummary {
         if (!getRunStartTime().equals(that.getRunStartTime())) return false;
         if (getRunEndTime() != null ? !getRunEndTime().equals(that.getRunEndTime()) : that.getRunEndTime() != null) return false;
         if (!version.equals(that.version)) return false;
-        return getDuration().equals(that.getDuration());
+        return getSpecifiedDuration().equals(that.getSpecifiedDuration());
 
     }
 
@@ -160,7 +168,7 @@ public class KinesisEventSummary {
         result = 31 * result + getRunStartTime().hashCode();
         result = 31 * result + (getRunEndTime() != null ? getRunEndTime().hashCode() : 0);
         result = 31 * result + version.hashCode();
-        result = 31 * result + getDuration().hashCode();
+        result = 31 * result + getSpecifiedDuration().hashCode();
         return result;
     }
 
@@ -210,6 +218,7 @@ public class KinesisEventSummary {
     private String clientAddress;
     private EventRunParms runParms;
     private String user;
+    private String rawJavaAppParms;
     private static final Logger LOGGER = LoggerFactory.getLogger(KinesisEventSummaryPersister.class);
 
 }
