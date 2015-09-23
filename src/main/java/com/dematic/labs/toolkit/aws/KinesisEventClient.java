@@ -309,7 +309,7 @@ public class KinesisEventClient {
      */
     public static void summarizeEventResults(EventRunParms eventRunParms) {
         eventRunParms.setRunEndTime(DateTime.now());
-        KinesisEventSummary summary = new KinesisEventSummary(eventRunParms);
+        final KinesisEventSummary summary = new KinesisEventSummary(eventRunParms);
         summary.setTotalEventsAttempted(TOTAL_EVENTS.get());
         summary.setTotalEventsSucceeded(SUCCESS.get());
         summary.setTotalEventsAttemptedFailed(SYSTEM_ERROR.get() + KINESIS_ERROR.get());
@@ -317,8 +317,8 @@ public class KinesisEventClient {
         summary.setTotalEventsFailedSystemErrors(SYSTEM_ERROR.get());
 
         summary.logSummaryStats(); // output to console
-        KinesisEventSummaryPersister reporter= new KinesisEventSummaryPersister(eventRunParms.getDynamoDBEndPoint(),null);
+        final KinesisEventSummaryPersister reporter =
+                new KinesisEventSummaryPersister(eventRunParms.getDynamoDBEndPoint(), null);
         reporter.persistSummary(summary);
     }
-
 }
