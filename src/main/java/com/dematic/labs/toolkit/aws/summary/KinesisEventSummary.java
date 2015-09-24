@@ -94,12 +94,12 @@ public class KinesisEventSummary {
     }
 
     @DynamoDBAttribute
-    public Long getTotalEventsAttemptedFailed() {
-        return totalEventsAttemptedFailed;
+    public Long getTotalEventsFailed() {
+        return totalEventsFailed;
     }
 
-    public void setTotalEventsAttemptedFailed(Long totalEventsAttemptedFailed) {
-        this.totalEventsAttemptedFailed = totalEventsAttemptedFailed;
+    public void setTotalEventsFailed(Long totalEventsFailed) {
+        this.totalEventsFailed = totalEventsFailed;
     }
 
     @DynamoDBAttribute
@@ -109,15 +109,6 @@ public class KinesisEventSummary {
 
     public void setTotalEventsSucceeded(Long totalEventsSucceeded) {
         this.totalEventsSucceeded = totalEventsSucceeded;
-    }
-
-    @DynamoDBAttribute
-    public Long getTotalEventsFailed() {
-        return totalEventsFailed;
-    }
-
-    public void setTotalEventsFailed(Long totalEventsFailed) {
-        this.totalEventsFailed = totalEventsFailed;
     }
 
     @DynamoDBAttribute
@@ -178,7 +169,7 @@ public class KinesisEventSummary {
         return "KinesisEventSummary{" +
                 " runParms=" + runParms +
                 ", totalEventsAttempted=" + totalEventsAttempted +
-                ", totalEventsAttemptedFailed=" + totalEventsAttemptedFailed +
+                ", totalEventsFailed=" + totalEventsFailed +
                 ", totalEventsSucceeded=" + totalEventsSucceeded +
                 ", totalEventsFailed=" + totalEventsFailed +
                 ", totalEventsFailedSystemErrors=" + totalEventsFailedSystemErrors +
@@ -191,7 +182,7 @@ public class KinesisEventSummary {
         // old style logging
         LOGGER.info("Total Events ATTEMPTED: {}", getTotalEventsAttempted());
         LOGGER.info("Total Events SUCCEEDED: {}",  getTotalEventsSucceeded());
-        LOGGER.info("Total Events FAILED: {}",getTotalEventsFailed());
+        LOGGER.info("Total Events FAILED: {}", getTotalEventsFailed());
         LOGGER.info("Total System Events FAILED: {}", getTotalEventsFailedSystemErrors());
         LOGGER.info("Total Kinesis Events FAILED: {}", getTotalEventsFailedKinesisErrors());
     }
@@ -209,9 +200,8 @@ public class KinesisEventSummary {
 
     private Long version;
     private Long totalEventsAttempted;
-    private Long totalEventsAttemptedFailed;
-    private Long totalEventsSucceeded;
     private Long totalEventsFailed;
+    private Long totalEventsSucceeded;
     private Long totalEventsFailedSystemErrors;
     private Long totalEventsFailedKinesisErrors;
 
