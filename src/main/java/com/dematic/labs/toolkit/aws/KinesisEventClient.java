@@ -312,7 +312,7 @@ public class KinesisEventClient {
         KinesisEventSummary summary = new KinesisEventSummary(eventRunParms);
         summary.setTotalEventsAttempted(TOTAL_EVENTS.get());
         summary.setTotalEventsSucceeded(SUCCESS.get());
-        summary.setTotalEventsAttemptedFailed(SYSTEM_ERROR.get() + KINESIS_ERROR.get());
+        summary.setTotalEventsFailed(SYSTEM_ERROR.get() + KINESIS_ERROR.get());
         summary.setTotalEventsFailedKinesisErrors(KINESIS_ERROR.get());
         summary.setTotalEventsFailedSystemErrors(SYSTEM_ERROR.get());
 
