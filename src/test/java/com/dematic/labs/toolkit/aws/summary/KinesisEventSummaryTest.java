@@ -43,7 +43,7 @@ public class KinesisEventSummaryTest {
             assertNotNull(persistedSummary);
             assertEquals(summary.getRunEndTime(), persistedSummary.getString("runEndTime"));
             assertEquals(attemptsFailed,Long.valueOf(persistedSummary.getLong("totalEventsFailed")));
-            assertEquals(attemtpsSucceeded,Long.valueOf(persistedSummary.getLong("setTotalEventsSucceeded")));
+            assertEquals(attemtpsSucceeded,Long.valueOf(persistedSummary.getLong("totalEventsSucceeded")));
 
 
         } finally {
