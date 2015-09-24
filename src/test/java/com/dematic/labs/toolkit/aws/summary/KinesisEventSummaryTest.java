@@ -30,11 +30,14 @@ public class KinesisEventSummaryTest {
             EventRunParms runParms = new EventRunParms(inRawArgs);
             runParms.setKinesisInputStream("test_stream");
             runParms.setRunEndTime(DateTime.now());
+            DateTime endTime = DateTime.now();
             KinesisEventSummary summary = new KinesisEventSummary(runParms);
             summary.setTotalEventsFailed(attemptsFailed);
             summary.setTotalEventsSucceeded(attemtpsSucceeded);
             summary.setTotalEventsFailedKinesisErrors(333l);
+            runParms.setRunEndTime(endTime);
             persister.persistSummary(summary);
+
 
             // check to see that it's there
 
@@ -44,7 +47,7 @@ public class KinesisEventSummaryTest {
             assertEquals(summary.getRunEndTime(), persistedSummary.getString("runEndTime"));
             assertEquals(attemptsFailed,Long.valueOf(persistedSummary.getLong("totalEventsFailed")));
             assertEquals(attemtpsSucceeded,Long.valueOf(persistedSummary.getLong("totalEventsSucceeded")));
-
+            assertEquals(Long.valueOf(endTime.getMillis()),Long.valueOf(persistedSummary.getLong("runEndTimeInMillis")));
 
         } finally {
             deleteDynamoTable(getAmazonDynamoDBClient(getDynamoDBEndPoint()), persister.getTableName());

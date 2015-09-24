@@ -54,6 +54,18 @@ public class KinesisEventSummary {
         this.version = version;
     }
 
+    @DynamoDBAttribute
+    public Long getRunStartTimeInMillis() {
+        return runParms.getRunStartTime().getMillis();
+    }
+
+    @DynamoDBAttribute
+    public Long getRunEndTimeInMillis() {
+        DateTime endTime = runParms.getRunEndTime();
+        if (endTime != null) {
+            return endTime.getMillis();
+        } else return null;
+    }
 
 
     @DynamoDBAttribute
