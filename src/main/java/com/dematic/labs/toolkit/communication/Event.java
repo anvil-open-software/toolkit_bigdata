@@ -1,10 +1,6 @@
 package com.dematic.labs.toolkit.communication;
 
-import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBAttribute;
-import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBHashKey;
-import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMarshalling;
-import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBRangeKey;
-import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBTable;
+import com.amazonaws.services.dynamodbv2.datamodeling.*;
 import org.joda.time.DateTime;
 import org.joda.time.ReadableInstant;
 
@@ -27,6 +23,7 @@ public final class Event implements Serializable {
     private int orderId; // job/order 1 - 9
     private ReadableInstant timestamp; // time events are generated
     private double value; // random value
+    private Long version;
 
     public Event() {
         sequence = EventSequenceNumber.next();
@@ -98,6 +95,11 @@ public final class Event implements Serializable {
         this.value = value;
     }
 
+    @DynamoDBVersionAttribute
+    public Long getVersion() { return version; }
+
+    public void setVersion(final Long version) { this.version = version;}
+
     public String aggregateBy(final TimeUnit unit) {
         final String aggregateTime;
         switch (unit) {
@@ -127,6 +129,7 @@ public final class Event implements Serializable {
         }
         final Event event = (Event) that;
         return Objects.equals(sequence, event.sequence) &&
+                Objects.equals(version, event.version) &&
                 Objects.equals(nodeId, event.nodeId) &&
                 Objects.equals(orderId, event.orderId) &&
                 Objects.equals(value, event.value) &&
@@ -136,7 +139,7 @@ public final class Event implements Serializable {
 
     @Override
     public int hashCode() {
-        return Objects.hash(eventId, sequence, nodeId, orderId, timestamp, value);
+        return Objects.hash(eventId, sequence, nodeId, orderId, timestamp, value, version);
     }
 
     @Override
@@ -148,6 +151,7 @@ public final class Event implements Serializable {
                 ", orderId=" + orderId +
                 ", timestamp=" + timestamp +
                 ", value=" + value +
+                ", version=" + version +
                 '}';
     }
 }
