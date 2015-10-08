@@ -82,6 +82,18 @@ public final class EventUtils {
         return Math.abs((int) Math.round(randomGenerator.nextGaussian() * orderSize + nodeSize));
     }
 
+    public static DateTime now() {
+        return DateTime.now().toDateTimeISO();
+    }
+
+    public static String nowString() {
+        return now().toString();
+    }
+
+    public static DateTime dateTime(final long inMillis) {
+        return new DateTime(inMillis).toDateTimeISO();
+    }
+
     private final static class EventSerializer extends JsonSerializer<Event> {
         @Override
         public void serialize(final Event event, final JsonGenerator jsonGenerator, final SerializerProvider provider)
