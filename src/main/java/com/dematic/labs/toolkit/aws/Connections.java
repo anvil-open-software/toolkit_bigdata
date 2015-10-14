@@ -20,6 +20,9 @@ import com.amazonaws.services.kinesis.model.CreateStreamRequest;
 import com.amazonaws.services.kinesis.model.DescribeStreamRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import redis.clients.jedis.Jedis;
+import redis.clients.jedis.JedisPool;
+import redis.clients.jedis.JedisPoolConfig;
 
 import java.util.concurrent.Executors;
 
@@ -231,5 +234,12 @@ public final class Connections {
         final DescribeTableResult describeTableResult = dynamoDBClient.describeTable(describeTableRequest);
         final String status = describeTableResult.getTable().getTableStatus();
         return TableStatus.fromValue(status);
+    }
+
+    public static Jedis getCacheClient(final String url, final int port) {
+        final JedisPool pool = new JedisPool(url, port);
+        try (final Jedis jedis = pool.getResource()) {
+            return jedis;
+        }
     }
 }
