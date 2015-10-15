@@ -20,7 +20,6 @@ import com.amazonaws.services.kinesis.model.CreateStreamRequest;
 import com.amazonaws.services.kinesis.model.DescribeStreamRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 
 import java.util.concurrent.Executors;
@@ -235,10 +234,7 @@ public final class Connections {
         return TableStatus.fromValue(status);
     }
 
-    public static Jedis getCacheClient(final String url, final int port) {
-        final JedisPool pool = new JedisPool(url, port);
-        try (final Jedis jedis = pool.getResource()) {
-            return jedis;
-        }
+    public static JedisPool getCacheClientPool(final String url, final Integer port) {
+        return port == null ? new JedisPool(url) : new JedisPool(url, port);
     }
 }
