@@ -39,6 +39,11 @@
             <groupId>com.amazonaws</groupId>
             <artifactId>aws-java-sdk</artifactId>
         </dependency>
+        <!-- jedis redis client -->
+        <dependency>
+            <groupId>redis.clients</groupId>
+            <artifactId>jedis</artifactId>
+        </dependency>
         <!-- json/xml -->
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
