@@ -18,6 +18,7 @@ import com.amazonaws.services.kinesis.AmazonKinesisAsyncClient;
 import com.amazonaws.services.kinesis.AmazonKinesisClient;
 import com.amazonaws.services.kinesis.model.CreateStreamRequest;
 import com.amazonaws.services.kinesis.model.DescribeStreamRequest;
+import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import redis.clients.jedis.JedisPool;
@@ -235,6 +236,9 @@ public final class Connections {
     }
 
     public static JedisPool getCacheClientPool(final String url, final Integer port) {
-        return port == null ? new JedisPool(url) : new JedisPool(url, port);
+        final GenericObjectPoolConfig genericObjectPoolConfig = new GenericObjectPoolConfig();
+        genericObjectPoolConfig.setMaxTotal(50);
+        return port == null ? new JedisPool(genericObjectPoolConfig, url) :
+                new JedisPool(genericObjectPoolConfig, url, port);
     }
 }
