@@ -18,6 +18,7 @@ import java.util.Properties;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 import static com.dematic.labs.toolkit.aws.Connections.*;
 
@@ -92,11 +93,12 @@ public final class EventStreamCollector extends KinesisConnectorExecutorBase<Eve
             final CountdownTimer countdownTimer = new CountdownTimer();
             countdownTimer.countDown(numberOfMinutes);
             while (true) {
+                LOGGER.info("Moving Event Count = {}", collector.getEventCountAsOfNow());
+                LOGGER.info("Moving Event Duplicate Count = {}", collector.getEventDuplicateCountAsOfNow());
                 if (countdownTimer.isFinished()) {
-                    LOGGER.info("Moving Event Count = {}", collector.getEventCountAsOfNow());
-                    LOGGER.info("Moving Event Duplicate Count = {}", collector.getEventDuplicateCountAsOfNow());
                     break;
                 }
+                TimeUnit.SECONDS.sleep(10);
             }
         } catch (final Throwable any) {
             LOGGER.error("Unexpected Error: Collecting Statistics", any);
