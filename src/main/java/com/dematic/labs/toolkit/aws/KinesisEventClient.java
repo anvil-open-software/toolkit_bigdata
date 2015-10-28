@@ -21,6 +21,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.Random;
@@ -83,7 +84,6 @@ public class KinesisEventClient {
 
     private static void pushEventsToKinesisAsync(final AmazonKinesisAsyncClient amazonKinesisClient,
                                                  final String kinesisInputStream, final long numberOfEvents,
-                                                 final int nodeSize, final int orderSize,
                                                  final int kinesisRecordsPerRequest, final int streamChunkingSize,
                                                  final ForkJoinPool forkJoinPool) {
         try {
@@ -93,7 +93,7 @@ public class KinesisEventClient {
                         forEach(event -> {
                             // 1) generate batched events and dispatch request
                             final List<PutRecordsRequestEntry> putRecordsRequestEntries =
-                                    generatePutRecordsRequestEntries(kinesisRecordsPerRequest, nodeSize, orderSize);
+                                    generatePutRecordsRequestEntries(kinesisRecordsPerRequest, 1, 1);
                             // todo: come back to retries and deal w duplicates
                             dispatch(amazonKinesisClient, kinesisInputStream, putRecordsRequestEntries, 0);
                         });
@@ -104,8 +104,7 @@ public class KinesisEventClient {
     }
 
     private static void pushEventsToKinesisAsync(final AmazonKinesisAsyncClient amazonKinesisClient,
-                                                 final String kinesisInputStream, final int nodeSize,
-                                                 final int orderSize, final TimeUnit unit, final long time,
+                                                 final String kinesisInputStream, final TimeUnit unit, final long time,
                                                  final int kinesisRecordsPerRequest, final int streamChunkingSize,
                                                  final ForkJoinPool forkJoinPool) {
         // i know we could lose persision, but in this case, its ok
@@ -115,8 +114,8 @@ public class KinesisEventClient {
         countdownTimer.countDown(numberOfMinutes);
 
         while (true) {
-            pushEventsToKinesisAsync(amazonKinesisClient, kinesisInputStream, 1000, nodeSize, orderSize,
-                    kinesisRecordsPerRequest, streamChunkingSize, forkJoinPool);
+            pushEventsToKinesisAsync(amazonKinesisClient, kinesisInputStream, 1000, kinesisRecordsPerRequest,
+                    streamChunkingSize, forkJoinPool);
             if (countdownTimer.isFinished()) {
                 break;
             }
@@ -228,55 +227,60 @@ public class KinesisEventClient {
     }
 
     public static void main(final String[] args) {
+        EventRunParms runParms = null;
         AmazonKinesisAsyncClient amazonKinesisClient = null;
         ForkJoinPool forkJoinPool = null;
 
-        EventRunParms runParms = new EventRunParms(args);
-
         //noinspection finally
         try {
-            if (args != null && args.length == 8) {
-                final String kinesisEndpoint = args[0];
-                runParms.setKinesisInputStream(args[1]);
-                final long numberOfEvents = Long.valueOf(args[2]);
-                final int nodeSize = Integer.valueOf(args[3]);
-                final int orderSize = Integer.valueOf(args[4]);
-                final int kinesisRecordsPerRequest = Integer.valueOf(args[5]);
-                final int streamChunkSize = Integer.valueOf(args[6]);
-                final int parallelism = Integer.valueOf(args[7]);
-                amazonKinesisClient = getAmazonAsyncKinesisClient(kinesisEndpoint, parallelism);
-                forkJoinPool = new ForkJoinPool(parallelism, ForkJoinPool.defaultForkJoinWorkerThreadFactory, null, true);
-                //generate events and push to Kinesis
-                pushEventsToKinesisAsync(amazonKinesisClient, runParms.getKinesisInputStream(),
-                        numberOfEvents, nodeSize, orderSize,
-                        kinesisRecordsPerRequest, streamChunkSize, forkJoinPool);
-            } else if (args != null && args.length == 9) {
-                final String kinesisEndpoint = args[0];
-                runParms.setKinesisInputStream(args[1]);
-                final int nodeSize = Integer.valueOf(args[2]);
-                final int orderSize = Integer.valueOf(args[3]);
-                final TimeUnit unit = TimeUnit.valueOf(args[4]);
-                final long time = Long.valueOf(args[5]);
-                runParms.setDuration(time);
-                final int kinesisRecordsPerRequest = Integer.valueOf(args[6]);
-                final int streamChunkSize = Integer.valueOf(args[7]);
-                final int parallelism = Integer.valueOf(args[8]);
-                amazonKinesisClient = getAmazonAsyncKinesisClient(kinesisEndpoint, parallelism);
-                forkJoinPool = new ForkJoinPool(parallelism, ForkJoinPool.defaultForkJoinWorkerThreadFactory, null, true);
-                //generate events and push to Kinesis
-                pushEventsToKinesisAsync(amazonKinesisClient, runParms.getKinesisInputStream(), nodeSize, orderSize, unit, time,
-                        kinesisRecordsPerRequest, streamChunkSize, forkJoinPool);
-            } else {
+            if (args == null) {
                 throw new IllegalArgumentException(
-                        "ensure all the following are set {kinesisEndpoint, kinesisInputStream, numberOfEvents, nodeSize, " +
-                                "orderSize, kinesisRecordsPerRequest, streamChunkSize, levelOfParallelism} or " +
-                                "{kinesisEndpoint, kinesisInputStream, nodeSize, orderSize, timeUnit, time, " +
-                                "kinesisRecordsPerRequest, streamChunkSize, levelOfParallelism}");
+                        "ensure all the following are set {kinesisEndpoint, kinesisInputStream, numberOfEvents, " +
+                                "kinesisRecordsPerRequest, streamChunkSize, levelOfParallelism} or " +
+                                "{kinesisEndpoint, kinesisInputStream, timeUnit, time, kinesisRecordsPerRequest, " +
+                                "streamChunkSize, levelOfParallelism}");
             }
 
+            // create the runtime params for summary
+            runParms = createEventRunParms(args);
+
+            final String kinesisEndpoint = args[0];
+            final String kinesisStream = args[1];
+
+            if (args.length == 6) {
+                final long numberOfEvents = Long.valueOf(args[2]);
+                final int kinesisRecordsPerRequest = Integer.valueOf(args[3]);
+                final int streamChunkSize = Integer.valueOf(args[4]);
+                final int parallelism = Integer.valueOf(args[5]);
+                amazonKinesisClient = getAmazonAsyncKinesisClient(kinesisEndpoint, parallelism);
+                forkJoinPool =
+                        new ForkJoinPool(parallelism, ForkJoinPool.defaultForkJoinWorkerThreadFactory, null, true);
+                dispatchEventsByNumber(amazonKinesisClient, kinesisStream, numberOfEvents, kinesisRecordsPerRequest,
+                        streamChunkSize, forkJoinPool);
+            } else if (args.length == 7) {
+                final TimeUnit unit = TimeUnit.valueOf(args[2]);
+                final long time = Long.valueOf(args[3]);
+                final int kinesisRecordsPerRequest = Integer.valueOf(args[4]);
+                final int streamChunkSize = Integer.valueOf(args[5]);
+                final int parallelism = Integer.valueOf(args[6]);
+                amazonKinesisClient = getAmazonAsyncKinesisClient(kinesisEndpoint, parallelism);
+                forkJoinPool =
+                        new ForkJoinPool(parallelism, ForkJoinPool.defaultForkJoinWorkerThreadFactory, null, true);
+                dispatchEventsByTime(amazonKinesisClient, kinesisStream, unit, time, kinesisRecordsPerRequest,
+                        streamChunkSize, forkJoinPool);
+            } else {
+                throw new IllegalArgumentException(String.format("invalid argument list %s", Arrays.toString(args)));
+            }
         } catch (final Throwable any) {
             LOGGER.error("unexpected error running kinesis client", any);
         } finally {
+            if (runParms != null) {
+                try {
+                    summarizeEventResults(runParms);
+                } catch (final Throwable throwable) {
+                    LOGGER.error("Unexpected error collecting summaries", throwable);
+                }
+            }
             if (forkJoinPool != null) {
                 try {
                     // shutdown and wait for jobs to be finished
@@ -294,20 +298,48 @@ public class KinesisEventClient {
                     executorService.awaitTermination(5, TimeUnit.MINUTES);
                 } catch (final Throwable throwable) {
                     LOGGER.error("unexpected error shutting down amazon kinesis client", throwable);
-                } finally {
-                    summarizeEventResults(runParms);
                 }
             }
-
+            // kill everything
             System.exit(0);
         }
+    }
+
+    private static EventRunParms createEventRunParms(final String[] args) {
+        //todo: clean up
+        final EventRunParms runParms = new EventRunParms(args);
+        runParms.setKinesisInputStream(args[1]);
+        // set duration if set
+        if (args.length == 7) {
+            final long time = Long.valueOf(args[3]);
+            runParms.setDuration(time);
+        }
+        return runParms;
+    }
+
+    private static void dispatchEventsByNumber(final AmazonKinesisAsyncClient amazonKinesisClient,
+                                               final String kinesisInputStream, final long numberOfEvents,
+                                               final int kinesisRecordsPerRequest, final int streamChunkSize,
+                                               final ForkJoinPool forkJoinPool) {
+        //generate events and push to Kinesis
+        pushEventsToKinesisAsync(amazonKinesisClient, kinesisInputStream, numberOfEvents, kinesisRecordsPerRequest,
+                streamChunkSize, forkJoinPool);
+    }
+
+    private static void dispatchEventsByTime(final AmazonKinesisAsyncClient amazonKinesisClient,
+                                             final String kinesisInputStream, final TimeUnit unit, final Long time,
+                                             final int kinesisRecordsPerRequest, final int streamChunkSize,
+                                             final ForkJoinPool forkJoinPool) {
+        //generate events and push to Kinesis
+        pushEventsToKinesisAsync(amazonKinesisClient, kinesisInputStream, unit, time,
+                kinesisRecordsPerRequest, streamChunkSize, forkJoinPool);
     }
 
     /**
      *
      * push summary results to dynamodb
      */
-    public static void summarizeEventResults(EventRunParms eventRunParms) {
+    public static void summarizeEventResults(final EventRunParms eventRunParms) {
         eventRunParms.setRunEndTime(DateTime.now());
         final KinesisEventSummary summary = new KinesisEventSummary(eventRunParms);
         summary.setTotalEventsAttempted(TOTAL_EVENTS.get());
