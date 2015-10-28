@@ -1,4 +1,4 @@
-package com.dematic.labs.toolkit.aws;
+package com.dematic.labs.toolkit.aws.kinesis;
 
 import com.amazonaws.handlers.AsyncHandler;
 import com.amazonaws.services.kinesis.AmazonKinesisAsyncClient;
@@ -10,6 +10,8 @@ import com.amazonaws.services.kinesis.model.PutRecordsRequestEntry;
 import com.amazonaws.services.kinesis.model.PutRecordsResult;
 import com.amazonaws.services.kinesis.model.PutRecordsResultEntry;
 import com.dematic.labs.toolkit.CountdownTimer;
+import com.dematic.labs.toolkit.aws.EventRunParms;
+import com.dematic.labs.toolkit.aws.FixedBatchSpliterator;
 import com.dematic.labs.toolkit.aws.summary.KinesisEventSummary;
 import com.dematic.labs.toolkit.aws.summary.KinesisEventSummaryPersister;
 import com.dematic.labs.toolkit.communication.Event;
