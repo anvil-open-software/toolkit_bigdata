@@ -33,13 +33,10 @@ public final class EventEmitter implements IEmitter<byte[]> {
                 final Event event = jsonToEvent(new String(record, Charset.defaultCharset()));
                 final boolean put = statistics.put(event.getEventId(), event);
                 if (!put) {
-                    LOGGER.error("Error writing record to output stream. Failing this emit attempt. Record: " +
-                            Arrays.toString(record));
+                    // will try again w failed records
                     failed.add(record);
                 }
             } catch (final IOException ioe) {
-                LOGGER.error("Error writing record to output stream. Failing this emit attempt. Record: " +
-                        Arrays.toString(record), ioe);
                 failed.add(record);
             }
         });
@@ -47,9 +44,20 @@ public final class EventEmitter implements IEmitter<byte[]> {
     }
 
     @Override
-    public void fail(List<byte[]> records) {
-        //todo: deal wilth
-        throw new IllegalStateException("failed records");
+    public void fail(final List<byte[]> records) {
+        // just try to add the failed record to the statistics
+        records.stream().forEach(record -> {
+            try {
+                final Event event = jsonToEvent(new String(record, Charset.defaultCharset()));
+                LOGGER.error("{} failed to be emitted, trying to add to statistics again", event);
+                final boolean put = statistics.put(event.getEventId(), event);
+                if (!put) {
+                    LOGGER.error("unable to add record to statistics:  >{}<" + Arrays.toString(record));
+                }
+            } catch (final IOException ioe) {
+                LOGGER.error("Failed: Error: unable to add record to statistics:  >{}<" + Arrays.toString(record), ioe);
+            }
+        });
     }
 
     @Override
