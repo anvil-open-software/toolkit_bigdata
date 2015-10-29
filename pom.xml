@@ -39,6 +39,11 @@
             <groupId>com.amazonaws</groupId>
             <artifactId>aws-java-sdk</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.amazonaws</groupId>
+            <artifactId>amazon-kinesis-connectors</artifactId>
+            <version>1.2.0</version>
+        </dependency>
         <!-- jedis redis client -->
         <dependency>
             <groupId>redis.clients</groupId>
@@ -114,16 +119,17 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-shade-plugin</artifactId>
-                <version>2.3</version>
+                <version>2.4.1</version>
                 <executions>
                     <execution>
+                        <id>producer</id>
                         <phase>package</phase>
                         <goals>
                             <goal>shade</goal>
                         </goals>
                         <configuration>
                             <shadedArtifactAttached>true</shadedArtifactAttached>
-                            <shadedClassifierName>client</shadedClassifierName>
+                            <shadedClassifierName>producer</shadedClassifierName>
                             <filters>
                                 <filter>
                                     <artifact>*:*</artifact>
@@ -147,11 +153,140 @@
                                     <exclude>*:xml-apis</exclude>
                                     <exclude>*:tests</exclude>
                                     <exclude>*:test-jar:tests</exclude>
+                                    <!-- We don't need a lot of these aws jars which balloon the uber jar to
+                                       tried to do a cleaner whitelist but can't seem to get it working-->
+                                    <!--<exclude>com.amazonaws:aws-java-sdk-support</exclude>-->
+                                    <exclude>com.amazonaws:aws-java-sdk-simpledb</exclude>
+                                    <exclude>com.amazonaws:aws-java-sdk-simpleworkflow</exclude>
+                                    <exclude>com.amazonaws:aws-java-sdk-storagegateway</exclude>
+                                    <exclude>com.amazonaws:aws-java-sdk-route53</exclude>
+                                    <!--<exclude>com.amazonaws:aws-java-sdk-importexport</exclude>-->
+                                    <exclude>com.amazonaws:aws-java-sdk-sts</exclude>
+                                    <exclude>com.amazonaws:aws-java-sdk-sqs</exclude>
+                                    <exclude>com.amazonaws:aws-java-sdk-rds</exclude>
+                                    <exclude>com.amazonaws:aws-java-sdk-redshift</exclude>
+                                    <exclude>com.amazonaws:aws-java-sdk-elasticbeanstalk</exclude>
+                                    <exclude>com.amazonaws:aws-java-sdk-glacier</exclude>
+                                    <exclude>com.amazonaws:aws-java-sdk-iam</exclude>
+                                    <exclude>com.amazonaws:aws-java-sdk-datapipeline</exclude>
+                                    <exclude>com.amazonaws:aws-java-sdk-elasticloadbalancing</exclude>
+                                    <exclude>com.amazonaws:aws-java-sdk-emr</exclude>
+                                    <exclude>com.amazonaws:aws-java-sdk-elastictranscoder</exclude>
+                                    <exclude>com.amazonaws:aws-java-sdk-sns</exclude>
+                                    <exclude>com.amazonaws:aws-java-sdk-cloudtrail</exclude>
+                                    <!-- <exclude>com.amazonaws:aws-java-sdk-logs</exclude>-->
+                                    <exclude>com.amazonaws:aws-java-sdk-cognitoidentity</exclude>
+                                    <exclude>com.amazonaws:aws-java-sdk-cognitosync</exclude>
+                                    <exclude>com.amazonaws:aws-java-sdk-directconnect</exclude>
+                                    <exclude>com.amazonaws:aws-java-sdk-cloudformation</exclude>
+                                    <exclude>com.amazonaws:aws-java-sdk-cloudfront</exclude>
+                                    <exclude>com.amazonaws:aws-java-sdk-opsworks</exclude>
+                                    <exclude>com.amazonaws:aws-java-sdk-ses</exclude>
+                                    <!--<exclude>com.amazonaws:aws-java-sdk-autoscaling</exclude>-->
+                                    <exclude>com.amazonaws:aws-java-sdk-cloudsearch</exclude>
+
+                                    <exclude>com.amazonaws:aws-java-sdk-swf-libraries</exclude>
+                                    <exclude>com.amazonaws:aws-java-sdk-codedeploy</exclude>
+                                    <exclude>com.amazonaws:aws-java-sdk-kms</exclude>
+                                    <!--<exclude>com.amazonaws:aws-java-sdk-config</exclude>-->
+                                    <exclude>com.amazonaws:aws-java-sdk-lambda</exclude><!--
+                                    <exclude>com.amazonaws:aws-java-sdk-ecs</exclude>-->
+                                    <exclude>com.amazonaws:aws-java-sdk-cloudhsm</exclude>
+                                    <exclude>com.amazonaws:aws-java-sdk-ssm</exclude>
+                                    <exclude>com.amazonaws:aws-java-sdk-workspaces</exclude>
+                                    <exclude>com.amazonaws:aws-java-sdk-machinelearning</exclude>
+                                    <!--<exclude>com.amazonaws:aws-java-sdk-directory</exclude>-->
+                                    <exclude>com.amazonaws:aws-java-sdk-efs</exclude>
                                 </excludes>
                             </artifactSet>
                             <transformers>
                                 <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                                    <mainClass>com.dematic.labs.toolkit.aws.KinesisEventClient</mainClass>
+                                    <mainClass>com.dematic.labs.toolkit.aws.kinesis.KinesisEventClient</mainClass>
+                                </transformer>
+                            </transformers>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>consumer</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                        <configuration>
+                            <shadedArtifactAttached>true</shadedArtifactAttached>
+                            <shadedClassifierName>consumer</shadedClassifierName>
+                            <filters>
+                                <filter>
+                                    <artifact>*:*</artifact>
+                                    <excludes>
+                                        <exclude>META-INF/*.SF</exclude>
+                                        <exclude>META-INF/*.DSA</exclude>
+                                        <exclude>META-INF/*.RSA</exclude>
+                                        <exclude>junit:junit</exclude>
+                                        <exclude>jmock:*</exclude>
+                                        <exclude>*:xml-apis</exclude>
+                                        <!-- todo: not being excluded -->
+                                        <exclude>com.dematic.labs:common:test-jar:tests</exclude>
+                                    </excludes>
+                                </filter>
+                            </filters>
+                            <artifactSet>
+                                <excludes>
+                                    <exclude>commons-httpclient:commons-httpclient</exclude>
+                                    <exclude>junit:junit</exclude>
+                                    <exclude>jmock:*</exclude>
+                                    <exclude>*:xml-apis</exclude>
+                                    <exclude>*:tests</exclude>
+                                    <exclude>*:test-jar:tests</exclude>
+                                    <!-- We don't need a lot of these aws jars which balloon the uber jar to
+                                       tried to do a cleaner whitelist but can't seem to get it working-->
+                                    <!--<exclude>com.amazonaws:aws-java-sdk-support</exclude>-->
+                                    <exclude>com.amazonaws:aws-java-sdk-simpledb</exclude>
+                                    <exclude>com.amazonaws:aws-java-sdk-simpleworkflow</exclude>
+                                    <exclude>com.amazonaws:aws-java-sdk-storagegateway</exclude>
+                                    <exclude>com.amazonaws:aws-java-sdk-route53</exclude>
+                                    <!--<exclude>com.amazonaws:aws-java-sdk-importexport</exclude>-->
+                                    <exclude>com.amazonaws:aws-java-sdk-sts</exclude>
+                                    <exclude>com.amazonaws:aws-java-sdk-sqs</exclude>
+                                    <exclude>com.amazonaws:aws-java-sdk-rds</exclude>
+                                    <exclude>com.amazonaws:aws-java-sdk-redshift</exclude>
+                                    <exclude>com.amazonaws:aws-java-sdk-elasticbeanstalk</exclude>
+                                    <exclude>com.amazonaws:aws-java-sdk-glacier</exclude>
+                                    <exclude>com.amazonaws:aws-java-sdk-iam</exclude>
+                                    <exclude>com.amazonaws:aws-java-sdk-datapipeline</exclude>
+                                    <exclude>com.amazonaws:aws-java-sdk-elasticloadbalancing</exclude>
+                                    <exclude>com.amazonaws:aws-java-sdk-emr</exclude>
+                                    <exclude>com.amazonaws:aws-java-sdk-elastictranscoder</exclude>
+                                    <exclude>com.amazonaws:aws-java-sdk-sns</exclude>
+                                    <exclude>com.amazonaws:aws-java-sdk-cloudtrail</exclude>
+                                    <!-- <exclude>com.amazonaws:aws-java-sdk-logs</exclude>-->
+                                    <exclude>com.amazonaws:aws-java-sdk-cognitoidentity</exclude>
+                                    <exclude>com.amazonaws:aws-java-sdk-cognitosync</exclude>
+                                    <exclude>com.amazonaws:aws-java-sdk-directconnect</exclude>
+                                    <exclude>com.amazonaws:aws-java-sdk-cloudformation</exclude>
+                                    <exclude>com.amazonaws:aws-java-sdk-cloudfront</exclude>
+                                    <exclude>com.amazonaws:aws-java-sdk-opsworks</exclude>
+                                    <exclude>com.amazonaws:aws-java-sdk-ses</exclude>
+                                    <!--<exclude>com.amazonaws:aws-java-sdk-autoscaling</exclude>-->
+                                    <exclude>com.amazonaws:aws-java-sdk-cloudsearch</exclude>
+
+                                    <exclude>com.amazonaws:aws-java-sdk-swf-libraries</exclude>
+                                    <exclude>com.amazonaws:aws-java-sdk-codedeploy</exclude>
+                                    <exclude>com.amazonaws:aws-java-sdk-kms</exclude>
+                                    <!--<exclude>com.amazonaws:aws-java-sdk-config</exclude>-->
+                                    <exclude>com.amazonaws:aws-java-sdk-lambda</exclude><!--
+                                    <exclude>com.amazonaws:aws-java-sdk-ecs</exclude>-->
+                                    <exclude>com.amazonaws:aws-java-sdk-cloudhsm</exclude>
+                                    <exclude>com.amazonaws:aws-java-sdk-ssm</exclude>
+                                    <exclude>com.amazonaws:aws-java-sdk-workspaces</exclude>
+                                    <exclude>com.amazonaws:aws-java-sdk-machinelearning</exclude>
+                                    <!--<exclude>com.amazonaws:aws-java-sdk-directory</exclude>-->
+                                    <exclude>com.amazonaws:aws-java-sdk-efs</exclude>
+                                </excludes>
+                            </artifactSet>
+                            <transformers>
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                                    <mainClass>com.dematic.labs.toolkit.aws.kinesis.consumer.EventStreamCollector</mainClass>
                                 </transformer>
                             </transformers>
                         </configuration>

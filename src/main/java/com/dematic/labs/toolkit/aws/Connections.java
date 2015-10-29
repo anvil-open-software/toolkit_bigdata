@@ -145,6 +145,12 @@ public final class Connections {
         kinesisClient.deleteStream(kinesisStream);
     }
 
+    public static int getNumberOfShards(final String awsEndpointUrl, final String streamName) {
+        final AmazonKinesisClient amazonKinesisClient = getAmazonKinesisClient(awsEndpointUrl);
+        // Determine the number of shards from the stream and create 1 Kinesis Worker/Receiver/DStream for each shard
+        return amazonKinesisClient.describeStream(streamName).getStreamDescription().getShards().size();
+    }
+
     public static void deleteDynamoTable(final AmazonDynamoDBClient dynamoDBClient, final String tableName) {
         if (dynamoTableExists(dynamoDBClient, tableName)) {
             DeleteTableRequest deleteTableRequest = new DeleteTableRequest();
