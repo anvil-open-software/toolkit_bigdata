@@ -46,9 +46,10 @@ public final class EventStreamCollector extends KinesisConnectorExecutorBase<Eve
         return new KinesisConnectorRecordProcessorFactory<>(new EventStreamsConnectorPipeline(statistics), config);
     }
 
-    public void startCollectingStatistics() {
+    public ExecutorService startCollectingStatistics() {
         final ExecutorService executorService = Executors.newCachedThreadPool();
         executorService.submit(worker);
+        return executorService;
     }
 
     public void stopCollectingStatistics() {
@@ -77,6 +78,7 @@ public final class EventStreamCollector extends KinesisConnectorExecutorBase<Eve
 
     public static void main(String[] args) {
         EventStreamCollector collector = null;
+        ExecutorService executorService = null;
         if (args == null || args.length != 4) {
             throw new IllegalArgumentException();
         }
@@ -88,7 +90,7 @@ public final class EventStreamCollector extends KinesisConnectorExecutorBase<Eve
             final int numberOfMinutes = Integer.valueOf(args[3]);
             final int numberOfShards = getNumberOfShards(kinesisEndpoint, kinesisStream);
             collector = new EventStreamCollector(appName, kinesisEndpoint, kinesisStream, numberOfShards);
-            collector.startCollectingStatistics();
+            executorService = collector.startCollectingStatistics();
             // collect for specific amount of time in minutes
             final CountdownTimer countdownTimer = new CountdownTimer();
             countdownTimer.countDown(numberOfMinutes);
@@ -110,6 +112,14 @@ public final class EventStreamCollector extends KinesisConnectorExecutorBase<Eve
                 try {
                     collector.stopCollectingStatistics();
                 } catch (final Throwable ignore) {
+                }
+            }
+            // delete the executor
+            if (executorService != null) {
+                try {
+                    executorService.shutdownNow();
+                } catch (final Throwable ignore) {
+
                 }
             }
             // delete the app table
