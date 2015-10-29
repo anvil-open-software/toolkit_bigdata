@@ -77,6 +77,22 @@ public final class EventStreamCollector extends KinesisConnectorExecutorBase<Eve
     }
 
     public static void main(String[] args) {
+        /*
+        USE LEGACY SORT UNTIL BUG is FIXED in JVM
+
+        java.lang.IllegalArgumentException: Comparison method violates its general contract!
+	at java.util.TimSort.mergeHi(TimSort.java:895) ~[na:1.8.0_25]
+	at java.util.TimSort.mergeAt(TimSort.java:512) ~[na:1.8.0_25]
+	at java.util.TimSort.mergeCollapse(TimSort.java:437) ~[na:1.8.0_25]
+	at java.util.TimSort.sort(TimSort.java:241) ~[na:1.8.0_25]
+	at java.util.Arrays.sort(Arrays.java:1438) ~[na:1.8.0_25]
+	at com.google.common.collect.Ordering.immutableSortedCopy(Ordering.java:846) ~[toolkit-1.0-SNAPSHOT-consumer.jar:na]
+	at com.google.common.collect.Multisets.copyHighestCountFirst(Multisets.java:1095) ~[toolkit-1.0-SNAPSHOT-consumer.jar:na]
+	at com.dematic.labs.toolkit.aws.kinesis.consumer.EventStreamCollector.getEventDuplicateCountAsOfNow(EventStreamCollector.java:64) ~[toolkit-1.0-SNAPSHOT-consumer.jar:na]
+	at com.dematic.labs.toolkit.aws.kinesis.consumer.EventStreamCollector.main(EventStreamCollector.java:97) ~[toolkit-1.0-SNAPSHOT-consumer.jar:na]
+         */
+        System.setProperty("java.util.Arrays.useLegacyMergeSort", "true");
+
         EventStreamCollector collector = null;
         ExecutorService executorService = null;
         if (args == null || args.length != 4) {
