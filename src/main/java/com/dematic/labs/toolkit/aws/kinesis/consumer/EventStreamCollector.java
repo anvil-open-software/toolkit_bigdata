@@ -111,7 +111,6 @@ public final class EventStreamCollector extends KinesisConnectorExecutorBase<Eve
             countdownTimer.countDown(numberOfMinutes);
             while (true) {
                 LOGGER.info("Moving Event Count = {}", collector.getEventCountAsOfNow());
-                LOGGER.info("Moving Event Duplicate Count = {}", collector.getEventDuplicateCountAsOfNow());
                 if (countdownTimer.isFinished()) {
                     break;
                 }
