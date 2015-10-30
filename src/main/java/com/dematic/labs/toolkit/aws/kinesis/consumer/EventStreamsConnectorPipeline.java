@@ -16,9 +16,9 @@ import static com.dematic.labs.toolkit.communication.EventUtils.eventToJsonByteA
 import static com.dematic.labs.toolkit.communication.EventUtils.jsonToEvent;
 
 public final class EventStreamsConnectorPipeline implements IKinesisConnectorPipeline<Event, byte[]> {
-    private final Multimap<UUID, Event> statistics;
+    private final Multimap<UUID, byte[]> statistics;
 
-    public EventStreamsConnectorPipeline(final Multimap<UUID, Event> statistics) {
+    public EventStreamsConnectorPipeline(final Multimap<UUID, byte[]> statistics) {
         this.statistics = statistics;
     }
 

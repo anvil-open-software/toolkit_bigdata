@@ -19,9 +19,9 @@ import static com.dematic.labs.toolkit.communication.EventUtils.jsonToEvent;
 public final class EventEmitter implements IEmitter<byte[]> {
     private static final Logger LOGGER = LoggerFactory.getLogger(EventEmitter.class);
 
-    private final Multimap<UUID, Event> statistics;
+    private final Multimap<UUID, byte[]> statistics;
 
-    public EventEmitter(final Multimap<UUID, Event> statistics) {
+    public EventEmitter(final Multimap<UUID, byte[]> statistics) {
         this.statistics = statistics;
     }
 
@@ -31,7 +31,7 @@ public final class EventEmitter implements IEmitter<byte[]> {
         buffer.getRecords().stream().forEach(record -> {
             try {
                 final Event event = jsonToEvent(new String(record, Charset.defaultCharset()));
-                final boolean put = statistics.put(event.getEventId(), event);
+                final boolean put = statistics.put(event.getEventId(), record);
                 if (!put) {
                     // will try again w failed records
                     failed.add(record);
@@ -50,7 +50,7 @@ public final class EventEmitter implements IEmitter<byte[]> {
             try {
                 final Event event = jsonToEvent(new String(record, Charset.defaultCharset()));
                 LOGGER.error("{} failed to be emitted, trying to add to statistics again", event);
-                final boolean put = statistics.put(event.getEventId(), event);
+                final boolean put = statistics.put(event.getEventId(), record);
                 if (!put) {
                     LOGGER.error("unable to add record to statistics:  >{}<" + Arrays.toString(record));
                 }

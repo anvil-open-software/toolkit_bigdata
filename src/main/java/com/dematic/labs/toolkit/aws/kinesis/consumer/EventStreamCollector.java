@@ -10,6 +10,7 @@ import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ImmutableMultiset;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Multimaps;
+import com.google.common.collect.Multiset;
 import com.google.common.collect.Multisets;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,7 +26,7 @@ import static com.dematic.labs.toolkit.aws.Connections.*;
 public final class EventStreamCollector extends KinesisConnectorExecutorBase<Event, byte[]> {
     private static final Logger LOGGER = LoggerFactory.getLogger(EventStreamCollector.class);
 
-    private final Multimap<UUID, Event> statistics;
+    private final Multimap<UUID, byte[]> statistics;
     private final KinesisConnectorConfiguration config;
 
     public EventStreamCollector(final String appName, final String kinesisEndpoint, final String streamName,
@@ -61,19 +62,17 @@ public final class EventStreamCollector extends KinesisConnectorExecutorBase<Eve
     }
 
     public int getEventDuplicateCountAsOfNow() {
-        final int[] sum = {0};
+        int sum = 0;
         final ImmutableMultiset<UUID> uuids = Multisets.copyHighestCountFirst(statistics.keys());
-        uuids.entrySet().stream().forEach(uuid -> {
-            final int count = uuid.getCount();
+        for (final Multiset.Entry<UUID> uuidEntry : uuids.entrySet()) {
+            final int count = uuidEntry.getCount();
             if (count > 1) {
-                sum[0] = sum[0] + count;
+                sum = sum + count;
             } else {
-                // just break out, if not duplicates
-                //noinspection UnnecessaryReturnStatement
-                return;
+                break;
             }
-        });
-        return sum[0];
+        }
+        return sum;
     }
 
     public static void main(String[] args) {
