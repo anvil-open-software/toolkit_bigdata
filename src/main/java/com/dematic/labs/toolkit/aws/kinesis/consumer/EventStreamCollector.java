@@ -114,7 +114,7 @@ public final class EventStreamCollector extends KinesisConnectorExecutorBase<Eve
                 if (countdownTimer.isFinished()) {
                     break;
                 }
-                TimeUnit.SECONDS.sleep(10);
+                TimeUnit.SECONDS.sleep(30);
             }
         } catch (final Throwable any) {
             LOGGER.error("Unexpected Error: Collecting Statistics", any);
