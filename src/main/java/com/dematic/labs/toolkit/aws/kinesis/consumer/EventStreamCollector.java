@@ -122,12 +122,13 @@ public final class EventStreamCollector extends KinesisConnectorExecutorBase<Eve
             LOGGER.error("Unexpected Error: Collecting Statistics", any);
         } finally {
             if (collector != null) {
-                // collect the final stats
-                LOGGER.info("Final Event Count = {}", collector.getEventCountAsOfNow());
-                LOGGER.info("Final Event Duplicate Count = {}", collector.getEventDuplicateCountAsOfNow());
                 try {
+                    // collect the final stats
+                    LOGGER.info("Final Event Count = {}", collector.getEventCountAsOfNow());
+                    LOGGER.info("Final Event Duplicate Count = {}", collector.getEventDuplicateCountAsOfNow());
                     collector.stopCollectingStatistics();
-                } catch (final Throwable ignore) {
+                } catch (final Throwable any) {
+                    LOGGER.error("Unexpected Final Collection Error", any);
                 }
             }
             // delete the executor
@@ -139,7 +140,7 @@ public final class EventStreamCollector extends KinesisConnectorExecutorBase<Eve
                 }
             }
             // delete the app table
-            try {
+            try {`
                 deleteDynamoTable(getAmazonDynamoDBClient(KinesisConnectorConfiguration.DEFAULT_DYNAMODB_ENDPOINT),
                         appName);
             } catch (final Throwable ignore) {
