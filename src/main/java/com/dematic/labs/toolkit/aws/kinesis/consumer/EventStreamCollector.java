@@ -6,8 +6,8 @@ import com.amazonaws.services.kinesis.connectors.KinesisConnectorRecordProcessor
 import com.amazonaws.services.kinesis.metrics.impl.NullMetricsFactory;
 import com.dematic.labs.toolkit.CountdownTimer;
 import com.dematic.labs.toolkit.communication.Event;
+import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ImmutableMultiset;
-import com.google.common.collect.LinkedListMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Multimaps;
 import com.google.common.collect.Multisets;
@@ -37,7 +37,7 @@ public final class EventStreamCollector extends KinesisConnectorExecutorBase<Eve
         properties.setProperty(KinesisConnectorConfiguration.PROP_KINESIS_INPUT_STREAM_SHARD_COUNT,
                 String.valueOf(shardCount));
         config = new KinesisConnectorConfiguration(properties, getAWSCredentialsProvider());
-        statistics = Multimaps.synchronizedMultimap(LinkedListMultimap.create());
+        statistics = Multimaps.synchronizedMultimap(ArrayListMultimap.create());
         initialize(config, new NullMetricsFactory());
     }
 
@@ -57,7 +57,7 @@ public final class EventStreamCollector extends KinesisConnectorExecutorBase<Eve
     }
 
     public int getEventCountAsOfNow() {
-        return statistics.keys().size();
+        return statistics.size();
     }
 
     public int getEventDuplicateCountAsOfNow() {
