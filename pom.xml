@@ -25,12 +25,12 @@
             <dependency>
                 <groupId>org.apache.httpcomponents</groupId>
                 <artifactId>httpclient</artifactId>
-                <version>4.2.6</version>
+                <version>4.5.1</version>
             </dependency>
             <dependency>
                 <groupId>com.amazonaws</groupId>
                 <artifactId>aws-java-sdk</artifactId>
-                <version>1.10.3</version>
+                <version>1.10.30</version>
                 <exclusions>
                     <exclusion>
                         <artifactId>commons-httpclient</artifactId>
