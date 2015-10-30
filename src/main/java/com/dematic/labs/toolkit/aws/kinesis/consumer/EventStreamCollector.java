@@ -140,7 +140,7 @@ public final class EventStreamCollector extends KinesisConnectorExecutorBase<Eve
                 }
             }
             // delete the app table
-            try {`
+            try {
                 deleteDynamoTable(getAmazonDynamoDBClient(KinesisConnectorConfiguration.DEFAULT_DYNAMODB_ENDPOINT),
                         appName);
             } catch (final Throwable ignore) {
