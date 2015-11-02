@@ -6,12 +6,7 @@ import com.amazonaws.services.kinesis.connectors.KinesisConnectorRecordProcessor
 import com.amazonaws.services.kinesis.metrics.impl.NullMetricsFactory;
 import com.dematic.labs.toolkit.CountdownTimer;
 import com.dematic.labs.toolkit.communication.Event;
-import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.ImmutableMultiset;
-import com.google.common.collect.Multimap;
-import com.google.common.collect.Multimaps;
-import com.google.common.collect.Multiset;
-import com.google.common.collect.Multisets;
+import com.google.common.collect.ConcurrentHashMultiset;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,7 +21,7 @@ import static com.dematic.labs.toolkit.aws.Connections.*;
 public final class EventStreamCollector extends KinesisConnectorExecutorBase<Event, byte[]> {
     private static final Logger LOGGER = LoggerFactory.getLogger(EventStreamCollector.class);
 
-    private final Multimap<UUID, byte[]> statistics;
+    private final ConcurrentHashMultiset<UUID> statistics;
     private final KinesisConnectorConfiguration config;
 
     public EventStreamCollector(final String appName, final String kinesisEndpoint, final String streamName,
@@ -38,7 +33,7 @@ public final class EventStreamCollector extends KinesisConnectorExecutorBase<Eve
         properties.setProperty(KinesisConnectorConfiguration.PROP_KINESIS_INPUT_STREAM_SHARD_COUNT,
                 String.valueOf(shardCount));
         config = new KinesisConnectorConfiguration(properties, getAWSCredentialsProvider());
-        statistics = Multimaps.synchronizedMultimap(ArrayListMultimap.create());
+        statistics = ConcurrentHashMultiset.create();
         initialize(config, new NullMetricsFactory());
     }
 
@@ -62,17 +57,8 @@ public final class EventStreamCollector extends KinesisConnectorExecutorBase<Eve
     }
 
     public int getEventDuplicateCountAsOfNow() {
-        int sum = 0;
-        final ImmutableMultiset<UUID> uuids = Multisets.copyHighestCountFirst(statistics.keys());
-        for (final Multiset.Entry<UUID> uuidEntry : uuids.entrySet()) {
-            final int count = uuidEntry.getCount();
-            if (count > 1) {
-                sum = sum + count;
-            } else {
-                break;
-            }
-        }
-        return sum;
+       // duplicates are the total size - minus the number of distinct elements
+        return statistics.size() - statistics.entrySet().size();
     }
 
     public static void main(String[] args) {
@@ -123,7 +109,7 @@ public final class EventStreamCollector extends KinesisConnectorExecutorBase<Eve
                 try {
                     // collect the final stats
                     LOGGER.info("Final Event Count = {}", collector.getEventCountAsOfNow());
-                   // LOGGER.info("Final Event Duplicate Count = {}", collector.getEventDuplicateCountAsOfNow());
+                    LOGGER.info("Final Event Duplicate Count = {}", collector.getEventDuplicateCountAsOfNow());
                     collector.stopCollectingStatistics();
                 } catch (final Throwable any) {
                     LOGGER.error("Unexpected Final Collection Error", any);

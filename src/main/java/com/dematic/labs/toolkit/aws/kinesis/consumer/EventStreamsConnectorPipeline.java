@@ -2,11 +2,16 @@ package com.dematic.labs.toolkit.aws.kinesis.consumer;
 
 import com.amazonaws.services.kinesis.connectors.KinesisConnectorConfiguration;
 import com.amazonaws.services.kinesis.connectors.impl.AllPassFilter;
-import com.amazonaws.services.kinesis.connectors.interfaces.*;
+import com.amazonaws.services.kinesis.connectors.interfaces.IBuffer;
+import com.amazonaws.services.kinesis.connectors.interfaces.IEmitter;
+import com.amazonaws.services.kinesis.connectors.interfaces.IFilter;
+import com.amazonaws.services.kinesis.connectors.interfaces.IKinesisConnectorPipeline;
+import com.amazonaws.services.kinesis.connectors.interfaces.ITransformer;
+import com.amazonaws.services.kinesis.connectors.interfaces.ITransformerBase;
 import com.amazonaws.services.kinesis.model.Record;
 
 import com.dematic.labs.toolkit.communication.Event;
-import com.google.common.collect.Multimap;
+import com.google.common.collect.ConcurrentHashMultiset;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
@@ -16,9 +21,9 @@ import static com.dematic.labs.toolkit.communication.EventUtils.eventToJsonByteA
 import static com.dematic.labs.toolkit.communication.EventUtils.jsonToEvent;
 
 public final class EventStreamsConnectorPipeline implements IKinesisConnectorPipeline<Event, byte[]> {
-    private final Multimap<UUID, byte[]> statistics;
+    private final ConcurrentHashMultiset<UUID> statistics;
 
-    public EventStreamsConnectorPipeline(final Multimap<UUID, byte[]> statistics) {
+    public EventStreamsConnectorPipeline(final ConcurrentHashMultiset<UUID> statistics) {
         this.statistics = statistics;
     }
 
