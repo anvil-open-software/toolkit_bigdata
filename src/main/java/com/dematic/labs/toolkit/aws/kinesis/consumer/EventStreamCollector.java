@@ -110,9 +110,10 @@ public final class EventStreamCollector extends KinesisConnectorExecutorBase<Eve
                     // collect the final stats
                     LOGGER.info("Final Event Count = {}", collector.getEventCountAsOfNow());
                     LOGGER.info("Final Event Duplicate Count = {}", collector.getEventDuplicateCountAsOfNow());
-                    collector.stopCollectingStatistics();
                 } catch (final Throwable any) {
                     LOGGER.error("Unexpected Final Collection Error", any);
+                } finally {
+                    collector.stopCollectingStatistics();
                 }
             }
             // delete the executor
