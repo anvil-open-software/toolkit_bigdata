@@ -16,7 +16,6 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
 import java.util.UUID;
 import java.util.stream.LongStream;
 
@@ -53,33 +52,17 @@ public final class EventUtils {
      * Generate analytic system events.
      *
      * @param numberOfEvents -- # of events to generate
-     * @param nodeSize       -- amount of nodes
-     * @param orderSize      -- amout of orders
+     * @param nodeId         -- amount of nodes
      * @return List<Event>   -- list of generated events
      */
-    public static List<Event> generateEvents(final long numberOfEvents, final int nodeSize, final int orderSize) {
-        final Random randomGenerator = new Random();
+    public static List<Event> generateEvents(final long numberOfEvents, final String nodeId) {
         // startInclusive the (inclusive) initial value, endExclusive the exclusive upper bound
         return LongStream.range(1, numberOfEvents + 1)
                 .parallel()
-                .mapToObj(value -> new Event(UUID.randomUUID(), EventSequenceNumber.next(),
-                        generateNode(nodeSize, randomGenerator),
-                        generateOrder(orderSize, randomGenerator), DateTime.now(),
-                        generateValue(nodeSize, orderSize, randomGenerator)))
+                .mapToObj(value -> new Event(UUID.randomUUID(), EventSequenceNumber.next(), nodeId, null,
+                        DateTime.now(), null, null))
                         //supplier, accumulator, combiner
                 .collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
-    }
-
-    public static int generateNode(final int nodeSize, final Random randomGenerator) {
-        return randomGenerator.nextInt(nodeSize) + 1;
-    }
-
-    public static int generateOrder(final int orderSize, final Random randomGenerator) {
-        return randomGenerator.nextInt(orderSize) + 1;
-    }
-
-    public static double generateValue(final int nodeSize, final int orderSize, final Random randomGenerator) {
-        return Math.abs((int) Math.round(randomGenerator.nextGaussian() * orderSize + nodeSize));
     }
 
     public static DateTime now() {
@@ -99,12 +82,16 @@ public final class EventUtils {
         public void serialize(final Event event, final JsonGenerator jsonGenerator, final SerializerProvider provider)
                 throws IOException {
             jsonGenerator.writeStartObject();
-            jsonGenerator.writeStringField("eventId", event.getEventId().toString());
+            jsonGenerator.writeStringField("id", event.getId().toString());
             jsonGenerator.writeNumberField("sequence", event.getSequence());
-            jsonGenerator.writeNumberField("nodeId", event.getNodeId());
-            jsonGenerator.writeNumberField("orderId", event.getOrderId());
+            jsonGenerator.writeStringField("nodeId", event.getNodeId());
+            jsonGenerator.writeStringField("type", event.getType());
             jsonGenerator.writeStringField("timestamp", event.getTimestamp().toString());
-            jsonGenerator.writeNumberField("value", event.getValue());
+            jsonGenerator.writeStringField("generatorId", event.getGeneratorId());
+            final Long version = event.getVersion();
+            if (version != null) {
+                jsonGenerator.writeNumberField("version", version.longValue());
+            }
             jsonGenerator.writeEndObject();
         }
     }
@@ -114,9 +101,9 @@ public final class EventUtils {
         public Event deserialize(final JsonParser jp, final DeserializationContext deserializationContext) throws IOException {
             final ObjectCodec codec = jp.getCodec();
             final JsonNode jsonNode = codec.readTree(jp);
-            final JsonNode eventIdNode = jsonNode.get("eventId");
+            final JsonNode eventIdNode = jsonNode.get("id");
             if (eventIdNode == null || isNullOrEmpty(eventIdNode.asText())) {
-                throw new IllegalStateException("Event does not have an eventId");
+                throw new IllegalStateException("Event does not have an id");
             }
             final UUID uuid = UUID.fromString(eventIdNode.asText());
 
@@ -127,16 +114,13 @@ public final class EventUtils {
             final long sequence = sequenceNode.asLong();
 
             final JsonNode nodeIdNode = jsonNode.get("nodeId");
-            if (nodeIdNode == null || nodeIdNode.asInt() == 0) {
+            if (nodeIdNode == null || isNullOrEmpty(nodeIdNode.asText())) {
                 throw new IllegalStateException("Event does not have a nodeId assigned");
             }
-            final int nodeId = nodeIdNode.asInt();
+            final String nodeId = nodeIdNode.asText();
 
-            final JsonNode orderIdNode = jsonNode.get("orderId");
-            if (orderIdNode == null || orderIdNode.asInt() == 0) {
-                throw new IllegalStateException("Event does not have a orderId assigned");
-            }
-            final int orderId = orderIdNode.asInt();
+            final JsonNode typeNode = jsonNode.get("type");
+            final String type = typeNode == null ? null : typeNode.asText();
 
             final JsonNode timestampNode = jsonNode.get("timestamp");
             if (timestampNode == null || isNullOrEmpty(timestampNode.asText())) {
@@ -144,15 +128,13 @@ public final class EventUtils {
             }
             final DateTime timestamp = new DateTime(timestampNode.asText());
 
-            final JsonNode valueNode = jsonNode.get("value");
-            // todo: for now we are using random dist of numbers, so some may be negitive, put a positive number check,
-            // todo: when this is changed
-            if (valueNode == null) {
-                throw new IllegalStateException("Event does not have a value assigned");
-            }
-            final double value = valueNode.asDouble();
+            final JsonNode generatorIdNode = jsonNode.get("generatorId");
+            final String generatorId = generatorIdNode == null ? null : generatorIdNode.asText();
 
-            return new Event(uuid, sequence, nodeId, orderId, timestamp, value);
+            final JsonNode versionNode = jsonNode.get("version");
+            final Long version = versionNode == null ? null : versionNode.asLong();
+
+            return new Event(uuid, sequence, nodeId, type, timestamp, generatorId, version);
         }
 
         // use a lib

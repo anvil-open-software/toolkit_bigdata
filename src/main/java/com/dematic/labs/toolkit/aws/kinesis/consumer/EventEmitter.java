@@ -31,7 +31,7 @@ public final class EventEmitter implements IEmitter<byte[]> {
         buffer.getRecords().stream().forEach(record -> {
             try {
                 final Event event = jsonToEvent(new String(record, Charset.defaultCharset()));
-                final boolean put = statistics.add(event.getEventId());
+                final boolean put = statistics.add(event.getId());
                 if (!put) {
                     // will try again w failed records
                     failed.add(record);
@@ -50,7 +50,7 @@ public final class EventEmitter implements IEmitter<byte[]> {
             try {
                 final Event event = jsonToEvent(new String(record, Charset.defaultCharset()));
                 LOGGER.error("{} failed to be emitted, trying to add to statistics again", event);
-                final boolean put = statistics.add(event.getEventId());
+                final boolean put = statistics.add(event.getId());
                 if (!put) {
                     LOGGER.error("unable to add record to statistics:  >{}<" + Arrays.toString(record));
                 }

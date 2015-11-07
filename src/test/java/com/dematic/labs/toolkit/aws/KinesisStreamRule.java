@@ -54,11 +54,10 @@ public final class KinesisStreamRule extends ExternalResource {
         }
     }
 
-    public boolean pushEventsToKinesis(final int batchSize, final int nodeSize, final int orderSize,
-                                       final long timeValue, final TimeUnit unit) {
+    public boolean pushEventsToKinesis(final int batchSize, final long timeValue, final TimeUnit unit) {
         try {
             Awaitility.waitAtMost(timeValue, unit).until(() -> {
-                pushEventsToKinesis(generateEvents(batchSize, nodeSize, orderSize));
+                pushEventsToKinesis(generateEvents(batchSize, "KinesisRuleGenerated"));
                 LOGGER.info("pushed >{}< events to kinesis", batchSize);
                 return false;
             });
@@ -72,6 +71,6 @@ public final class KinesisStreamRule extends ExternalResource {
     public void pushEventsToKinesis(final List<Event> events) {
         final String kinesisEndpoint = System.getProperty("kinesisEndpoint");
         final String kinesisInputStream = System.getProperty("kinesisInputStream");
-        KinesisEventClient.pushEventsToKinesis(kinesisEndpoint, kinesisInputStream, events);
+        KinesisEventClient.dispatchEventsToKinesis(kinesisEndpoint, kinesisInputStream, events);
     }
 }

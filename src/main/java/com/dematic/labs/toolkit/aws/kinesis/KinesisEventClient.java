@@ -63,8 +63,8 @@ public class KinesisEventClient {
     private KinesisEventClient() {
     }
 
-    public static void pushEventsToKinesis(final String kinesisEndpoint, final String kinesisInputStream,
-                                           final List<Event> events) {
+    public static void dispatchEventsToKinesis(final String kinesisEndpoint, final String kinesisInputStream,
+                                               final List<Event> events) {
         final AmazonKinesisClient amazonKinesisClient = getAmazonKinesisClient(kinesisEndpoint);
         events.stream()
                 .parallel()
@@ -77,17 +77,17 @@ public class KinesisEventClient {
                         putRecordRequest.setPartitionKey(randomPartitionKey());
                         final PutRecordResult putRecordResult =
                                 amazonKinesisClient.putRecord(putRecordRequest);
-                        LOGGER.info("pushed event >{}< to shard>{}<", event.getEventId(), putRecordResult.getShardId());
+                        LOGGER.info("pushed event >{}< to shard>{}<", event.getId(), putRecordResult.getShardId());
                     } catch (final IOException ioe) {
                         LOGGER.error("unable to push event >{}< to the kinesis stream", event, ioe);
                     }
                 });
     }
 
-    private static void pushEventsToKinesisAsync(final AmazonKinesisAsyncClient amazonKinesisClient,
-                                                 final String kinesisInputStream, final long numberOfEvents,
-                                                 final int kinesisRecordsPerRequest, final int streamChunkingSize,
-                                                 final ForkJoinPool forkJoinPool) {
+    private static void dispatchEventsToKinesisAsync(final AmazonKinesisAsyncClient amazonKinesisClient,
+                                                     final String kinesisInputStream, final long numberOfEvents,
+                                                     final int kinesisRecordsPerRequest, final int streamChunkingSize,
+                                                     final ForkJoinPool forkJoinPool) {
         try {
             forkJoinPool.submit(() -> {
                 FixedBatchSpliterator.withBatchSize(LongStream.range(1, numberOfEvents + 1).boxed(), streamChunkingSize).
@@ -95,7 +95,7 @@ public class KinesisEventClient {
                         forEach(event -> {
                             // 1) generate batched events and dispatch request
                             final List<PutRecordsRequestEntry> putRecordsRequestEntries =
-                                    generatePutRecordsRequestEntries(kinesisRecordsPerRequest, 1, 1);
+                                    generatePutRecordsRequestEntries(kinesisRecordsPerRequest);
                             // todo: come back to retries and deal w duplicates
                             dispatch(amazonKinesisClient, kinesisInputStream, putRecordsRequestEntries, 0);
                         });
@@ -105,10 +105,10 @@ public class KinesisEventClient {
         }
     }
 
-    private static void pushEventsToKinesisAsync(final AmazonKinesisAsyncClient amazonKinesisClient,
-                                                 final String kinesisInputStream, final TimeUnit unit, final long time,
-                                                 final int kinesisRecordsPerRequest, final int streamChunkingSize,
-                                                 final ForkJoinPool forkJoinPool) {
+    private static void dispatchEventsToKinesisAsync(final AmazonKinesisAsyncClient amazonKinesisClient,
+                                                     final String kinesisInputStream, final TimeUnit unit, final long time,
+                                                     final int kinesisRecordsPerRequest, final int streamChunkingSize,
+                                                     final ForkJoinPool forkJoinPool) {
         // i know we could lose persision, but in this case, its ok
         int numberOfMinutes = TimeUnit.HOURS == unit ? Long.valueOf(unit.toMinutes(time)).intValue() :
                 Long.valueOf(time).intValue();
@@ -116,7 +116,7 @@ public class KinesisEventClient {
         countdownTimer.countDown(numberOfMinutes);
 
         while (true) {
-            pushEventsToKinesisAsync(amazonKinesisClient, kinesisInputStream, 1000, kinesisRecordsPerRequest,
+            dispatchEventsToKinesisAsync(amazonKinesisClient, kinesisInputStream, 1000, kinesisRecordsPerRequest,
                     streamChunkingSize, forkJoinPool);
             if (countdownTimer.isFinished()) {
                 break;
@@ -140,28 +140,28 @@ public class KinesisEventClient {
                 final Future<PutRecordsResult> futurePutRecordsResult =
                         amazonKinesisClient.putRecordsAsync(putRecordsRequest, new AsyncHandler<PutRecordsRequest,
                                 PutRecordsResult>() {
-                    @Override
-                    public void onError(final Exception exception) {
-                        final long error = SYSTEM_ERROR.addAndGet(putRecordsRequest.getRecords().size());
-                        LOGGER.error("unable to dispatch: {} events (system error)", error, exception);
-                    }
+                            @Override
+                            public void onError(final Exception exception) {
+                                final long error = SYSTEM_ERROR.addAndGet(putRecordsRequest.getRecords().size());
+                                LOGGER.error("unable to dispatch: {} events (system error)", error, exception);
+                            }
 
-                    @Override
-                    public void onSuccess(final PutRecordsRequest request, final PutRecordsResult putRecordsResult) {
-                        if (putRecordsResult.getFailedRecordCount() == 0) {
-                            SUCCESS.getAndAdd(request.getRecords().size());
-                        }
+                            @Override
+                            public void onSuccess(final PutRecordsRequest request, final PutRecordsResult putRecordsResult) {
+                                if (putRecordsResult.getFailedRecordCount() == 0) {
+                                    SUCCESS.getAndAdd(request.getRecords().size());
+                                }
 
-                        if (putRecordsResult.getFailedRecordCount() > 0) {
-                            final Integer failedRecordCount = putRecordsResult.getFailedRecordCount();
-                            // add the records that succeeded
-                            SUCCESS.getAndAdd(request.getRecords().size() - failedRecordCount);
-                            // add failures
-                            KINESIS_ERROR.getAndAdd(failedRecordCount);
-                            LOGGER.error("unable to dispatch: {} events (kinesis error)", failedRecordCount);
-                        }
-                    }
-                });
+                                if (putRecordsResult.getFailedRecordCount() > 0) {
+                                    final Integer failedRecordCount = putRecordsResult.getFailedRecordCount();
+                                    // add the records that succeeded
+                                    SUCCESS.getAndAdd(request.getRecords().size() - failedRecordCount);
+                                    // add failures
+                                    KINESIS_ERROR.getAndAdd(failedRecordCount);
+                                    LOGGER.error("unable to dispatch: {} events (kinesis error)", failedRecordCount);
+                                }
+                            }
+                        });
                 putRecordsResult = futurePutRecordsResult.get();
                 // deal with any type of system, connection exception, etc...
             } catch (final Throwable any) {
@@ -204,10 +204,8 @@ public class KinesisEventClient {
                 (putRecordsResult != null && putRecordsResult.getFailedRecordCount() > 0 && count < numberOfTries));
     }
 
-    private static List<PutRecordsRequestEntry> generatePutRecordsRequestEntries(final int numberOfEvents,
-                                                                                 final int nodeSize,
-                                                                                 final int orderSize) {
-        return generateEvents(numberOfEvents, nodeSize, orderSize).parallelStream().map(event -> {
+    private static List<PutRecordsRequestEntry> generatePutRecordsRequestEntries(final int numberOfEvents) {
+        return generateEvents(numberOfEvents, "KinesisClientGenerated").parallelStream().map(event -> {
             final PutRecordsRequestEntry putRecordsRequestEntry = new PutRecordsRequestEntry();
             try {
                 putRecordsRequestEntry.setData(ByteBuffer.wrap(eventToJsonByteArray(event)));
@@ -324,7 +322,7 @@ public class KinesisEventClient {
                                                final int kinesisRecordsPerRequest, final int streamChunkSize,
                                                final ForkJoinPool forkJoinPool) {
         //generate events and push to Kinesis
-        pushEventsToKinesisAsync(amazonKinesisClient, kinesisInputStream, numberOfEvents, kinesisRecordsPerRequest,
+        dispatchEventsToKinesisAsync(amazonKinesisClient, kinesisInputStream, numberOfEvents, kinesisRecordsPerRequest,
                 streamChunkSize, forkJoinPool);
     }
 
@@ -333,12 +331,11 @@ public class KinesisEventClient {
                                              final int kinesisRecordsPerRequest, final int streamChunkSize,
                                              final ForkJoinPool forkJoinPool) {
         //generate events and push to Kinesis
-        pushEventsToKinesisAsync(amazonKinesisClient, kinesisInputStream, unit, time,
+        dispatchEventsToKinesisAsync(amazonKinesisClient, kinesisInputStream, unit, time,
                 kinesisRecordsPerRequest, streamChunkSize, forkJoinPool);
     }
 
     /**
-     *
      * push summary results to dynamodb
      */
     public static void summarizeEventResults(final EventRunParms eventRunParms) {
