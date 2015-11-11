@@ -77,7 +77,7 @@ public class KinesisEventClient {
                         putRecordRequest.setPartitionKey(randomPartitionKey());
                         final PutRecordResult putRecordResult =
                                 amazonKinesisClient.putRecord(putRecordRequest);
-                        LOGGER.info("pushed event >{}< to shard>{}<", event.getId(), putRecordResult.getShardId());
+                        LOGGER.debug("pushed event >{}< to shard>{}<", event.getId(), putRecordResult.getShardId());
                     } catch (final IOException ioe) {
                         LOGGER.error("unable to push event >{}< to the kinesis stream", event, ioe);
                     }
