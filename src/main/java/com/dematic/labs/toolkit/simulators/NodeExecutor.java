@@ -3,16 +3,19 @@ package com.dematic.labs.toolkit.simulators;
 import com.dematic.labs.toolkit.CountdownTimer;
 import com.dematic.labs.toolkit.communication.Event;
 import com.dematic.labs.toolkit.communication.EventSequenceNumber;
+import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.RateLimiter;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Map;
 import java.util.Random;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
@@ -28,6 +31,7 @@ public final class NodeExecutor {
     private final int maxEventsPerMinutePerNode;
     private final int avgInterArrivalTime;
     private final String generatorId;
+    private final Map<String, AtomicInteger> statistics;
 
     public NodeExecutor(final int nodeRangeMin, final int nodeRangeMax, final int maxEventsPerMinutePerNode,
                         final int avgInterArrivalTime, final String generatorId) {
@@ -36,6 +40,7 @@ public final class NodeExecutor {
         this.maxEventsPerMinutePerNode = maxEventsPerMinutePerNode;
         this.avgInterArrivalTime = avgInterArrivalTime;
         this.generatorId = generatorId;
+        statistics = Maps.newConcurrentMap();
         LOGGER.info("NodeExecutor: created with a nodeRangeSize {} between {} and {} with maxEventsPerMinutePerNode {} "
                         + "and an averger inter-arrival time of {} and generatorId {}", nodeRangeSize, nodeRangeMin,
                 nodeRangeMax, maxEventsPerMinutePerNode, avgInterArrivalTime, generatorId);
@@ -54,8 +59,12 @@ public final class NodeExecutor {
         } catch (final Throwable any) {
             LOGGER.error("NodeExecutor: Unhandled Error: stopping execution", any);
         } finally {
-            System.out.println("finally");
+            try {
+                forkJoinPool.shutdownNow();
+            } catch (final Throwable ignore) {
+            }
         }
+        System.exit(0);
     }
 
     private void dispatchPerNode(final String kinesisEndpoint, final String kinesisStreamName, final String nodeId,
@@ -70,8 +79,16 @@ public final class NodeExecutor {
             // dispatch until duration ends at a rate specified by max events
             while (true) {
                 dispatch(kinesisEndpoint, kinesisStreamName, nodeId, rateLimiter, randomNumberGenerator);
+
+                if (statistics.containsKey(nodeId)) {
+                    statistics.get(nodeId).getAndIncrement();
+                } else {
+                    statistics.put(nodeId, new AtomicInteger(1));
+                }
+
                 if (countdownTimer.isFinished()) {
-                    LOGGER.info("NodeExecutor: Completed dispatching events for node {}", nodeId);
+                    LOGGER.info("NodeExecutor: Completed dispatching events for node {} : dispatched {} events",
+                            nodeId, statistics.get(nodeId).get());
                     break;
                 }
             }
@@ -83,11 +100,24 @@ public final class NodeExecutor {
     private void dispatch(final String kinesisEndpoint, final String kinesisStreamName, final String nodeId,
                           final RateLimiter rateLimiter, final Random randomNumberGenerator) {
         rateLimiter.acquire();
+        //todo: should datetime be passed in
         // event time is based on the avgInterArrivalTime * bounded random int, 6 is the upper bounds, inclusive
         final DateTime now = now().plusSeconds(randomNumberGenerator.nextInt(7) * avgInterArrivalTime);
         // todo: come back to batching and errors
-        dispatchEventsToKinesis(kinesisEndpoint, kinesisStreamName, singletonList(new Event(UUID.randomUUID(),
-                EventSequenceNumber.next(), nodeId, null, now, generatorId, null)));
+        int count = 0;
+        do {
+            // if we fail we will try to just dispatch another event, because of how kinesis works, a failure doesn't
+            // mean the event didn't go through, we could have had a network error and we are unable to tell if the
+            // event made it or not, we are just going to dispatch another event
+            Event event = null;
+            try {
+                event = new Event(UUID.randomUUID(), EventSequenceNumber.next(), nodeId, null, now, generatorId, null);
+                dispatchEventsToKinesis(kinesisEndpoint, kinesisStreamName, singletonList(event));
+                break;
+            } catch (final Throwable any) {
+                LOGGER.error("NodeExecutor: Failure dispatching {} : Count {}", event, count);
+            }
+        } while (count++ > 3);
     }
 
     private static double eventsPerSecond(final int eventsPerMinutes) {
