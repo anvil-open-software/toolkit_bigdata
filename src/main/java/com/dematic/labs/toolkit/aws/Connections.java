@@ -44,6 +44,14 @@ public final class Connections {
         return kinesisClient;
     }
 
+    public static AmazonKinesisClient getAmazonKinesisClient(final String awsEndpointUrl,
+                                                             final ClientConfiguration clientConfiguration) {
+        final AmazonKinesisClient kinesisClient = new AmazonKinesisClient(getAWSCredentialsProvider(),
+                clientConfiguration);
+        kinesisClient.setEndpoint(awsEndpointUrl);
+        return kinesisClient;
+    }
+
     /**
      * Creates an async kinesis client.
      *

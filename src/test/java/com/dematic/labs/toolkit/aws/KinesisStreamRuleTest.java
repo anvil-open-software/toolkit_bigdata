@@ -21,7 +21,7 @@ public final class KinesisStreamRuleTest {
     @Test
     public void pushEventsUntilTimeAllocation(){
         Awaitility.await().atMost(2, TimeUnit.MINUTES).until(() -> {
-            kinesisStreamRule.pushEventsToKinesis(100, 5, 10, 1, TimeUnit.MINUTES);
+            kinesisStreamRule.pushEventsToKinesis(100, 1, TimeUnit.MINUTES);
         });
     }
 }

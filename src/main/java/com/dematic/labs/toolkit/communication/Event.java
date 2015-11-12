@@ -17,36 +17,37 @@ import java.util.concurrent.TimeUnit;
 public final class Event implements Serializable {
     public static final String TABLE_NAME = "Events";
 
-    private UUID eventId;
+    private UUID id;
     private long sequence;
-    private int nodeId; // node 1 - 5
-    private int orderId; // job/order 1 - 9
+    private String nodeId; // Node-135
+    private String type;
     private ReadableInstant timestamp; // time events are generated
-    private double value; // random value
+    private String generatorId;
     private Long version;
 
     public Event() {
         sequence = EventSequenceNumber.next();
     }
 
-    public Event(final UUID eventId, final long sequence, final int nodeId, final int orderId,
-                 final ReadableInstant timestamp, final double value) {
-        this.eventId = eventId;
+    public Event(final UUID id, final long sequence, final String nodeId, final String type,
+                 final ReadableInstant timestamp, final String generatorId, final Long version) {
+        this.id = id;
         this.sequence = sequence;
         this.nodeId = nodeId;
-        this.orderId = orderId;
+        this.type = type;
         this.timestamp = timestamp;
-        this.value = value;
+        this.generatorId = generatorId;
+        this.version = version;
     }
 
     @DynamoDBMarshalling(marshallerClass = UUIDMarshaller.class)
     @DynamoDBHashKey(attributeName = "id")
-    public UUID getEventId() {
-        return eventId;
+    public UUID getId() {
+        return id;
     }
 
-    public void setEventId(final UUID eventId) {
-        this.eventId = eventId;
+    public void setId(final UUID id) {
+        this.id = id;
     }
 
     @DynamoDBAttribute
@@ -59,21 +60,21 @@ public final class Event implements Serializable {
     }
 
     @DynamoDBAttribute
-    public int getNodeId() {
+    public String getNodeId() {
         return nodeId;
     }
 
-    public void setNodeId(final int nodeId) {
+    public void setNodeId(final String nodeId) {
         this.nodeId = nodeId;
     }
 
     @DynamoDBAttribute
-    public int getOrderId() {
-        return orderId;
+    public String getType() {
+        return type;
     }
 
-    public void setOrderId(final int orderId) {
-        this.orderId = orderId;
+    public void setType(String type) {
+        this.type = type;
     }
 
     @DynamoDBMarshalling(marshallerClass = ReadableInstantMarshaller.class)
@@ -87,18 +88,22 @@ public final class Event implements Serializable {
     }
 
     @DynamoDBAttribute
-    public double getValue() {
-        return value;
+    public String getGeneratorId() {
+        return generatorId;
     }
 
-    public void setValue(final double value) {
-        this.value = value;
+    public void setGeneratorId(String generatorId) {
+        this.generatorId = generatorId;
     }
 
     @DynamoDBVersionAttribute
-    public Long getVersion() { return version; }
+    public Long getVersion() {
+        return version;
+    }
 
-    public void setVersion(final Long version) { this.version = version;}
+    public void setVersion(final Long version) {
+        this.version = version;
+    }
 
     public String aggregateBy(final TimeUnit unit) {
         final String aggregateTime;
@@ -120,37 +125,33 @@ public final class Event implements Serializable {
     }
 
     @Override
-    public boolean equals(final Object that) {
-        if (this == that) {
-            return true;
-        }
-        if (that == null || getClass() != that.getClass()) {
-            return false;
-        }
-        final Event event = (Event) that;
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Event event = (Event) o;
         return Objects.equals(sequence, event.sequence) &&
-                Objects.equals(version, event.version) &&
+                Objects.equals(id, event.id) &&
                 Objects.equals(nodeId, event.nodeId) &&
-                Objects.equals(orderId, event.orderId) &&
-                Objects.equals(value, event.value) &&
-                Objects.equals(eventId, event.eventId) &&
-                Objects.equals(timestamp, event.timestamp);
+                Objects.equals(type, event.type) &&
+                Objects.equals(timestamp, event.timestamp) &&
+                Objects.equals(generatorId, event.generatorId) &&
+                Objects.equals(version, event.version);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(eventId, sequence, nodeId, orderId, timestamp, value, version);
+        return Objects.hash(id, sequence, nodeId, type, timestamp, generatorId, version);
     }
 
     @Override
     public String toString() {
         return "Event{" +
-                "eventId=" + eventId +
+                "id=" + id +
                 ", sequence=" + sequence +
-                ", nodeId=" + nodeId +
-                ", orderId=" + orderId +
+                ", nodeId='" + nodeId + '\'' +
+                ", type='" + type + '\'' +
                 ", timestamp=" + timestamp +
-                ", value=" + value +
+                ", generatorId='" + generatorId + '\'' +
                 ", version=" + version +
                 '}';
     }
