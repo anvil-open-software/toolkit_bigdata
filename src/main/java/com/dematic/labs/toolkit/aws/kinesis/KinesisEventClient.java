@@ -1,6 +1,8 @@
 package com.dematic.labs.toolkit.aws.kinesis;
 
+import com.amazonaws.ClientConfiguration;
 import com.amazonaws.handlers.AsyncHandler;
+import com.amazonaws.retry.PredefinedRetryPolicies;
 import com.amazonaws.services.kinesis.AmazonKinesisAsyncClient;
 import com.amazonaws.services.kinesis.AmazonKinesisClient;
 import com.amazonaws.services.kinesis.model.PutRecordRequest;
@@ -28,11 +30,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Random;
 import java.util.Set;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.ForkJoinPool;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -65,7 +63,9 @@ public class KinesisEventClient {
 
     public static void dispatchEventsToKinesisWithRetries(final String kinesisEndpoint, final String kinesisInputStream,
                                                           final List<Event> events, final int retryCount) {
-        final AmazonKinesisClient amazonKinesisClient = getAmazonKinesisClient(kinesisEndpoint);
+        final ClientConfiguration clientConfiguration = new ClientConfiguration();
+        clientConfiguration.withMaxConnections(150).withMaxErrorRetry(retryCount);
+        final AmazonKinesisClient amazonKinesisClient = getAmazonKinesisClient(kinesisEndpoint, clientConfiguration);
         events.stream()
                 .parallel()
                 .forEach(event -> {
