@@ -19,7 +19,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-import static com.dematic.labs.toolkit.aws.kinesis.KinesisEventClient.dispatchEventsToKinesis;
+import static com.dematic.labs.toolkit.aws.kinesis.KinesisEventClient.dispatchEventsToKinesisWithRetries;
 import static com.dematic.labs.toolkit.communication.EventUtils.*;
 import static java.util.Collections.singletonList;
 
@@ -104,20 +104,12 @@ public final class NodeExecutor {
         // event time is based on the avgInterArrivalTime * bounded random int, 6 is the upper bounds, inclusive
         final DateTime now = now().plusSeconds(randomNumberGenerator.nextInt(7) * avgInterArrivalTime);
         // todo: come back to batching and errors
-        int count = 0;
-        do {
-            // if we fail we will try to just dispatch another event, because of how kinesis works, a failure doesn't
-            // mean the event didn't go through, we could have had a network error and we are unable to tell if the
-            // event made it or not, we are just going to dispatch another event
-            Event event = null;
-            try {
-                event = new Event(UUID.randomUUID(), EventSequenceNumber.next(), nodeId, null, now, generatorId, null);
-                dispatchEventsToKinesis(kinesisEndpoint, kinesisStreamName, singletonList(event));
-                break;
-            } catch (final Throwable any) {
-                LOGGER.error("NodeExecutor: Failure dispatching {} : Count {}", event, count);
-            }
-        } while (count++ > 3);
+        // if we fail we will try to just dispatch another event, because of how kinesis works, a failure doesn't
+        // mean the event didn't go through, we could have had a network error and we are unable to tell if the
+        // event made it or not, we are just going to dispatch another event
+        dispatchEventsToKinesisWithRetries(kinesisEndpoint, kinesisStreamName,
+                singletonList(new Event(UUID.randomUUID(), EventSequenceNumber.next(), nodeId, null, now, generatorId,
+                        null)), 3);
     }
 
     private static double eventsPerSecond(final int eventsPerMinutes) {
@@ -126,7 +118,10 @@ public final class NodeExecutor {
 
     public static void main(String[] args) {
         if (args == null || args.length != 8) {
-            throw new IllegalArgumentException();
+            // 100 200 30 2 3 https://kinesis.us-west-2.amazonaws.com  node_test unittest
+            throw new IllegalArgumentException("NodeExecutor: Please ensure the following are set: nodeRangeMin, " +
+                    "nodeRangeMax, maxEventsPerMinutePerNode, avgInterArrivalTime, duriationInMinutes, kinesisEndpoint,"
+                    + "kinesisStreamName, generatorId");
         }
         final int nodeRangeMin = Integer.valueOf(args[0]);
         final int nodeRangeMax = Integer.valueOf(args[1]);

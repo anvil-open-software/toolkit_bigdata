@@ -71,6 +71,6 @@ public final class KinesisStreamRule extends ExternalResource {
     public void pushEventsToKinesis(final List<Event> events) {
         final String kinesisEndpoint = System.getProperty("kinesisEndpoint");
         final String kinesisInputStream = System.getProperty("kinesisInputStream");
-        KinesisEventClient.dispatchEventsToKinesis(kinesisEndpoint, kinesisInputStream, events);
+        KinesisEventClient.dispatchEventsToKinesisIgnoringExceptions(kinesisEndpoint, kinesisInputStream, events);
     }
 }

@@ -63,8 +63,34 @@ public class KinesisEventClient {
     private KinesisEventClient() {
     }
 
-    public static void dispatchEventsToKinesis(final String kinesisEndpoint, final String kinesisInputStream,
-                                               final List<Event> events) {
+    public static void dispatchEventsToKinesisWithRetries(final String kinesisEndpoint, final String kinesisInputStream,
+                                                          final List<Event> events, final int retryCount) {
+        final AmazonKinesisClient amazonKinesisClient = getAmazonKinesisClient(kinesisEndpoint);
+        events.stream()
+                .parallel()
+                .forEach(event -> {
+                    int count = 1;
+                    do {
+                        try {
+                            final PutRecordRequest putRecordRequest = new PutRecordRequest();
+                            putRecordRequest.setStreamName(kinesisInputStream);
+                            putRecordRequest.setData(ByteBuffer.wrap(eventToJsonByteArray(event)));
+                            // group by partitionKey
+                            putRecordRequest.setPartitionKey(randomPartitionKey());
+                            final PutRecordResult putRecordResult =
+                                    amazonKinesisClient.putRecord(putRecordRequest);
+                            LOGGER.debug("pushed event >{}< to shard>{}<", event.getId(), putRecordResult.getShardId());
+                            break;
+                        } catch (final Throwable any) {
+                            LOGGER.error("Unexpected Error dispatching events : trying again : count = {}", count);
+                        }
+                    } while (count++ <= retryCount);
+                });
+    }
+
+    public static void dispatchEventsToKinesisIgnoringExceptions(final String kinesisEndpoint,
+                                                                 final String kinesisInputStream,
+                                                                 final List<Event> events) {
         final AmazonKinesisClient amazonKinesisClient = getAmazonKinesisClient(kinesisEndpoint);
         events.stream()
                 .parallel()
