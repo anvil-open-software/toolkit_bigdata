@@ -90,7 +90,7 @@ public final class EventUtils {
             jsonGenerator.writeStringField("generatorId", event.getGeneratorId());
             final Long version = event.getVersion();
             if (version != null) {
-                jsonGenerator.writeNumberField("version", version.longValue());
+                jsonGenerator.writeNumberField("version", version);
             }
             jsonGenerator.writeEndObject();
         }
