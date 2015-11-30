@@ -6,6 +6,7 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
+//todo: make immutable
 public final class GenericBuilder<T> {
     private final Supplier<T> instantiator;
 
