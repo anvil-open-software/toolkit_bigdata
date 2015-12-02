@@ -64,7 +64,6 @@ public final class NodeExecutor {
             } catch (final Throwable ignore) {
             }
         }
-        System.exit(0);
     }
 
     private void dispatchPerNode(final String kinesisEndpoint, final String kinesisStreamName, final String nodeId,
@@ -135,5 +134,7 @@ public final class NodeExecutor {
         final NodeExecutor nodeExecutor = new NodeExecutor(nodeRangeMin, nodeRangeMax, maxEventsPerMinutePerNode,
                 avgInterArrivalTime, generatorId);
         nodeExecutor.execute(duriationInMinutes, kinesisEndpoint, kinesisStreamName);
+
+        // todo: figure out system.exit
     }
 }
