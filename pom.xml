@@ -130,7 +130,25 @@
 
     <build>
         <defaultGoal>clean install</defaultGoal>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-release-plugin</artifactId>
+                <version>2.5.3</version>
+                <configuration>
+                    <!-- currently Jenkins m2 release plugin defaults to proj-version
+                         and does not provide a way to set a new default in the screen.
+                         However this setting is for manual invokes not via plugin -->
+                    <tagNameFormat>v${project.version}</tagNameFormat>
+                </configuration>
+            </plugin>
+
+        </plugins>
     </build>
+
+    <scm>
+        <developerConnection>scm:git:https://github.com/Dematiclabs/common-dep/</developerConnection>
+    </scm>
 
     <distributionManagement>
         <repository>
