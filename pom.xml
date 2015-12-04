@@ -147,7 +147,7 @@
     </build>
 
     <scm>
-        <developerConnection>scm:git:https://github.com/Dematiclabs/test_release_a/</developerConnection>
+        <developerConnection>scm:git:https://github.com/Dematiclabs/common-dep/</developerConnection>
     </scm>
 
     <distributionManagement>
