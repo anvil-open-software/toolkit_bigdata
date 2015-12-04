@@ -33,6 +33,10 @@
         </dependencies>
     </dependencyManagement>
 
+    <scm>
+        <developerConnection>scm:git:https://github.com/Dematiclabs/toolkit/</developerConnection>
+    </scm>
+
     <dependencies>
         <!-- AWS dependencies -->
         <dependency>
@@ -119,6 +123,14 @@
                         </goals>
                     </execution>
                 </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-release-plugin</artifactId>
+                <version>2.5.3</version>
+                <configuration>
+                    <tagNameFormat>v${project.version}</tagNameFormat>
+                </configuration>
             </plugin>
             <!-- build ubar kinesis test jar -->
             <plugin>
