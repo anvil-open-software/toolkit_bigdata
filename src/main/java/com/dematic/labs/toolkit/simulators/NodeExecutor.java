@@ -131,10 +131,12 @@ public final class NodeExecutor {
         final String kinesisStreamName = args[6];
         final String generatorId = args[7];
 
-        final NodeExecutor nodeExecutor = new NodeExecutor(nodeRangeMin, nodeRangeMax, maxEventsPerMinutePerNode,
-                avgInterArrivalTime, generatorId);
-        nodeExecutor.execute(duriationInMinutes, kinesisEndpoint, kinesisStreamName);
-
-        // todo: figure out system.exit
+        try {
+            final NodeExecutor nodeExecutor = new NodeExecutor(nodeRangeMin, nodeRangeMax, maxEventsPerMinutePerNode,
+                    avgInterArrivalTime, generatorId);
+            nodeExecutor.execute(duriationInMinutes, kinesisEndpoint, kinesisStreamName);
+        } finally {
+           Runtime.getRuntime().halt(0);
+        }
     }
 }
