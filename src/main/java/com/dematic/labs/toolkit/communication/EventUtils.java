@@ -10,6 +10,7 @@ import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.module.SimpleModule;
+import com.google.common.collect.Lists;
 import org.joda.time.DateTime;
 
 import java.io.IOException;
@@ -61,8 +62,19 @@ public final class EventUtils {
                 .parallel()
                 .mapToObj(value -> new Event(UUID.randomUUID(), EventSequenceNumber.next(), nodeId, null,
                         DateTime.now(), null, null))
-                        //supplier, accumulator, combiner
+                //supplier, accumulator, combiner
                 .collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
+    }
+
+    public static List<Event> generateEvents(final long numberOfEvents, final String nodeId,
+                                             final int timeBetweenEventsInSeconds) {
+        DateTime now = EventUtils.now();
+        final List<Event> events = Lists.newArrayList();
+        for (int i = 0; i < numberOfEvents; i++) {
+            events.add(new Event(UUID.randomUUID(), EventSequenceNumber.next(), nodeId, null, now, null, null));
+            now = now.plusSeconds(timeBetweenEventsInSeconds);
+        }
+        return events;
     }
 
     public static DateTime now() {
