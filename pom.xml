@@ -5,7 +5,7 @@
 
     <groupId>com.dematic.labs</groupId>
     <artifactId>common-dep</artifactId>
-    <version>1.0.0</version>
+    <version>1.0.1-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <!-- common dependencies for all projects -->
@@ -146,7 +146,7 @@
 
     <scm>
         <developerConnection>scm:git:https://github.com/Dematiclabs/common-dep/</developerConnection>
-      <tag>v$MVN_RELEASE_VERSION</tag>
+      <tag>HEAD</tag>
   </scm>
 
     <distributionManagement>
