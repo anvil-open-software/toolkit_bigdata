@@ -4,7 +4,7 @@
 
     <groupId>com.dematic.labs</groupId>
     <artifactId>toolkit</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <version>1.0.0</version>
     <packaging>jar</packaging>
 
     <properties>
@@ -33,7 +33,8 @@
 
     <scm>
         <developerConnection>scm:git:https://github.com/Dematiclabs/toolkit/</developerConnection>
-    </scm>
+      <tag>v1.0.0</tag>
+  </scm>
 
     <dependencies>
         <!-- AWS dependencies -->
