@@ -4,8 +4,11 @@ import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.amazonaws.services.dynamodbv2.document.DynamoDB;
 import com.amazonaws.services.dynamodbv2.document.Table;
 import com.amazonaws.services.dynamodbv2.model.TableDescription;
+import com.dematic.labs.toolkit.SystemPropertyRule;
 import com.dematic.labs.toolkit.aws.Connections;
+import com.dematic.labs.toolkit.aws.KinesisStreamRule;
 import com.dematic.labs.toolkit.communication.Event;
+import org.junit.Rule;
 import org.junit.Test;
 
 import static com.dematic.labs.toolkit.aws.Connections.CapacityUnit;
@@ -20,6 +23,9 @@ import static junit.framework.TestCase.assertNotNull;
  * Test dyanamo db provisioning
  */
 public class DynamoDBTest {
+
+    @Rule
+    public final SystemPropertyRule systemPropertyRule = new SystemPropertyRule();
 
     @Test
     public void testCapacityUnitFromSystemProperties() {
