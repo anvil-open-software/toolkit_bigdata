@@ -7,17 +7,22 @@ import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
 import com.amazonaws.retry.PredefinedRetryPolicies;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
+import com.amazonaws.services.dynamodbv2.document.DynamoDB;
+import com.amazonaws.services.dynamodbv2.document.Table;
 import com.amazonaws.services.dynamodbv2.model.CreateTableRequest;
 import com.amazonaws.services.dynamodbv2.model.DeleteTableRequest;
 import com.amazonaws.services.dynamodbv2.model.DescribeTableRequest;
 import com.amazonaws.services.dynamodbv2.model.DescribeTableResult;
 import com.amazonaws.services.dynamodbv2.model.ProvisionedThroughput;
+import com.amazonaws.services.dynamodbv2.model.ProvisionedThroughputDescription;
 import com.amazonaws.services.dynamodbv2.model.ResourceNotFoundException;
+import com.amazonaws.services.dynamodbv2.model.TableDescription;
 import com.amazonaws.services.dynamodbv2.model.TableStatus;
 import com.amazonaws.services.kinesis.AmazonKinesisAsyncClient;
 import com.amazonaws.services.kinesis.AmazonKinesisClient;
 import com.amazonaws.services.kinesis.model.CreateStreamRequest;
 import com.amazonaws.services.kinesis.model.DescribeStreamRequest;
+import com.google.common.base.Strings;
 import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,6 +34,9 @@ import static com.amazonaws.util.StringUtils.isNullOrEmpty;
 
 public final class Connections {
     private static final Logger LOGGER = LoggerFactory.getLogger(Connections.class);
+    public static final Long DEFAULT_DYNAMODB_DEFAULT_CAPACITY_UNITS = 10L;
+    public enum CapacityUnit { READ_CAPACITY_UNITS, WRITE_CAPACITY_UNITS };
+    public static final String DYNAMODB_SYSTEM_PROP_PREFIX = "dlabs.aws.dynamodb.";
 
     private Connections() {
     }
@@ -180,20 +188,95 @@ public final class Connections {
         return dynamoDBClient;
     }
 
+    /**
+     *
+     * @param tableName
+     * @param capacityType
+     * @return  capacityUnit from system properties if defined or DEFAULT_DYNAMODB_DEFAULT_CAPACITY_UNITS
+     */
+    public static Long getDynamoDBTableCapacityUnits(String tableName, CapacityUnit capacityType) {
+        String propertyName= getCapacitySystemPropertyName(tableName,capacityType);
+        String capacityUnitsStr = System.getProperty(propertyName);
+        Long capUnits = DEFAULT_DYNAMODB_DEFAULT_CAPACITY_UNITS;
+        if (!Strings.isNullOrEmpty(capacityUnitsStr) ) {
+            capUnits =  Long.valueOf(capacityUnitsStr);
+        }
+        LOGGER.info("DynamoDB capacity units " + propertyName + "=" + capUnits);
+        return capUnits;
+    }
+
+    /**
+     *
+     * @return append names together to get system property,
+     * i.e. dlabs.aws.dynamodb.your_table_name.READ_CAPACITY_UNITS
+     */
+    public static String getCapacitySystemPropertyName(String tableName, CapacityUnit capacityType) {
+        return  DYNAMODB_SYSTEM_PROP_PREFIX + tableName + "." + capacityType.name();
+    }
+
+    /**
+     *
+     * update provision if new values are different
+     */
+   public static boolean updateDynamoTableCapacity(AmazonDynamoDBClient dynamoDBClient, String tableName,
+                                                Long readCapacityUnits,Long writeCapacityUnits) {
+       boolean changedCapacity = false;
+       DynamoDB dynamoDB = new DynamoDB(dynamoDBClient);
+       Table table = dynamoDB.getTable(tableName);
+
+       // check to see if the new capacity values and old values differ
+       try {
+           TableDescription description = table.describe();
+           ProvisionedThroughputDescription throughput = description.getProvisionedThroughput();
+           if (throughput.getReadCapacityUnits().longValue() != readCapacityUnits.longValue()
+                   || throughput.getWriteCapacityUnits().longValue() != writeCapacityUnits.longValue()) {
+               // we will need to update since values differ
+               // see http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/JavaDocumentAPITablesExample.html
+               LOGGER.info("Modifying specified provisioned throughput for " + tableName);
+               LOGGER.warn("read units: new =" + readCapacityUnits + " old=" + throughput.getReadCapacityUnits());
+               LOGGER.warn("write units: new =" + writeCapacityUnits+ " old=" + throughput.getWriteCapacityUnits());
+
+               table.updateTable(new ProvisionedThroughput()
+                       .withReadCapacityUnits(readCapacityUnits).withWriteCapacityUnits(writeCapacityUnits));
+               // waitForActive has it's own try catch but needs to be in this if then statement and
+               waitForActive(dynamoDBClient, tableName);
+           }
+
+       } catch (Exception e) {
+           LOGGER.error("UpdateTable request failed for " + tableName);
+           LOGGER.error(e.getMessage());
+       }
+
+       return changedCapacity;
+   }
+    /**
+     *
+     * @param awsEndpointUrl
+     * @param clazz
+     * @param tablePrefix
+     * @return
+     */
     public static String createDynamoTable(final String awsEndpointUrl, final Class<?> clazz, final String tablePrefix) {
         final AmazonDynamoDBClient dynamoDBClient = getAmazonDynamoDBClient(awsEndpointUrl);
         final DynamoDBMapper dynamoDBMapper = new DynamoDBMapper(dynamoDBClient);
         final CreateTableRequest createTableRequest = dynamoDBMapper.generateCreateTableRequest(clazz);
         final String tableName = isNullOrEmpty(tablePrefix) ? createTableRequest.getTableName() :
                 String.format("%s%s", tablePrefix, createTableRequest.getTableName());
+
+        Long readCapacityUnits = getDynamoDBTableCapacityUnits(tableName, CapacityUnit.READ_CAPACITY_UNITS);
+        Long writeCapcityUnits =  getDynamoDBTableCapacityUnits(tableName, CapacityUnit.WRITE_CAPACITY_UNITS);
+
         if (dynamoTableExists(dynamoDBClient, tableName)) {
             waitForActive(dynamoDBClient, tableName);
+            // update throughput if needed
+            updateDynamoTableCapacity(dynamoDBClient, tableName, readCapacityUnits, writeCapcityUnits);
+
             return tableName;
         }
         try {
             // just using default read/write provisioning, will need to use a service to monitor and scale accordingly
             createTableRequest.setTableName(tableName);
-            createTableRequest.setProvisionedThroughput(new ProvisionedThroughput(10L, 10L));
+            createTableRequest.setProvisionedThroughput(new ProvisionedThroughput( readCapacityUnits, writeCapcityUnits));
             dynamoDBClient.createTable(createTableRequest);
         } catch (com.amazonaws.services.autoscaling.model.ResourceInUseException e) {
             throw new IllegalStateException("the table may already be getting created.", e);
