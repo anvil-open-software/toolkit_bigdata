@@ -192,7 +192,8 @@ public final class Connections {
      *
      * @param tableName
      * @param capacityType
-     * @return  capacityUnit from system properties if defined or DEFAULT_DYNAMODB_DEFAULT_CAPACITY_UNITS
+     * @return  capacityUnit from 1. system properties specific for table if defined 2. global if defined
+     * 3. otherwise DEFAULT_DYNAMODB_DEFAULT_CAPACITY_UNITS
      */
     public static Long getDynamoDBTableCapacityUnits(String tableName, CapacityUnit capacityType) {
         String propertyName= getCapacitySystemPropertyName(tableName,capacityType);
@@ -200,6 +201,11 @@ public final class Connections {
         Long capUnits = DEFAULT_DYNAMODB_DEFAULT_CAPACITY_UNITS;
         if (!Strings.isNullOrEmpty(capacityUnitsStr) ) {
             capUnits =  Long.valueOf(capacityUnitsStr);
+        } else { // try global setting
+            String globalCapacityUnitsStr = System.getProperty( DYNAMODB_SYSTEM_PROP_PREFIX + capacityType.name());
+            if (!Strings.isNullOrEmpty(globalCapacityUnitsStr) ) {
+                capUnits = Long.valueOf(globalCapacityUnitsStr);
+            }
         }
         LOGGER.info("DynamoDB capacity units " + propertyName + "=" + capUnits);
         return capUnits;
