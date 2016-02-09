@@ -83,6 +83,8 @@ public class KinesisEventClient {
                             break;
                         } catch (final Throwable any) {
                             LOGGER.error("Unexpected Error dispatching events : trying again : count = {}", count);
+                            // put to info level so we can see this separately from the debug statement
+                            LOGGER.info("AWS putRecord error:"+ any.toString());
                         }
                     } while (count++ <= retryCount);
                 });
