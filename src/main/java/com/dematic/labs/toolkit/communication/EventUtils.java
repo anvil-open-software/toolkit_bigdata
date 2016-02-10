@@ -61,7 +61,7 @@ public final class EventUtils {
         return LongStream.range(1, numberOfEvents + 1)
                 .parallel()
                 .mapToObj(value -> new Event(UUID.randomUUID(), EventSequenceNumber.next(), nodeId, null,
-                        DateTime.now().minusMinutes(3), null, null))
+                        DateTime.now(), null, null))
                 //supplier, accumulator, combiner
                 .collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
     }
