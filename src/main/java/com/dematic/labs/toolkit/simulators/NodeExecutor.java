@@ -36,7 +36,7 @@ public final class NodeExecutor {
     public NodeExecutor(final int nodeRangeMin, final int nodeRangeMax, final int maxEventsPerMinutePerNode,
                         final int avgInterArrivalTime, final String generatorId) {
         nodeRangeSize = nodeRangeMax - nodeRangeMin;
-        nodeRangeIds = IntStream.range(nodeRangeMin, nodeRangeMax).mapToObj(i -> "Node-" + i);
+        nodeRangeIds = IntStream.range(nodeRangeMin, nodeRangeMax).mapToObj(i -> generatorId + "-" + i);
         this.maxEventsPerMinutePerNode = maxEventsPerMinutePerNode;
         this.avgInterArrivalTime = avgInterArrivalTime;
         this.generatorId = generatorId;
@@ -68,7 +68,7 @@ public final class NodeExecutor {
 
     private void dispatchPerNode(final String kinesisEndpoint, final String kinesisStreamName, final String nodeId,
                                  final Long durationInMinutes, final CountDownLatch latch) {
-        LOGGER.info("NodeExecutor: Dispatching events for node {}", nodeId);
+        LOGGER.info("NodeExecutor: Dispatching events for {}", nodeId);
         try {
             // generate events for the specific amount of time in minutes for a specific node
             final CountdownTimer countdownTimer = new CountdownTimer();
@@ -86,7 +86,7 @@ public final class NodeExecutor {
                 }
 
                 if (countdownTimer.isFinished()) {
-                    LOGGER.info("NodeExecutor: Completed dispatching events for node {} : dispatched {} events",
+                    LOGGER.info("NodeExecutor: Completed dispatching events for {} : dispatched {} events",
                             nodeId, statistics.get(nodeId).get());
                     break;
                 }
