@@ -49,7 +49,7 @@ public final class NodeExecutor {
     public void execute(final Long durationInMinutes, final String kinesisEndpoint, final String kinesisStreamName) {
         final CountDownLatch latch = new CountDownLatch(nodeRangeSize);
         final ForkJoinPool forkJoinPool =
-                new ForkJoinPool(100, ForkJoinPool.defaultForkJoinWorkerThreadFactory, null, true);
+                new ForkJoinPool(nodeRangeSize, ForkJoinPool.defaultForkJoinWorkerThreadFactory, null, true);
         try {
             nodeRangeIds.forEach(nodeId -> forkJoinPool.submit(() -> {
                 dispatchPerNode(kinesisEndpoint, kinesisStreamName, nodeId, durationInMinutes, latch);
