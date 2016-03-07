@@ -3,6 +3,7 @@ package com.dematic.labs.toolkit.simulators;
 import com.dematic.labs.toolkit.CountdownTimer;
 import com.dematic.labs.toolkit.communication.Event;
 import com.dematic.labs.toolkit.communication.EventSequenceNumber;
+import com.dematic.labs.toolkit.communication.EventType;
 import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.RateLimiter;
 import org.joda.time.DateTime;
@@ -107,8 +108,8 @@ public final class NodeExecutor {
         // mean the event didn't go through, we could have had a network error and we are unable to tell if the
         // event made it or not, we are just going to dispatch another event
         dispatchEventsToKinesisWithRetries(kinesisEndpoint, kinesisStreamName,
-                singletonList(new Event(UUID.randomUUID(), EventSequenceNumber.next(), nodeId, null, now, generatorId,
-                        null)), 3);
+                singletonList(new Event(UUID.randomUUID(), EventSequenceNumber.next(), nodeId, UUID.randomUUID(),
+                        EventType.UNKNOWN, now, generatorId, null)), 3);
     }
 
     private static double eventsPerSecond(final int eventsPerMinutes) {
