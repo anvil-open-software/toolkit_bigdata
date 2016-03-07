@@ -75,6 +75,7 @@ public final class Event implements Serializable {
         this.nodeId = nodeId;
     }
 
+    @DynamoDBMarshalling(marshallerClass = UUIDMarshaller.class)
     @DynamoDBAttribute
     public UUID getJobId() {
         return jobId;
