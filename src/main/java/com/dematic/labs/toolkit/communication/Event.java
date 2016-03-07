@@ -21,7 +21,7 @@ public final class Event implements Serializable {
     private long sequence;
     private String nodeId; // Node-135
     private String jobId; // correlation Id
-    private String type;
+    private EventType type;
     private ReadableInstant timestamp; // time events are generated
     private String generatorId;
     private Long version;
@@ -30,7 +30,7 @@ public final class Event implements Serializable {
         sequence = EventSequenceNumber.next();
     }
 
-    public Event(final UUID id, final long sequence, final String nodeId, final String jobId, final String type,
+    public Event(final UUID id, final long sequence, final String nodeId, final String jobId, final EventType type,
                  final ReadableInstant timestamp, final String generatorId, final Long version) {
         this.id = id;
         this.sequence = sequence;
@@ -81,11 +81,11 @@ public final class Event implements Serializable {
 
     @DynamoDBAttribute
     public String getType() {
-        return type;
+        return type.name();
     }
 
-    public void setType(String type) {
-        this.type = type;
+    public void setType(final String type) {
+        this.type = EventType.valueOf(type);
     }
 
     @DynamoDBMarshalling(marshallerClass = ReadableInstantMarshaller.class)
@@ -103,7 +103,7 @@ public final class Event implements Serializable {
         return generatorId;
     }
 
-    public void setGeneratorId(String generatorId) {
+    public void setGeneratorId(final String generatorId) {
         this.generatorId = generatorId;
     }
 
