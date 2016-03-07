@@ -1,6 +1,11 @@
 package com.dematic.labs.toolkit.communication;
 
-import com.amazonaws.services.dynamodbv2.datamodeling.*;
+import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBAttribute;
+import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBHashKey;
+import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMarshalling;
+import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBRangeKey;
+import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBTable;
+import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBVersionAttribute;
 import org.joda.time.DateTime;
 import org.joda.time.ReadableInstant;
 
@@ -80,12 +85,12 @@ public final class Event implements Serializable {
     }
 
     @DynamoDBAttribute
-    public String getType() {
-        return type.name();
+    public EventType getType() {
+        return type;
     }
 
-    public void setType(final String type) {
-        this.type = EventType.valueOf(type);
+    public void setType(final EventType type) {
+        this.type = type;
     }
 
     @DynamoDBMarshalling(marshallerClass = ReadableInstantMarshaller.class)
