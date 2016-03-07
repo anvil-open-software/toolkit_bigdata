@@ -20,6 +20,7 @@ public final class Event implements Serializable {
     private UUID id;
     private long sequence;
     private String nodeId; // Node-135
+    private String jobId; // correlation Id
     private String type;
     private ReadableInstant timestamp; // time events are generated
     private String generatorId;
@@ -29,11 +30,12 @@ public final class Event implements Serializable {
         sequence = EventSequenceNumber.next();
     }
 
-    public Event(final UUID id, final long sequence, final String nodeId, final String type,
+    public Event(final UUID id, final long sequence, final String nodeId, final String jobId, final String type,
                  final ReadableInstant timestamp, final String generatorId, final Long version) {
         this.id = id;
         this.sequence = sequence;
         this.nodeId = nodeId;
+        this.jobId = jobId;
         this.type = type;
         this.timestamp = timestamp;
         this.generatorId = generatorId;
@@ -66,6 +68,15 @@ public final class Event implements Serializable {
 
     public void setNodeId(final String nodeId) {
         this.nodeId = nodeId;
+    }
+
+    @DynamoDBAttribute
+    public String getJobId() {
+        return jobId;
+    }
+
+    public void setJobId(final String jobId) {
+        this.jobId = jobId;
     }
 
     @DynamoDBAttribute
@@ -132,6 +143,7 @@ public final class Event implements Serializable {
         return Objects.equals(sequence, event.sequence) &&
                 Objects.equals(id, event.id) &&
                 Objects.equals(nodeId, event.nodeId) &&
+                Objects.equals(jobId, event.jobId) &&
                 Objects.equals(type, event.type) &&
                 Objects.equals(timestamp, event.timestamp) &&
                 Objects.equals(generatorId, event.generatorId) &&
@@ -140,7 +152,7 @@ public final class Event implements Serializable {
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, sequence, nodeId, type, timestamp, generatorId, version);
+        return Objects.hash(id, sequence, nodeId, jobId, type, timestamp, generatorId, version);
     }
 
     @Override
@@ -149,6 +161,7 @@ public final class Event implements Serializable {
                 "id=" + id +
                 ", sequence=" + sequence +
                 ", nodeId='" + nodeId + '\'' +
+                ", jobId='" + jobId + '\'' +
                 ", type='" + type + '\'' +
                 ", timestamp=" + timestamp +
                 ", generatorId='" + generatorId + '\'' +
