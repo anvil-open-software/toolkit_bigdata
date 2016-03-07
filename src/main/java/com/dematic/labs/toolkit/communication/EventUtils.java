@@ -137,7 +137,7 @@ public final class EventUtils {
             if (jobIdNode == null || isNullOrEmpty(jobIdNode.asText())) {
                 throw new IllegalStateException("Event does not have a jobId assigned");
             }
-            final UUID jobId = UUID.fromString(nodeIdNode.asText());
+            final UUID jobId = UUID.fromString(jobIdNode.asText());
 
             final JsonNode typeNode = jsonNode.get("type");
             final String type = typeNode == null ? null : typeNode.asText();
