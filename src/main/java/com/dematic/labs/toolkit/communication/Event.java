@@ -23,9 +23,9 @@ public final class Event implements Serializable {
     public static final String TABLE_NAME = "Events";
 
     private UUID id;
-    private long sequence;
+    private Long sequence;
     private String nodeId; // Node-135
-    private String jobId; // correlation Id
+    private UUID jobId; // correlation Id
     private EventType type;
     private ReadableInstant timestamp; // time events are generated
     private String generatorId;
@@ -35,7 +35,7 @@ public final class Event implements Serializable {
         sequence = EventSequenceNumber.next();
     }
 
-    public Event(final UUID id, final long sequence, final String nodeId, final String jobId, final EventType type,
+    public Event(final UUID id, final Long sequence, final String nodeId, final UUID jobId, final EventType type,
                  final ReadableInstant timestamp, final String generatorId, final Long version) {
         this.id = id;
         this.sequence = sequence;
@@ -62,7 +62,7 @@ public final class Event implements Serializable {
         return sequence;
     }
 
-    public void setSequence(final long sequence) {
+    public void setSequence(final Long sequence) {
         this.sequence = sequence;
     }
 
@@ -76,11 +76,11 @@ public final class Event implements Serializable {
     }
 
     @DynamoDBAttribute
-    public String getJobId() {
+    public UUID getJobId() {
         return jobId;
     }
 
-    public void setJobId(final String jobId) {
+    public void setJobId(final UUID jobId) {
         this.jobId = jobId;
     }
 
