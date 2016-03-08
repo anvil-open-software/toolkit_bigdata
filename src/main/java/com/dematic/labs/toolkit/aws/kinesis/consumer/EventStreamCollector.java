@@ -5,8 +5,12 @@ import com.amazonaws.services.kinesis.connectors.KinesisConnectorExecutorBase;
 import com.amazonaws.services.kinesis.connectors.KinesisConnectorRecordProcessorFactory;
 import com.amazonaws.services.kinesis.metrics.impl.NullMetricsFactory;
 import com.dematic.labs.toolkit.CountdownTimer;
+import com.dematic.labs.toolkit.aws.EventRunParms;
+import com.dematic.labs.toolkit.aws.summary.KinesisStreamSummary;
+import com.dematic.labs.toolkit.aws.summary.KinesisStreamSummaryPersister;
 import com.dematic.labs.toolkit.communication.Event;
 import com.google.common.collect.ConcurrentHashMultiset;
+import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -86,9 +90,15 @@ public final class EventStreamCollector extends KinesisConnectorExecutorBase<Eve
         final String appName = args[0];
         final String kinesisEndpoint = args[1];
         final String kinesisStream = args[2];
+        EventRunParms runParms = new EventRunParms(args);
+        runParms.setKinesisInputStream(kinesisStream);
+        //Michael I am leaving the use of default endpoint
+        runParms.setDynamoDBEndPoint(KinesisConnectorConfiguration.DEFAULT_DYNAMODB_ENDPOINT);
+
         //noinspection finally
         try {
             final int numberOfMinutes = Integer.valueOf(args[3]);
+            runParms.setDuration(numberOfMinutes);
             final int numberOfShards = getNumberOfShards(kinesisEndpoint, kinesisStream);
             collector = new EventStreamCollector(appName, kinesisEndpoint, kinesisStream, numberOfShards);
             executorService = collector.startCollectingStatistics();
@@ -110,6 +120,9 @@ public final class EventStreamCollector extends KinesisConnectorExecutorBase<Eve
                     // collect the final stats
                     LOGGER.info("Final Event Count = {}", collector.getEventCountAsOfNow());
                     LOGGER.info("Final Event Duplicate Count = {}", collector.getEventDuplicateCountAsOfNow());
+
+                    // write results to DynamoDB
+                    persistStreamResults(runParms, collector);
                 } catch (final Throwable any) {
                     LOGGER.error("Unexpected Final Collection Error", any);
                 } finally {
@@ -133,5 +146,18 @@ public final class EventStreamCollector extends KinesisConnectorExecutorBase<Eve
             // kill everything
             System.exit(0);
         }
+    }
+
+    /**
+     * push summary results to new row in dynamodb
+     */
+    public static void persistStreamResults(EventRunParms runParms, final EventStreamCollector eventCollector) {
+        runParms.setRunEndTime(DateTime.now());
+        final KinesisStreamSummary summary = new KinesisStreamSummary(runParms);
+        summary.setTotalEventCount((long) eventCollector.getEventCountAsOfNow());
+        summary.setTotalDuplicateEventCount((long) eventCollector.getEventDuplicateCountAsOfNow());
+        final KinesisStreamSummaryPersister reporter =
+                new KinesisStreamSummaryPersister(runParms.getDynamoDBEndPoint(), null);
+        reporter.persistSummary(summary);
     }
 }

@@ -45,8 +45,8 @@ public class DynamoDBTest {
     @Test
     public void testCapacityUnitFromGlobalSystemProperties() {
 
-        Long globalReadCPU = 22L;
-        Long globalWriteCPU = 161L;
+        Long globalReadCPU = 2L;
+        Long globalWriteCPU = 7L;
         String tableName = "testCapacityUnitFromGlobalSystemProperties";
 
         clearGlobalCapacity();
@@ -64,10 +64,12 @@ public class DynamoDBTest {
 
     @Test
     public void testCapacityUnitFromSystemProperties() {
-        Long readCPU = 31L;
-        Long writeCPU = 241L;
-        Long globalReadCPU = 22L;
-        Long globalWriteCPU = 161L;
+
+        // keep numbers low so we don't have to pay..
+        Long readCPU = 3L;
+        Long writeCPU = 5L;
+        Long globalReadCPU = 8L;
+        Long globalWriteCPU = 6L;
         String tableName = "testGetSystemProperties";
 
         clearGlobalCapacity();
