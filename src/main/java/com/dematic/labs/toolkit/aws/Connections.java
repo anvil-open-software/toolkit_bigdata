@@ -35,7 +35,7 @@ import static com.amazonaws.util.StringUtils.isNullOrEmpty;
 public final class Connections {
     private static final Logger LOGGER = LoggerFactory.getLogger(Connections.class);
     public static final Long DEFAULT_DYNAMODB_DEFAULT_CAPACITY_UNITS = 10L;
-    public enum CapacityUnit { READ_CAPACITY_UNITS, WRITE_CAPACITY_UNITS };
+    public enum CapacityUnit { READ_CAPACITY_UNITS, WRITE_CAPACITY_UNITS }
     public static final String DYNAMODB_SYSTEM_PROP_PREFIX = "dlabs.aws.dynamodb.";
 
     private Connections() {
