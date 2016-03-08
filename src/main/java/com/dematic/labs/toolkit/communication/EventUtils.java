@@ -78,6 +78,23 @@ public final class EventUtils {
         return events;
     }
 
+    public static List<Event> generateCycleTimeEvents(final long numberOfEvents, final String nodeId, final UUID jobId,
+                                                      final int timeBetweenEventsInSeconds) {
+        DateTime now = EventUtils.now();
+        final List<Event> events = Lists.newArrayList();
+        for (int i = 0; i < numberOfEvents; i++) {
+            final EventType eventType = isEven(i) ? EventType.START : EventType.END;
+                    events.add(new Event(UUID.randomUUID(), EventSequenceNumber.next(), nodeId, jobId, eventType, now,
+                            null, null));
+            now = now.plusSeconds(timeBetweenEventsInSeconds);
+        }
+        return events;
+    }
+
+    private static boolean isEven(final int num) {
+        return ((num % 2) == 0);
+    }
+
     public static DateTime now() {
         return DateTime.now().toDateTimeISO();
     }
