@@ -58,7 +58,7 @@ public final class Event implements Serializable {
     }
 
     @DynamoDBAttribute
-    public long getSequence() {
+    public Long getSequence() {
         return sequence;
     }
 
