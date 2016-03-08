@@ -1,6 +1,11 @@
 package com.dematic.labs.toolkit.communication;
 
-import com.amazonaws.services.dynamodbv2.datamodeling.*;
+import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBAttribute;
+import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBHashKey;
+import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMarshalling;
+import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBRangeKey;
+import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBTable;
+import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBVersionAttribute;
 import org.joda.time.DateTime;
 import org.joda.time.ReadableInstant;
 
@@ -18,10 +23,10 @@ public final class Event implements Serializable {
     public static final String TABLE_NAME = "Events";
 
     private UUID id;
-    private long sequence;
+    private Long sequence;
     private String nodeId; // Node-135
-    private String jobId; // correlation Id
-    private String type;
+    private UUID jobId; // correlation Id
+    private EventType type;
     private ReadableInstant timestamp; // time events are generated
     private String generatorId;
     private Long version;
@@ -30,7 +35,7 @@ public final class Event implements Serializable {
         sequence = EventSequenceNumber.next();
     }
 
-    public Event(final UUID id, final long sequence, final String nodeId, final String jobId, final String type,
+    public Event(final UUID id, final Long sequence, final String nodeId, final UUID jobId, final EventType type,
                  final ReadableInstant timestamp, final String generatorId, final Long version) {
         this.id = id;
         this.sequence = sequence;
@@ -53,11 +58,11 @@ public final class Event implements Serializable {
     }
 
     @DynamoDBAttribute
-    public long getSequence() {
+    public Long getSequence() {
         return sequence;
     }
 
-    public void setSequence(final long sequence) {
+    public void setSequence(final Long sequence) {
         this.sequence = sequence;
     }
 
@@ -70,21 +75,23 @@ public final class Event implements Serializable {
         this.nodeId = nodeId;
     }
 
+    @DynamoDBMarshalling(marshallerClass = UUIDMarshaller.class)
     @DynamoDBAttribute
-    public String getJobId() {
+    public UUID getJobId() {
         return jobId;
     }
 
-    public void setJobId(final String jobId) {
+    public void setJobId(final UUID jobId) {
         this.jobId = jobId;
     }
 
+    @DynamoDBMarshalling(marshallerClass = EventTypeMarshaller.class)
     @DynamoDBAttribute
-    public String getType() {
+    public EventType getType() {
         return type;
     }
 
-    public void setType(String type) {
+    public void setType(final EventType type) {
         this.type = type;
     }
 
@@ -103,7 +110,7 @@ public final class Event implements Serializable {
         return generatorId;
     }
 
-    public void setGeneratorId(String generatorId) {
+    public void setGeneratorId(final String generatorId) {
         this.generatorId = generatorId;
     }
 

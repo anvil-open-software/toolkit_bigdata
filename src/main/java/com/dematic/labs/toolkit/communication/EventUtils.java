@@ -60,8 +60,8 @@ public final class EventUtils {
         // startInclusive the (inclusive) initial value, endExclusive the exclusive upper bound
         return LongStream.range(1, numberOfEvents + 1)
                 .parallel()
-                .mapToObj(value -> new Event(UUID.randomUUID(), EventSequenceNumber.next(), nodeId, null,
-                        DateTime.now(), null, null))
+                .mapToObj(value -> new Event(UUID.randomUUID(), EventSequenceNumber.next(), nodeId, UUID.randomUUID(),
+                        EventType.UNKNOWN, DateTime.now(), null, null))
                 //supplier, accumulator, combiner
                 .collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
     }
@@ -71,10 +71,28 @@ public final class EventUtils {
         DateTime now = EventUtils.now();
         final List<Event> events = Lists.newArrayList();
         for (int i = 0; i < numberOfEvents; i++) {
-            events.add(new Event(UUID.randomUUID(), EventSequenceNumber.next(), nodeId, null, now, null, null));
+            events.add(new Event(UUID.randomUUID(), EventSequenceNumber.next(), nodeId, UUID.randomUUID(),
+                    EventType.UNKNOWN, now, null, null));
             now = now.plusSeconds(timeBetweenEventsInSeconds);
         }
         return events;
+    }
+
+    public static List<Event> generateCycleTimeEvents(final long numberOfEvents, final String nodeId, final UUID jobId,
+                                                      final int timeBetweenEventsInSeconds) {
+        DateTime now = EventUtils.now();
+        final List<Event> events = Lists.newArrayList();
+        for (int i = 0; i < numberOfEvents; i++) {
+            final EventType eventType = isEven(i) ? EventType.START : EventType.END;
+                    events.add(new Event(UUID.randomUUID(), EventSequenceNumber.next(), nodeId, jobId, eventType, now,
+                            null, null));
+            now = now.plusSeconds(timeBetweenEventsInSeconds);
+        }
+        return events;
+    }
+
+    private static boolean isEven(final int num) {
+        return ((num % 2) == 0);
     }
 
     public static DateTime now() {
@@ -97,7 +115,8 @@ public final class EventUtils {
             jsonGenerator.writeStringField("id", event.getId().toString());
             jsonGenerator.writeNumberField("sequence", event.getSequence());
             jsonGenerator.writeStringField("nodeId", event.getNodeId());
-            jsonGenerator.writeStringField("type", event.getType());
+            jsonGenerator.writeStringField("jobId", event.getJobId().toString());
+            jsonGenerator.writeStringField("type", event.getType().name());
             jsonGenerator.writeStringField("timestamp", event.getTimestamp().toString());
             jsonGenerator.writeStringField("generatorId", event.getGeneratorId());
             final Long version = event.getVersion();
@@ -131,6 +150,12 @@ public final class EventUtils {
             }
             final String nodeId = nodeIdNode.asText();
 
+            final JsonNode jobIdNode = jsonNode.get("jobId");
+            if (jobIdNode == null || isNullOrEmpty(jobIdNode.asText())) {
+                throw new IllegalStateException("Event does not have a jobId assigned");
+            }
+            final UUID jobId = UUID.fromString(jobIdNode.asText());
+
             final JsonNode typeNode = jsonNode.get("type");
             final String type = typeNode == null ? null : typeNode.asText();
 
@@ -146,7 +171,7 @@ public final class EventUtils {
             final JsonNode versionNode = jsonNode.get("version");
             final Long version = versionNode == null ? null : versionNode.asLong();
 
-            return new Event(uuid, sequence, nodeId, type, timestamp, generatorId, version);
+            return new Event(uuid, sequence, nodeId, jobId, EventType.valueOf(type), timestamp, generatorId, version);
         }
 
         // use a lib

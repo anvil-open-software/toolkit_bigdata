@@ -15,8 +15,8 @@ public final class EventTest {
     @Test
     public void convertEventToJson() throws IOException {
         // test event to json then to event
-        final Event rawEvent = new Event(UUID.randomUUID(), EventSequenceNumber.next(), "Node-1", "PutWall",
-                DateTime.now(), "UnitTestGenerated", 1L);
+        final Event rawEvent = new Event(UUID.randomUUID(), EventSequenceNumber.next(), "Node-1", UUID.randomUUID(),
+                EventType.UNKNOWN, DateTime.now(), "UnitTestGenerated", 1L);
         final String jsonEvent = EventUtils.eventToJson(rawEvent);
         final Event fromJson = EventUtils.jsonToEvent(jsonEvent);
         assertThat(rawEvent.getId(), is(fromJson.getId()));
