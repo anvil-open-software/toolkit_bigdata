@@ -85,6 +85,7 @@ public final class Event implements Serializable {
         this.jobId = jobId;
     }
 
+    @DynamoDBMarshalling(marshallerClass = EventTypeMarshaller.class)
     @DynamoDBAttribute
     public EventType getType() {
         return type;
