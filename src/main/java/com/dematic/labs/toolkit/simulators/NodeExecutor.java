@@ -4,6 +4,7 @@ import com.dematic.labs.toolkit.CountdownTimer;
 import com.dematic.labs.toolkit.communication.Event;
 import com.dematic.labs.toolkit.communication.EventSequenceNumber;
 import com.dematic.labs.toolkit.communication.EventType;
+import com.google.common.base.Strings;
 import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.RateLimiter;
 import org.joda.time.DateTime;
@@ -32,15 +33,17 @@ public final class NodeExecutor {
     private final int maxEventsPerMinutePerNode;
     private final int avgInterArrivalTime;
     private final String generatorId;
+    private final String groupBy;
     private final Map<String, AtomicInteger> statistics;
 
     public NodeExecutor(final int nodeRangeMin, final int nodeRangeMax, final int maxEventsPerMinutePerNode,
-                        final int avgInterArrivalTime, final String generatorId) {
+                        final int avgInterArrivalTime, final String generatorId, final String groupBy) {
         nodeRangeSize = nodeRangeMax - nodeRangeMin;
         nodeRangeIds = IntStream.range(nodeRangeMin, nodeRangeMax).mapToObj(i -> generatorId + "-" + i);
         this.maxEventsPerMinutePerNode = maxEventsPerMinutePerNode;
         this.avgInterArrivalTime = avgInterArrivalTime;
         this.generatorId = generatorId;
+        this.groupBy = groupBy;
         statistics = Maps.newConcurrentMap();
         LOGGER.info("NodeExecutor: created with a nodeRangeSize {} between {} and {} with maxEventsPerMinutePerNode {} "
                         + "and an averger inter-arrival time of {} and generatorId {}", nodeRangeSize, nodeRangeMin,
@@ -74,16 +77,20 @@ public final class NodeExecutor {
             // generate events for the specific amount of time in minutes for a specific node
             final CountdownTimer countdownTimer = new CountdownTimer();
             countdownTimer.countDown((int) TimeUnit.MINUTES.toMinutes(durationInMinutes));
+
             final RateLimiter rateLimiter = RateLimiter.create(eventsPerSecond(maxEventsPerMinutePerNode));
             final Random randomNumberGenerator = new Random();
-            // dispatch until duration ends at a rate specified by max events
-            while (true) {
-                dispatch(kinesisEndpoint, kinesisStreamName, nodeId, rateLimiter, randomNumberGenerator);
 
-                if (statistics.containsKey(nodeId)) {
-                    statistics.get(nodeId).getAndIncrement();
+            while (true) {
+                if (Strings.isNullOrEmpty(groupBy)) {
+                    // dispatchSingleEvent until duration ends at a rate specified by max events
+                    dispatchSingleEvent(kinesisEndpoint, kinesisStreamName, nodeId, rateLimiter, randomNumberGenerator);
+                } else if ("jobId".equalsIgnoreCase(groupBy)) {
+                    // dispatchSingleEvents in pairs groupBy 'jobId' until duration ends at a rate specified by max events
+                    dispatchSingleEventByJobId(kinesisEndpoint, kinesisStreamName, nodeId, rateLimiter,
+                            randomNumberGenerator);
                 } else {
-                    statistics.put(nodeId, new AtomicInteger(1));
+                    throw new IllegalStateException(String.format("NodeExecutor: Unexpected parameter >%s<", groupBy));
                 }
 
                 if (countdownTimer.isFinished()) {
@@ -97,19 +104,58 @@ public final class NodeExecutor {
         }
     }
 
-    private void dispatch(final String kinesisEndpoint, final String kinesisStreamName, final String nodeId,
-                          final RateLimiter rateLimiter, final Random randomNumberGenerator) {
+    private void dispatchSingleEvent(final String kinesisEndpoint, final String kinesisStreamName, final String nodeId,
+                                     final RateLimiter rateLimiter, final Random randomNumberGenerator) {
         rateLimiter.acquire();
-        //todo: should datetime be passed in
         // event time is based on the avgInterArrivalTime * bounded random int, 6 is the upper bounds, inclusive
+
         final DateTime now = now().plusSeconds(randomNumberGenerator.nextInt(7) * avgInterArrivalTime);
-        // todo: come back to batching and errors
-        // if we fail we will try to just dispatch another event, because of how kinesis works, a failure doesn't
+
+        // if we fail we will try to just dispatchSingleEvent another event, because of how kinesis works, a failure doesn't
         // mean the event didn't go through, we could have had a network error and we are unable to tell if the
-        // event made it or not, we are just going to dispatch another event
+        // event made it or not, we are just going to dispatchSingleEvent another event
         dispatchEventsToKinesisWithRetries(kinesisEndpoint, kinesisStreamName,
                 singletonList(new Event(UUID.randomUUID(), EventSequenceNumber.next(), nodeId, UUID.randomUUID(),
                         EventType.UNKNOWN, now, generatorId, null)), 3);
+        // add the event count to statistics
+        incrementEventCount(nodeId, statistics);
+    }
+
+    private void dispatchSingleEventByJobId(final String kinesisEndpoint, final String kinesisStreamName,
+                                            final String nodeId, final RateLimiter rateLimiter,
+                                            final Random randomNumberGenerator) {
+        rateLimiter.acquire();
+        // event time is based on the avgInterArrivalTime * bounded random int, 6 is the upper bounds, inclusive, and
+        // end needs to come after start
+        final DateTime start = now().plusSeconds(randomNumberGenerator.nextInt(7) * avgInterArrivalTime);
+        final DateTime end = start.plusSeconds(randomNumberGenerator.nextInt(7) * avgInterArrivalTime);
+
+        // if we fail we will try to just dispatchSingleEvent another event, because of how kinesis works, a failure doesn't
+        // mean the event didn't go through, we could have had a network error and we are unable to tell if the
+        // event made it or not, we are just going to dispatchSingleEvent another event
+
+        final UUID jobId = UUID.randomUUID();
+        // dispatch a start based on jobId
+        dispatchEventsToKinesisWithRetries(kinesisEndpoint, kinesisStreamName,
+                singletonList(new Event(UUID.randomUUID(), EventSequenceNumber.next(), nodeId, jobId, EventType.START,
+                        start, generatorId, null)), 3);
+        // add the event count to statistics
+        incrementEventCount(nodeId, statistics);
+
+        // dispatch a end event based on jobId
+        dispatchEventsToKinesisWithRetries(kinesisEndpoint, kinesisStreamName,
+                singletonList(new Event(UUID.randomUUID(), EventSequenceNumber.next(), nodeId, jobId, EventType.END,
+                        end, generatorId, null)), 3);
+        // add the event count to statistics
+        incrementEventCount(nodeId, statistics);
+    }
+
+    private static void incrementEventCount(final String nodeId, final Map<String, AtomicInteger> statistics) {
+        if (statistics.containsKey(nodeId)) {
+            statistics.get(nodeId).getAndIncrement();
+        } else {
+            statistics.put(nodeId, new AtomicInteger(1));
+        }
     }
 
     private static double eventsPerSecond(final int eventsPerMinutes) {
@@ -117,11 +163,11 @@ public final class NodeExecutor {
     }
 
     public static void main(String[] args) {
-        if (args == null || args.length != 8) {
-            // 100 200 30 2 3 https://kinesis.us-west-2.amazonaws.com  node_test unittest
+        if (args == null || args.length < 8) {
+            // 100 200 30 2 3 https://kinesis.us-west-2.amazonaws.com  node_test unittest jobId
             throw new IllegalArgumentException("NodeExecutor: Please ensure the following are set: nodeRangeMin, " +
-                    "nodeRangeMax, maxEventsPerMinutePerNode, avgInterArrivalTime, duriationInMinutes, kinesisEndpoint,"
-                    + "kinesisStreamName, generatorId");
+                    "nodeRangeMax, maxEventsPerMinutePerNode, avgArrivalTime, duriationInMinutes, kinesisEndpoint,"
+                    + "kinesisStreamName, generatorId, and optional groupBy");
         }
         final int nodeRangeMin = Integer.valueOf(args[0]);
         final int nodeRangeMax = Integer.valueOf(args[1]);
@@ -131,13 +177,15 @@ public final class NodeExecutor {
         final String kinesisEndpoint = args[5];
         final String kinesisStreamName = args[6];
         final String generatorId = args[7];
+        // for now, we will just groupBy jobId
+        final String groupBy = args.length == 9 ? args[8] : null;
 
         try {
             final NodeExecutor nodeExecutor = new NodeExecutor(nodeRangeMin, nodeRangeMax, maxEventsPerMinutePerNode,
-                    avgInterArrivalTime, generatorId);
+                    avgInterArrivalTime, generatorId, groupBy);
             nodeExecutor.execute(duriationInMinutes, kinesisEndpoint, kinesisStreamName);
         } finally {
-           Runtime.getRuntime().halt(0);
+            Runtime.getRuntime().halt(0);
         }
     }
 }
