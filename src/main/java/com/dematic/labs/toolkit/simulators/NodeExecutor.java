@@ -1,5 +1,7 @@
 package com.dematic.labs.toolkit.simulators;
 
+import com.amazonaws.ClientConfiguration;
+import com.amazonaws.services.kinesis.AmazonKinesisClient;
 import com.dematic.labs.toolkit.CountdownTimer;
 import com.dematic.labs.toolkit.communication.Event;
 import com.dematic.labs.toolkit.communication.EventSequenceNumber;
@@ -21,12 +23,13 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-import static com.dematic.labs.toolkit.aws.kinesis.KinesisEventClient.dispatchEventsToKinesisWithRetries;
-import static com.dematic.labs.toolkit.communication.EventUtils.*;
-import static java.util.Collections.singletonList;
+import static com.dematic.labs.toolkit.aws.Connections.getAmazonKinesisClient;
+import static com.dematic.labs.toolkit.aws.kinesis.KinesisEventClient.dispatchSingleEventsToKinesisWithRetries;
+import static com.dematic.labs.toolkit.communication.EventUtils.now;
 
 public final class NodeExecutor {
     private static final Logger LOGGER = LoggerFactory.getLogger(NodeExecutor.class);
+    private static final int RETRY = 3;
 
     private final int nodeRangeSize;
     private final Stream<String> nodeRangeIds;
@@ -73,6 +76,11 @@ public final class NodeExecutor {
     private void dispatchPerNode(final String kinesisEndpoint, final String kinesisStreamName, final String nodeId,
                                  final Long durationInMinutes, final CountDownLatch latch) {
         LOGGER.info("NodeExecutor: Dispatching events for {}", nodeId);
+
+        final ClientConfiguration clientConfiguration = new ClientConfiguration();
+        clientConfiguration.withMaxConnections(150).withMaxErrorRetry(RETRY);
+        final AmazonKinesisClient amazonKinesisClient = getAmazonKinesisClient(kinesisEndpoint, clientConfiguration);
+
         try {
             // generate events for the specific amount of time in minutes for a specific node
             final CountdownTimer countdownTimer = new CountdownTimer();
@@ -84,10 +92,10 @@ public final class NodeExecutor {
             while (true) {
                 if (Strings.isNullOrEmpty(groupBy)) {
                     // dispatchSingleEvent until duration ends at a rate specified by max events
-                    dispatchSingleEvent(kinesisEndpoint, kinesisStreamName, nodeId, rateLimiter, randomNumberGenerator);
+                    dispatchSingleEvent(amazonKinesisClient, kinesisStreamName, nodeId, rateLimiter, randomNumberGenerator);
                 } else if ("jobId".equalsIgnoreCase(groupBy)) {
                     // dispatchSingleEvents in pairs groupBy 'jobId' until duration ends at a rate specified by max events
-                    dispatchSingleEventByJobId(kinesisEndpoint, kinesisStreamName, nodeId, rateLimiter,
+                    dispatchSingleEventByJobId(amazonKinesisClient, kinesisStreamName, nodeId, rateLimiter,
                             randomNumberGenerator);
                 } else {
                     throw new IllegalStateException(String.format("NodeExecutor: Unexpected parameter >%s<", groupBy));
@@ -104,8 +112,9 @@ public final class NodeExecutor {
         }
     }
 
-    private void dispatchSingleEvent(final String kinesisEndpoint, final String kinesisStreamName, final String nodeId,
-                                     final RateLimiter rateLimiter, final Random randomNumberGenerator) {
+    private void dispatchSingleEvent(final AmazonKinesisClient kinesisEventClient, final String kinesisStreamName,
+                                     final String nodeId, final RateLimiter rateLimiter,
+                                     final Random randomNumberGenerator) {
         rateLimiter.acquire();
         // event time is based on the avgInterArrivalTime * bounded random int, 6 is the upper bounds, inclusive
 
@@ -114,16 +123,17 @@ public final class NodeExecutor {
         // if we fail we will try to just dispatchSingleEvent another event, because of how kinesis works, a failure doesn't
         // mean the event didn't go through, we could have had a network error and we are unable to tell if the
         // event made it or not, we are just going to dispatchSingleEvent another event
-        dispatchEventsToKinesisWithRetries(kinesisEndpoint, kinesisStreamName,
-                singletonList(new Event(UUID.randomUUID(), EventSequenceNumber.next(), nodeId, UUID.randomUUID(),
-                        EventType.UNKNOWN, now, generatorId, null)), 3);
+        dispatchSingleEventsToKinesisWithRetries(kinesisEventClient, kinesisStreamName, new Event(UUID.randomUUID(),
+                        EventSequenceNumber.next(), nodeId, UUID.randomUUID(), EventType.UNKNOWN, now, generatorId, null),
+                RETRY);
+
         // add the event count to statistics
         incrementEventCount(nodeId, statistics);
     }
 
-    private void dispatchSingleEventByJobId(final String kinesisEndpoint, final String kinesisStreamName,
-                                            final String nodeId, final RateLimiter rateLimiter,
-                                            final Random randomNumberGenerator) {
+    private void dispatchSingleEventByJobId(final AmazonKinesisClient kinesisEventClient,
+                                            final String kinesisStreamName, final String nodeId,
+                                            final RateLimiter rateLimiter, final Random randomNumberGenerator) {
         rateLimiter.acquire();
         // event time is based on the avgInterArrivalTime * bounded random int, 6 is the upper bounds, inclusive, and
         // end needs to come after start
@@ -136,16 +146,16 @@ public final class NodeExecutor {
 
         final UUID jobId = UUID.randomUUID();
         // dispatch a start based on jobId
-        dispatchEventsToKinesisWithRetries(kinesisEndpoint, kinesisStreamName,
-                singletonList(new Event(UUID.randomUUID(), EventSequenceNumber.next(), nodeId, jobId, EventType.START,
-                        start, generatorId, null)), 3);
+        dispatchSingleEventsToKinesisWithRetries(kinesisEventClient, kinesisStreamName,
+                new Event(UUID.randomUUID(), EventSequenceNumber.next(), nodeId, jobId, EventType.START, start,
+                        generatorId, null), RETRY);
         // add the event count to statistics
         incrementEventCount(nodeId, statistics);
 
         // dispatch a end event based on jobId
-        dispatchEventsToKinesisWithRetries(kinesisEndpoint, kinesisStreamName,
-                singletonList(new Event(UUID.randomUUID(), EventSequenceNumber.next(), nodeId, jobId, EventType.END,
-                        end, generatorId, null)), 3);
+        dispatchSingleEventsToKinesisWithRetries(kinesisEventClient, kinesisStreamName,
+                new Event(UUID.randomUUID(), EventSequenceNumber.next(), nodeId, jobId, EventType.END, end, generatorId,
+                        null), RETRY);
         // add the event count to statistics
         incrementEventCount(nodeId, statistics);
     }
