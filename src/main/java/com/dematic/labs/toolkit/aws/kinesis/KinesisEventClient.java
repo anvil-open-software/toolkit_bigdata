@@ -1,8 +1,6 @@
 package com.dematic.labs.toolkit.aws.kinesis;
 
-import com.amazonaws.ClientConfiguration;
 import com.amazonaws.handlers.AsyncHandler;
-import com.amazonaws.retry.PredefinedRetryPolicies;
 import com.amazonaws.services.kinesis.AmazonKinesisAsyncClient;
 import com.amazonaws.services.kinesis.AmazonKinesisClient;
 import com.amazonaws.services.kinesis.model.PutRecordRequest;
@@ -30,7 +28,11 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Random;
 import java.util.Set;
-import java.util.concurrent.*;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -61,33 +63,27 @@ public class KinesisEventClient {
     private KinesisEventClient() {
     }
 
-    public static void dispatchEventsToKinesisWithRetries(final String kinesisEndpoint, final String kinesisInputStream,
-                                                          final List<Event> events, final int retryCount) {
-        final ClientConfiguration clientConfiguration = new ClientConfiguration();
-        clientConfiguration.withMaxConnections(150).withMaxErrorRetry(retryCount);
-        final AmazonKinesisClient amazonKinesisClient = getAmazonKinesisClient(kinesisEndpoint, clientConfiguration);
-        events.stream()
-                .parallel()
-                .forEach(event -> {
-                    int count = 1;
-                    do {
-                        try {
-                            final PutRecordRequest putRecordRequest = new PutRecordRequest();
-                            putRecordRequest.setStreamName(kinesisInputStream);
-                            putRecordRequest.setData(ByteBuffer.wrap(eventToJsonByteArray(event)));
-                            // group by partitionKey
-                            putRecordRequest.setPartitionKey(randomPartitionKey());
-                            final PutRecordResult putRecordResult =
-                                    amazonKinesisClient.putRecord(putRecordRequest);
-                            LOGGER.debug("pushed event >{}< to shard>{}<", event.getId(), putRecordResult.getShardId());
-                            break;
-                        } catch (final Throwable any) {
-                            LOGGER.error("Unexpected Error dispatching events : trying again : count = {}", count);
-                            // put to info level so we can see this separately from the debug statement
-                            LOGGER.info("AWS putRecord error:"+ any.toString());
-                        }
-                    } while (count++ <= retryCount);
-                });
+    public static void dispatchSingleEventsToKinesisWithRetries(final AmazonKinesisClient kinesisEventClient,
+                                                                final String kinesisInputStream, final Event event,
+                                                                final int retryCount) {
+        int count = 1;
+        do {
+            try {
+                final PutRecordRequest putRecordRequest = new PutRecordRequest();
+                putRecordRequest.setStreamName(kinesisInputStream);
+                putRecordRequest.setData(ByteBuffer.wrap(eventToJsonByteArray(event)));
+                // group by partitionKey
+                putRecordRequest.setPartitionKey(randomPartitionKey());
+                final PutRecordResult putRecordResult =
+                        kinesisEventClient.putRecord(putRecordRequest);
+                LOGGER.debug("pushed event >{}< to shard>{}<", event.getId(), putRecordResult.getShardId());
+                break;
+            } catch (final Throwable any) {
+                LOGGER.error("Unexpected Error dispatching events : trying again : count = {}", count);
+                // put to info level so we can see this separately from the debug statement
+                LOGGER.info("AWS putRecord error:"+ any.toString());
+            }
+        } while (count++ <= retryCount);
     }
 
     public static void dispatchEventsToKinesisIgnoringExceptions(final String kinesisEndpoint,
