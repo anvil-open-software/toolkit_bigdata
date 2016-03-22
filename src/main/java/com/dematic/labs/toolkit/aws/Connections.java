@@ -7,6 +7,7 @@ import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
 import com.amazonaws.retry.PredefinedRetryPolicies;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
+import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapperConfig;
 import com.amazonaws.services.dynamodbv2.document.DynamoDB;
 import com.amazonaws.services.dynamodbv2.document.Table;
 import com.amazonaws.services.dynamodbv2.model.CreateTableRequest;
@@ -31,6 +32,7 @@ import redis.clients.jedis.JedisPool;
 import java.util.concurrent.Executors;
 
 import static com.amazonaws.util.StringUtils.isNullOrEmpty;
+import static com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapperConfig.TableNameOverride.withTableNamePrefix;
 
 public final class Connections {
     private static final Logger LOGGER = LoggerFactory.getLogger(Connections.class);
@@ -186,6 +188,11 @@ public final class Connections {
         final AmazonDynamoDBClient dynamoDBClient = new AmazonDynamoDBClient(getAWSCredentialsProvider());
         dynamoDBClient.setEndpoint(awsEndpointUrl);
         return dynamoDBClient;
+    }
+
+    public static DynamoDBMapper getDynamoDBMapper(final String dynamoDBEndpoint, final String tablePrefix) {
+        final AmazonDynamoDBClient dynamoDBClient = getAmazonDynamoDBClient(dynamoDBEndpoint);
+        return new DynamoDBMapper(dynamoDBClient, new DynamoDBMapperConfig(withTableNamePrefix(tablePrefix)));
     }
 
     /**
