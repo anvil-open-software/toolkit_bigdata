@@ -7,19 +7,16 @@ import com.dematic.labs.toolkit.communication.Event;
 import com.dematic.labs.toolkit.communication.EventSequenceNumber;
 import com.dematic.labs.toolkit.communication.EventType;
 import com.google.common.base.Strings;
-import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.RateLimiter;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Map;
 import java.util.Random;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
@@ -37,17 +34,17 @@ public final class NodeExecutor {
     private final int avgInterArrivalTime;
     private final String generatorId;
     private final String groupBy;
-    private final Map<String, AtomicInteger> statistics;
+    private final NodeStatistics nodeStatistics;
 
-    public NodeExecutor(final int nodeRangeMin, final int nodeRangeMax, final int maxEventsPerMinutePerNode,
-                        final int avgInterArrivalTime, final String generatorId, final String groupBy) {
+    private NodeExecutor(final int nodeRangeMin, final int nodeRangeMax, final int maxEventsPerMinutePerNode,
+                         final int avgInterArrivalTime, final String generatorId, final String groupBy) {
         nodeRangeSize = nodeRangeMax - nodeRangeMin;
         nodeRangeIds = IntStream.range(nodeRangeMin, nodeRangeMax).mapToObj(i -> generatorId + "-" + i);
         this.maxEventsPerMinutePerNode = maxEventsPerMinutePerNode;
         this.avgInterArrivalTime = avgInterArrivalTime;
         this.generatorId = generatorId;
         this.groupBy = groupBy;
-        statistics = Maps.newConcurrentMap();
+        nodeStatistics = new NodeStatistics();
         LOGGER.info("NodeExecutor: created with a nodeRangeSize {} between {} and {} with maxEventsPerMinutePerNode {} "
                         + "and an averger inter-arrival time of {} and generatorId {}", nodeRangeSize, nodeRangeMin,
                 nodeRangeMax, maxEventsPerMinutePerNode, avgInterArrivalTime, generatorId);
@@ -58,14 +55,26 @@ public final class NodeExecutor {
         final ForkJoinPool forkJoinPool =
                 new ForkJoinPool(nodeRangeSize, ForkJoinPool.defaultForkJoinWorkerThreadFactory, null, true);
         try {
-            nodeRangeIds.forEach(nodeId -> forkJoinPool.submit(() -> {
-                dispatchPerNode(kinesisEndpoint, kinesisStreamName, nodeId, durationInMinutes, latch);
-            }));
+            nodeRangeIds.forEach(nodeId -> forkJoinPool.submit(() ->
+                    dispatchPerNode(kinesisEndpoint, kinesisStreamName, nodeId, durationInMinutes, latch)));
             // wait 5 minutes longer then duration
             latch.await(durationInMinutes + 5, TimeUnit.MINUTES);
         } catch (final Throwable any) {
             LOGGER.error("NodeExecutor: Unhandled Error: stopping execution", any);
         } finally {
+            try {
+                if ("jobId".equalsIgnoreCase(groupBy)) {
+                    LOGGER.info("NodeExecutor: Total Events: {}", nodeStatistics.getTotalSuccessEventCounts());
+                    LOGGER.info("NodeExecutor: Total CT Jobs: {}", nodeStatistics.getCompletedJobCounts());
+                    LOGGER.info("NodeExecutor: Total Errors: {}", nodeStatistics.getTotalErrorEventCounts());
+                    LOGGER.info("NodeExecutor: Total Start Event Errors: {}", nodeStatistics.getEventCycleTimeStartErrorCounts());
+                    LOGGER.info("NodeExecutor: Total End Event Errors: {}", nodeStatistics.getEventCycleTimeEndErrorCounts());
+                } else {
+                    LOGGER.info("NodeExecutor: Total Events: {}", nodeStatistics.getTotalSuccessEventCounts());
+                    LOGGER.info("NodeExecutor: Total Errors: {}", nodeStatistics.getTotalErrorEventCounts());
+                }
+            } catch (final Throwable ignore) {
+            }
             try {
                 forkJoinPool.shutdownNow();
             } catch (final Throwable ignore) {
@@ -102,8 +111,18 @@ public final class NodeExecutor {
                 }
 
                 if (countdownTimer.isFinished()) {
-                    LOGGER.info("NodeExecutor: Completed dispatching events for {} : dispatched {} events",
-                            nodeId, statistics.get(nodeId).get());
+                    if ("jobId".equalsIgnoreCase(groupBy)) {
+                        LOGGER.info("NodeExecutor: Completed dispatching events for {} ", nodeId);
+                        LOGGER.info("NodeExecutor: Events: {}", nodeStatistics.getTotalSuccessEventCountsByNodeId(nodeId));
+                        LOGGER.info("NodeExecutor: CT Jobs: {}", nodeStatistics.getCompletedJobCountsByNodeId(nodeId));
+                        LOGGER.info("NodeExecutor: Errors: {}", nodeStatistics.getTotalErrorEventCountsByNodeId(nodeId));
+                        LOGGER.info("NodeExecutor: Start Event Errors: {}", nodeStatistics.getEventCycleTimeStartErrorCountsByNodeId(nodeId));
+                        LOGGER.info("NodeExecutor: End Event Errors: {}", nodeStatistics.getEventCycleTimeEndErrorCountsByNodeId(nodeId));
+                    } else {
+                        LOGGER.info("NodeExecutor: Completed dispatching events for {} ", nodeId);
+                        LOGGER.info("\tNodeExecutor: {} : Events {}", nodeId, nodeStatistics.getTotalSuccessEventCountsByNodeId(nodeId));
+                        LOGGER.info("\tNodeExecutor: {} : Error {}", nodeId, nodeStatistics.getTotalErrorEventCountsByNodeId(nodeId));
+                    }
                     break;
                 }
             }
@@ -123,12 +142,15 @@ public final class NodeExecutor {
         // if we fail we will try to just dispatchSingleEvent another event, because of how kinesis works, a failure doesn't
         // mean the event didn't go through, we could have had a network error and we are unable to tell if the
         // event made it or not, we are just going to dispatchSingleEvent another event
-        dispatchSingleEventsToKinesisWithRetries(kinesisEventClient, kinesisStreamName, new Event(UUID.randomUUID(),
-                        EventSequenceNumber.next(), nodeId, UUID.randomUUID(), EventType.UNKNOWN, now, generatorId, null),
-                RETRY);
-
-        // add the event count to statistics
-        incrementEventCount(nodeId, statistics);
+        final boolean success = dispatchSingleEventsToKinesisWithRetries(kinesisEventClient, kinesisStreamName,
+                new Event(UUID.randomUUID(), EventSequenceNumber.next(), nodeId, UUID.randomUUID(), EventType.UNKNOWN,
+                        now, generatorId, null), RETRY);
+        // increment counts
+        if (success) {
+            nodeStatistics.incrementEventSuccessCountByNode(nodeId);
+        } else {
+            nodeStatistics.incrementEventErrorCountByNode(nodeId);
+        }
     }
 
     private void dispatchSingleEventByJobId(final AmazonKinesisClient kinesisEventClient,
@@ -143,28 +165,30 @@ public final class NodeExecutor {
         // if we fail we will try to just dispatchSingleEvent another event, because of how kinesis works, a failure doesn't
         // mean the event didn't go through, we could have had a network error and we are unable to tell if the
         // event made it or not, we are just going to dispatchSingleEvent another event
-
         final UUID jobId = UUID.randomUUID();
+
         // dispatch a start based on jobId
-        dispatchSingleEventsToKinesisWithRetries(kinesisEventClient, kinesisStreamName,
+        final boolean startSuccess = dispatchSingleEventsToKinesisWithRetries(kinesisEventClient, kinesisStreamName,
                 new Event(UUID.randomUUID(), EventSequenceNumber.next(), nodeId, jobId, EventType.START, start,
                         generatorId, null), RETRY);
-        // add the event count to statistics
-        incrementEventCount(nodeId, statistics);
-
         // dispatch a end event based on jobId
-        dispatchSingleEventsToKinesisWithRetries(kinesisEventClient, kinesisStreamName,
+        final boolean endSuccess = dispatchSingleEventsToKinesisWithRetries(kinesisEventClient, kinesisStreamName,
                 new Event(UUID.randomUUID(), EventSequenceNumber.next(), nodeId, jobId, EventType.END, end, generatorId,
                         null), RETRY);
-        // add the event count to statistics
-        incrementEventCount(nodeId, statistics);
-    }
-
-    private static void incrementEventCount(final String nodeId, final Map<String, AtomicInteger> statistics) {
-        if (statistics.containsKey(nodeId)) {
-            statistics.get(nodeId).getAndIncrement();
-        } else {
-            statistics.put(nodeId, new AtomicInteger(1));
+        // increment counts
+        if(startSuccess && endSuccess) {
+            // 2 events per job
+            nodeStatistics.incrementEventSuccessCountByNode(nodeId);
+            nodeStatistics.incrementEventSuccessCountByNode(nodeId);
+            nodeStatistics.incrementCompletedJobCounts(nodeId);
+        }
+        if (!startSuccess) {
+            nodeStatistics.incrementEventErrorCountByNode(nodeId);
+            nodeStatistics.incrementEventCycleTimeStartErrorCounts(nodeId);
+        }
+        if(!endSuccess) {
+            nodeStatistics.incrementEventErrorCountByNode(nodeId);
+            nodeStatistics.incrementEventCycleTimeEndErrorCounts(nodeId);
         }
     }
 

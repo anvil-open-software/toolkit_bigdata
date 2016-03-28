@@ -5,7 +5,6 @@ import com.google.common.collect.Maps;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
-@SuppressWarnings("unused")
 final class NodeStatistics {
     private final Map<String, AtomicInteger> totalSuccessEventCounts;
     private final Map<String, AtomicInteger> totalErrorEventCounts;
@@ -61,57 +60,57 @@ final class NodeStatistics {
         }
     }
 
-    public int getTotalSuccessEventCounts() {
+    int getTotalSuccessEventCounts() {
         final int[] count = {0};
-        totalSuccessEventCounts.values().stream().forEach(value -> count[0] =  count[0] + value.get());
+        totalSuccessEventCounts.values().stream().forEach(value -> count[0] = count[0] + value.get());
         return count[0];
     }
 
-    public int getTotalSuccessEventCountsByNodeId(final String nodeId) {
+    int getTotalSuccessEventCountsByNodeId(final String nodeId) {
         final AtomicInteger count = totalSuccessEventCounts.get(nodeId);
         return count != null ? count.get() : 0;
     }
 
-    public int getTotalErrorEventCounts() {
+    int getTotalErrorEventCounts() {
         final int[] count = {0};
-        totalErrorEventCounts.values().stream().forEach(value -> count[0] =  count[0] + value.get());
+        totalErrorEventCounts.values().stream().forEach(value -> count[0] = count[0] + value.get());
         return count[0];
     }
 
-    public int getTotalErrorEventCountsByNodeId(final String nodeId) {
+    int getTotalErrorEventCountsByNodeId(final String nodeId) {
         final AtomicInteger count = totalErrorEventCounts.get(nodeId);
         return count != null ? count.get() : 0;
     }
 
-    public int getCompletedJobCounts() {
+    int getCompletedJobCounts() {
         final int[] count = {0};
-        completedJobCounts.values().stream().forEach(value -> count[0] =  count[0] + value.get());
+        completedJobCounts.values().stream().forEach(value -> count[0] = count[0] + value.get());
         return count[0];
     }
 
-    public int getCompletedJobCountsByNodeId(final String nodeId) {
+    int getCompletedJobCountsByNodeId(final String nodeId) {
         final AtomicInteger count = completedJobCounts.get(nodeId);
         return count != null ? count.get() : 0;
     }
 
-    public int getEventCycleTimeStartErrorCounts() {
+    int getEventCycleTimeStartErrorCounts() {
         final int[] count = {0};
-        eventCycleTimeStartErrorCounts.values().stream().forEach(value -> count[0] =  count[0] + value.get());
+        eventCycleTimeStartErrorCounts.values().stream().forEach(value -> count[0] = count[0] + value.get());
         return count[0];
     }
 
-    public int getEventCycleTimeStartErrorCountsByNodeId(final String nodeId) {
+    int getEventCycleTimeStartErrorCountsByNodeId(final String nodeId) {
         final AtomicInteger count = eventCycleTimeStartErrorCounts.get(nodeId);
         return count != null ? count.get() : 0;
     }
 
-    public int getEventCycleTimeEndErrorCounts() {
+    int getEventCycleTimeEndErrorCounts() {
         final int[] count = {0};
-        eventCycleTimeEndErrorCounts.values().stream().forEach(value -> count[0] =  count[0] + value.get());
+        eventCycleTimeEndErrorCounts.values().stream().forEach(value -> count[0] = count[0] + value.get());
         return count[0];
     }
 
-    public int getEventCycleTimeEndErrorCountsByNodeId(final String nodeId) {
+    int getEventCycleTimeEndErrorCountsByNodeId(final String nodeId) {
         final AtomicInteger count = eventCycleTimeEndErrorCounts.get(nodeId);
         return count != null ? count.get() : 0;
     }
