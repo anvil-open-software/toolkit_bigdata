@@ -54,7 +54,7 @@ public final class KinesisStreamRule extends ExternalResource {
         }
     }
 
-    public boolean pushEventsToKinesis(final int batchSize, final long timeValue, final TimeUnit unit) {
+    boolean pushEventsToKinesis(final int batchSize, final long timeValue, final TimeUnit unit) {
         try {
             Awaitility.waitAtMost(timeValue, unit).until(() -> {
                 pushEventsToKinesis(generateEvents(batchSize, "KinesisRuleGenerated"));

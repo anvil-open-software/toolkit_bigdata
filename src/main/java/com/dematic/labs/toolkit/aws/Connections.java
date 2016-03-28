@@ -81,8 +81,8 @@ public final class Connections {
         return kinesisClient;
     }
 
-    public static void createKinesisStreams(final AmazonKinesisClient kinesisClient, final String kinesisStream,
-                                            final int kinesisStreamShardCount) {
+    static void createKinesisStreams(final AmazonKinesisClient kinesisClient, final String kinesisStream,
+                                     final int kinesisStreamShardCount) {
         if (kinesisStreamsExist(kinesisClient, kinesisStream)) {
             final String state = kinesisStreamState(kinesisClient, kinesisStream);
             if (state != null) {
@@ -140,7 +140,7 @@ public final class Connections {
         }
     }
 
-    public static boolean kinesisStreamsExist(final AmazonKinesisClient kinesisClient, final String kinesisStream) {
+    static boolean kinesisStreamsExist(final AmazonKinesisClient kinesisClient, final String kinesisStream) {
         try {
             kinesisClient.describeStream(kinesisStream);
             return true;
@@ -159,7 +159,7 @@ public final class Connections {
         }
     }
 
-    public static void deleteKinesisStream(final AmazonKinesisClient kinesisClient, final String kinesisStream) {
+    static void deleteKinesisStream(final AmazonKinesisClient kinesisClient, final String kinesisStream) {
         kinesisClient.deleteStream(kinesisStream);
     }
 
@@ -262,13 +262,7 @@ public final class Connections {
 
        return changedCapacity;
    }
-    /**
-     *
-     * @param awsEndpointUrl
-     * @param clazz
-     * @param tablePrefix
-     * @return
-     */
+
     public static String createDynamoTable(final String awsEndpointUrl, final Class<?> clazz, final String tablePrefix) {
         final AmazonDynamoDBClient dynamoDBClient = getAmazonDynamoDBClient(awsEndpointUrl);
         final DynamoDBMapper dynamoDBMapper = new DynamoDBMapper(dynamoDBClient);
@@ -299,7 +293,7 @@ public final class Connections {
         return tableName;
     }
 
-    public static boolean dynamoTableExists(final AmazonDynamoDBClient dynamoDBClient, final String tableName) {
+    private static boolean dynamoTableExists(final AmazonDynamoDBClient dynamoDBClient, final String tableName) {
         DescribeTableRequest describeTableRequest = new DescribeTableRequest();
         describeTableRequest.setTableName(tableName);
         try {
@@ -337,7 +331,7 @@ public final class Connections {
         }
     }
 
-    public static TableStatus getTableStatus(final AmazonDynamoDBClient dynamoDBClient, final String tableName) {
+    private static TableStatus getTableStatus(final AmazonDynamoDBClient dynamoDBClient, final String tableName) {
         final DescribeTableRequest describeTableRequest = new DescribeTableRequest();
         describeTableRequest.setTableName(tableName);
         final DescribeTableResult describeTableResult = dynamoDBClient.describeTable(describeTableRequest);
