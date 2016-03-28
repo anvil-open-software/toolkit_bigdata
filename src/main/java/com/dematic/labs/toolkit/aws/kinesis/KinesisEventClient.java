@@ -63,9 +63,10 @@ public class KinesisEventClient {
     private KinesisEventClient() {
     }
 
-    public static void dispatchSingleEventsToKinesisWithRetries(final AmazonKinesisClient kinesisEventClient,
-                                                                final String kinesisInputStream, final Event event,
-                                                                final int retryCount) {
+    public static boolean dispatchSingleEventsToKinesisWithRetries(final AmazonKinesisClient kinesisEventClient,
+                                                                   final String kinesisInputStream, final Event event,
+                                                                   final int retryCount) {
+        PutRecordResult putRecordResult = null;
         int count = 1;
         do {
             try {
@@ -74,17 +75,18 @@ public class KinesisEventClient {
                 putRecordRequest.setData(ByteBuffer.wrap(eventToJsonByteArray(event)));
                 // group by partitionKey
                 putRecordRequest.setPartitionKey(randomPartitionKey());
-                final PutRecordResult putRecordResult =
-                        kinesisEventClient.putRecord(putRecordRequest);
+                putRecordResult = kinesisEventClient.putRecord(putRecordRequest);
                 LOGGER.debug("pushed event >{}< to shard>{}<", event.getId(), putRecordResult.getShardId());
                 break;
             } catch (final Throwable any) {
                 LOGGER.error("Unexpected Error dispatching events : trying again : count = {}", count);
                 // put to info level so we can see this separately from the debug statement
-                LOGGER.info("AWS putRecord error:"+ any.toString());
+                LOGGER.info("AWS putRecord error:" + any.toString());
             }
         } while (count++ <= retryCount);
+        return putRecordResult != null;
     }
+
 
     public static void dispatchEventsToKinesisIgnoringExceptions(final String kinesisEndpoint,
                                                                  final String kinesisInputStream,
@@ -246,7 +248,7 @@ public class KinesisEventClient {
     /**
      * @return A random unsigned 128-bit int converted to a decimal string.
      */
-    public static String randomPartitionKey() {
+    private static String randomPartitionKey() {
         return new BigInteger(128, RANDOM).toString(10);
     }
 
