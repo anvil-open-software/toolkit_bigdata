@@ -84,7 +84,7 @@ public final class NodeExecutor {
 
     private void dispatchPerNode(final String kinesisEndpoint, final String kinesisStreamName, final String nodeId,
                                  final Long durationInMinutes, final CountDownLatch latch) {
-        LOGGER.info("NodeExecutor: Dispatching events for {}", nodeId);
+        LOGGER.debug("NodeExecutor: Dispatching events for {}", nodeId);
 
         final ClientConfiguration clientConfiguration = new ClientConfiguration();
         clientConfiguration.withMaxConnections(150).withMaxErrorRetry(RETRY);
@@ -112,16 +112,16 @@ public final class NodeExecutor {
 
                 if (countdownTimer.isFinished()) {
                     if ("jobId".equalsIgnoreCase(groupBy)) {
-                        LOGGER.info("NodeExecutor: Completed dispatching events for {} ", nodeId);
-                        LOGGER.info("NodeExecutor: Events: {}", nodeStatistics.getTotalSuccessEventCountsByNodeId(nodeId));
-                        LOGGER.info("NodeExecutor: CT Jobs: {}", nodeStatistics.getCompletedJobCountsByNodeId(nodeId));
-                        LOGGER.info("NodeExecutor: Errors: {}", nodeStatistics.getTotalErrorEventCountsByNodeId(nodeId));
-                        LOGGER.info("NodeExecutor: Start Event Errors: {}", nodeStatistics.getEventCycleTimeStartErrorCountsByNodeId(nodeId));
-                        LOGGER.info("NodeExecutor: End Event Errors: {}", nodeStatistics.getEventCycleTimeEndErrorCountsByNodeId(nodeId));
+                        LOGGER.debug("NodeExecutor: Completed dispatching events for {} ", nodeId);
+                        LOGGER.debug("NodeExecutor: Events: {}", nodeStatistics.getTotalSuccessEventCountsByNodeId(nodeId));
+                        LOGGER.debug("NodeExecutor: CT Jobs: {}", nodeStatistics.getCompletedJobCountsByNodeId(nodeId));
+                        LOGGER.debug("NodeExecutor: Errors: {}", nodeStatistics.getTotalErrorEventCountsByNodeId(nodeId));
+                        LOGGER.debug("NodeExecutor: Start Event Errors: {}", nodeStatistics.getEventCycleTimeStartErrorCountsByNodeId(nodeId));
+                        LOGGER.debug("NodeExecutor: End Event Errors: {}", nodeStatistics.getEventCycleTimeEndErrorCountsByNodeId(nodeId));
                     } else {
-                        LOGGER.info("NodeExecutor: Completed dispatching events for {} ", nodeId);
-                        LOGGER.info("\tNodeExecutor: {} : Events {}", nodeId, nodeStatistics.getTotalSuccessEventCountsByNodeId(nodeId));
-                        LOGGER.info("\tNodeExecutor: {} : Error {}", nodeId, nodeStatistics.getTotalErrorEventCountsByNodeId(nodeId));
+                        LOGGER.debug("NodeExecutor: Completed dispatching events for {} ", nodeId);
+                        LOGGER.debug("\tNodeExecutor: {} : Events {}", nodeId, nodeStatistics.getTotalSuccessEventCountsByNodeId(nodeId));
+                        LOGGER.debug("\tNodeExecutor: {} : Error {}", nodeId, nodeStatistics.getTotalErrorEventCountsByNodeId(nodeId));
                     }
                     break;
                 }
