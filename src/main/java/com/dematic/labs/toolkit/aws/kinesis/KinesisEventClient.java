@@ -76,7 +76,8 @@ public class KinesisEventClient {
                 // group by partitionKey
                 putRecordRequest.setPartitionKey(randomPartitionKey());
                 putRecordResult = kinesisEventClient.putRecord(putRecordRequest);
-                LOGGER.debug("pushed event >{}< to shard>{}<", event.getId(), putRecordResult.getShardId());
+                LOGGER.info("pushed event >{}< : >{}< : >{}<", event.getId(), event.getJobId(),
+                        putRecordResult.toString());
                 break;
             } catch (final Throwable any) {
                 LOGGER.error("Unexpected Error dispatching events : trying again : count = {}", count);
