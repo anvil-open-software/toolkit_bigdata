@@ -83,7 +83,7 @@ public class KinesisEventClient {
                 // put to info level so we can see this separately from the debug statement
                 LOGGER.info("AWS putRecord error:" + any.toString());
             }
-        } while (count++ <= retryCount);
+        } while (count++ < retryCount);
         return putRecordResult != null;
     }
 
@@ -364,7 +364,7 @@ public class KinesisEventClient {
     /**
      * push summary results to dynamodb
      */
-    public static void summarizeEventResults(final EventRunParms eventRunParms) {
+    private static void summarizeEventResults(final EventRunParms eventRunParms) {
         eventRunParms.setRunEndTime(DateTime.now());
         final KinesisEventSummary summary = new KinesisEventSummary(eventRunParms);
         summary.setTotalEventsAttempted(TOTAL_EVENTS.get());
