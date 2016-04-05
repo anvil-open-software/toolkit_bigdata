@@ -57,6 +57,11 @@
             <groupId>redis.clients</groupId>
             <artifactId>jedis</artifactId>
         </dependency>
+        <!-- cassandra connector -->
+        <dependency>
+            <groupId>com.datastax.spark</groupId>
+            <artifactId>spark-cassandra-connector-java_2.11</artifactId>
+        </dependency>
         <!-- json/xml -->
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
