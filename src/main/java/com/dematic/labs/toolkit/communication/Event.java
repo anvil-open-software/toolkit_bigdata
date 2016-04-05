@@ -22,6 +22,18 @@ import java.util.concurrent.TimeUnit;
 public final class Event implements Serializable {
     public static final String TABLE_NAME = "Events";
 
+    public static String createTableCql(final String keyspace) {
+        return String.format("CREATE TABLE if not exists %s.\"%s\" (" +
+                "\"id\" uuid PRIMARY KEY, " +
+                "sequence bigint, " +
+                "\"nodeId\" varchar, " +
+                "\"jobId\" uuid, " +
+                "type text, " +
+                "timestamp varchar, " +
+                "\"generatorId\" varchar" +
+                ");", keyspace, TABLE_NAME);
+    }
+
     private UUID id;
     private Long sequence;
     private String nodeId; // Node-135

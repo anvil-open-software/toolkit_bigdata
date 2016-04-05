@@ -1,5 +1,6 @@
 package com.dematic.labs.toolkit;
 
+import com.dematic.labs.toolkit.communication.EventUtils;
 import org.joda.time.DateTime;
 
 import java.util.Timer;
@@ -19,7 +20,7 @@ public final class CountdownTimer {
         timer.scheduleAtFixedRate(new TimerTask() {
             @Override
             public void run() {
-                if (DateTime.now().isAfter(nowPlusMinutes)) {
+                if (EventUtils.now().isAfter(nowPlusMinutes)) {
                     try {
                         timer.cancel();
                     } finally {
