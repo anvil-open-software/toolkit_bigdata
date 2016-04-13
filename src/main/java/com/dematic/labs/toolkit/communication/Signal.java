@@ -1,7 +1,7 @@
 package com.dematic.labs.toolkit.communication;
 
 import java.io.Serializable;
-import java.util.Map;
+import java.util.List;
 import java.util.Objects;
 
 /**
@@ -25,10 +25,27 @@ public final class Signal implements Serializable {
     private String value;
     private String timestamp;
     private String quality;
-    private String opcTagReadingID;
-    private String opcTagID;
+    private String opcTagReadingId;
+    private long opcTagId;
     private String proxiedTypeName;
-    private Map<String, String> extendedProperties;
+    private List<String> extendedProperties;
+
+    public Signal() {
+    }
+
+    public Signal(final String uniqueId, final String id, final String value, final String timestamp,
+                  final String quality, final String opcTagReadingId, final long opcTagId,
+                  final String proxiedTypeName, final List<String> extendedProperties) {
+        this.uniqueId = uniqueId;
+        this.id = id;
+        this.value = value;
+        this.timestamp = timestamp;
+        this.quality = quality;
+        this.opcTagReadingId = opcTagReadingId;
+        this.opcTagId = opcTagId;
+        this.proxiedTypeName = proxiedTypeName;
+        this.extendedProperties = extendedProperties;
+    }
 
     public String getUniqueId() {
         return uniqueId;
@@ -70,20 +87,20 @@ public final class Signal implements Serializable {
         this.quality = quality;
     }
 
-    public String getOpcTagReadingID() {
-        return opcTagReadingID;
+    public String getOpcTagReadingId() {
+        return opcTagReadingId;
     }
 
-    public void setOpcTagReadingID(final String opcTagReadingID) {
-        this.opcTagReadingID = opcTagReadingID;
+    public void setOpcTagReadingId(final String opcTagReadingId) {
+        this.opcTagReadingId = opcTagReadingId;
     }
 
-    public String getOpcTagID() {
-        return opcTagID;
+    public long getOpcTagId() {
+        return opcTagId;
     }
 
-    public void setOpcTagID(final String opcTagID) {
-        this.opcTagID = opcTagID;
+    public void setOpcTagId(final long opcTagId) {
+        this.opcTagId = opcTagId;
     }
 
     public String getProxiedTypeName() {
@@ -94,11 +111,11 @@ public final class Signal implements Serializable {
         this.proxiedTypeName = proxiedTypeName;
     }
 
-    public Map<String, String> getExtendedProperties() {
+    public List<String> getExtendedProperties() {
         return extendedProperties;
     }
 
-    public void setExtendedProperties(final Map<String, String> extendedProperties) {
+    public void setExtendedProperties(final List<String> extendedProperties) {
         this.extendedProperties = extendedProperties;
     }
 
@@ -112,15 +129,15 @@ public final class Signal implements Serializable {
                 Objects.equals(value, signal.value) &&
                 Objects.equals(timestamp, signal.timestamp) &&
                 Objects.equals(quality, signal.quality) &&
-                Objects.equals(opcTagReadingID, signal.opcTagReadingID) &&
-                Objects.equals(opcTagID, signal.opcTagID) &&
+                Objects.equals(opcTagReadingId, signal.opcTagReadingId) &&
+                Objects.equals(opcTagId, signal.opcTagId) &&
                 Objects.equals(proxiedTypeName, signal.proxiedTypeName) &&
                 Objects.equals(extendedProperties, signal.extendedProperties);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(uniqueId, id, value, timestamp, quality, opcTagReadingID, opcTagID, proxiedTypeName,
+        return Objects.hash(uniqueId, id, value, timestamp, quality, opcTagReadingId, opcTagId, proxiedTypeName,
                 extendedProperties);
     }
 
@@ -132,8 +149,8 @@ public final class Signal implements Serializable {
                 ", value='" + value + '\'' +
                 ", timestamp='" + timestamp + '\'' +
                 ", quality='" + quality + '\'' +
-                ", opcTagReadingID='" + opcTagReadingID + '\'' +
-                ", opcTagID='" + opcTagID + '\'' +
+                ", opcTagReadingID='" + opcTagReadingId + '\'' +
+                ", opcTagID='" + opcTagId + '\'' +
                 ", proxiedTypeName='" + proxiedTypeName + '\'' +
                 ", extendedProperties=" + extendedProperties +
                 '}';
