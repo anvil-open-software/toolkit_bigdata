@@ -22,7 +22,7 @@ public final class OpcTagExecutor {
                                         final String streamName) {
         // sequentially read files and send opc tags to stream, todo: do parallel and even time dispatching
         try {
-            Files.walk(dir).forEach(filePath -> {
+            Files.walk(dir).parallel().forEach(filePath -> {
                 if (Files.isRegularFile(filePath)) {
                     try {
                         final byte[] signal = Files.readAllBytes(filePath);
