@@ -222,7 +222,7 @@
                             </artifactSet>
                             <transformers>
                                 <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                                    <mainClass>com.dematic.labs.toolkit.aws.kinesis.KinesisEventClient</mainClass>
+                                    <mainClass>com.dematic.labs.toolkit.aws.kinesis.KinesisClient</mainClass>
                                 </transformer>
                             </transformers>
                         </configuration>

@@ -15,7 +15,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -40,10 +39,6 @@ public final class SignalUtils {
 
     public static String signalToJson(final Signal signal) throws IOException {
         return objectMapper.writeValueAsString(signal);
-    }
-
-    public static byte[] signalToJsonByteArray(final Signal signal) throws IOException {
-        return signalToJson(signal).getBytes(Charset.defaultCharset());
     }
 
     private final static class SignalSerializer extends JsonSerializer<Signal> {

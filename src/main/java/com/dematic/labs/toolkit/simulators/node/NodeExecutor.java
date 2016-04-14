@@ -1,4 +1,4 @@
-package com.dematic.labs.toolkit.simulators;
+package com.dematic.labs.toolkit.simulators.node;
 
 import com.amazonaws.ClientConfiguration;
 import com.amazonaws.services.kinesis.AmazonKinesisClient;
@@ -21,7 +21,7 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import static com.dematic.labs.toolkit.aws.Connections.getAmazonKinesisClient;
-import static com.dematic.labs.toolkit.aws.kinesis.KinesisEventClient.dispatchSingleEventsToKinesisWithRetries;
+import static com.dematic.labs.toolkit.aws.kinesis.KinesisClient.dispatchSingleEventToKinesisWithRetries;
 import static com.dematic.labs.toolkit.communication.EventUtils.now;
 
 public final class NodeExecutor {
@@ -142,7 +142,7 @@ public final class NodeExecutor {
         // if we fail we will try to just dispatchSingleEvent another event, because of how kinesis works, a failure doesn't
         // mean the event didn't go through, we could have had a network error and we are unable to tell if the
         // event made it or not, we are just going to dispatchSingleEvent another event
-        final boolean success = dispatchSingleEventsToKinesisWithRetries(kinesisEventClient, kinesisStreamName,
+        final boolean success = dispatchSingleEventToKinesisWithRetries(kinesisEventClient, kinesisStreamName,
                 new Event(UUID.randomUUID(), EventSequenceNumber.next(), nodeId, UUID.randomUUID(), EventType.UNKNOWN,
                         now, generatorId, null), RETRY);
         // increment counts
@@ -168,11 +168,11 @@ public final class NodeExecutor {
         final UUID jobId = UUID.randomUUID();
 
         // dispatch a start based on jobId
-        final boolean startSuccess = dispatchSingleEventsToKinesisWithRetries(kinesisEventClient, kinesisStreamName,
+        final boolean startSuccess = dispatchSingleEventToKinesisWithRetries(kinesisEventClient, kinesisStreamName,
                 new Event(UUID.randomUUID(), EventSequenceNumber.next(), nodeId, jobId, EventType.START, start,
                         generatorId, null), RETRY);
         // dispatch a end event based on jobId
-        final boolean endSuccess = dispatchSingleEventsToKinesisWithRetries(kinesisEventClient, kinesisStreamName,
+        final boolean endSuccess = dispatchSingleEventToKinesisWithRetries(kinesisEventClient, kinesisStreamName,
                 new Event(UUID.randomUUID(), EventSequenceNumber.next(), nodeId, jobId, EventType.END, end, generatorId,
                         null), RETRY);
         // increment counts

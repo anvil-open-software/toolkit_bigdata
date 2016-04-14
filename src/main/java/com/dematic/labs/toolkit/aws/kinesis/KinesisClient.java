@@ -23,6 +23,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -49,8 +50,8 @@ import static com.dematic.labs.toolkit.communication.EventUtils.generateEvents;
  * <p>
  * NOTE: does not handle any failures, retries, .... that is, will just log and continue
  */
-public class KinesisEventClient {
-    private static final Logger LOGGER = LoggerFactory.getLogger(KinesisEventClient.class);
+public class KinesisClient {
+    private static final Logger LOGGER = LoggerFactory.getLogger(KinesisClient.class);
 
     private static final Set<String> RETRYABLE_ERR_CODES = ImmutableSet.of("ProvisionedThroughputExceededException",
             "InternalFailure", "ServiceUnavailable");
@@ -60,26 +61,51 @@ public class KinesisEventClient {
     private static final AtomicLong SYSTEM_ERROR = new AtomicLong(0);
     private static final AtomicLong KINESIS_ERROR = new AtomicLong(0);
 
-    private KinesisEventClient() {
+    private KinesisClient() {
     }
 
-    public static boolean dispatchSingleEventsToKinesisWithRetries(final AmazonKinesisClient kinesisEventClient,
-                                                                   final String kinesisInputStream, final Event event,
-                                                                   final int retryCount) {
+    public static boolean dispatchSingleEventToKinesisWithRetries(final AmazonKinesisClient kinesisEventClient,
+                                                                  final String kinesisInputStream,
+                                                                  final Event event, final int retryCount) {
+        final ByteBuffer bytes;
+        try {
+            bytes = ByteBuffer.wrap(eventToJsonByteArray(event));
+        } catch (final IOException ioe) {
+            throw new IllegalStateException(String.format("Unexpected Exception : can't convert >%s< to json format",
+                    event));
+        }
+        final boolean succeed = dispatchSinglePayloadToKinesisWithRetries(kinesisEventClient, kinesisInputStream, bytes,
+                retryCount);
+        LOGGER.info("pushed event >{}< : succeeded >{}<", event.toString(), succeed);
+        return succeed;
+    }
+
+    public static boolean dispatchSignalToKinesisWithRetries(final AmazonKinesisClient kinesisEventClient,
+                                                             final String kinesisInputStream, final byte[] signal,
+                                                             final int retryCount) throws IOException {
+        final ByteBuffer bytes = ByteBuffer.wrap(signal);
+        final boolean succeed = dispatchSinglePayloadToKinesisWithRetries(kinesisEventClient, kinesisInputStream, bytes,
+                retryCount);
+        LOGGER.info("pushed event >{}< : succeeded >{}<", new String(signal, Charset.defaultCharset()), succeed);
+        return succeed;
+    }
+
+    public static boolean dispatchSinglePayloadToKinesisWithRetries(final AmazonKinesisClient kinesisEventClient,
+                                                                    final String kinesisInputStream,
+                                                                    final ByteBuffer payload, final int retryCount) {
         PutRecordResult putRecordResult = null;
         int count = 1;
         do {
             try {
                 final PutRecordRequest putRecordRequest = new PutRecordRequest();
                 putRecordRequest.setStreamName(kinesisInputStream);
-                putRecordRequest.setData(ByteBuffer.wrap(eventToJsonByteArray(event)));
+                putRecordRequest.setData(payload);
                 // group by partitionKey
                 putRecordRequest.setPartitionKey(randomPartitionKey());
                 putRecordResult = kinesisEventClient.putRecord(putRecordRequest);
-                LOGGER.info("pushed event >{}< : >{}<", event.toString(), putRecordResult.toString());
                 break;
             } catch (final Throwable any) {
-                LOGGER.error("Unexpected Error dispatching events : trying again : count = {}", count);
+                LOGGER.error("Unexpected Error dispatching payload : trying again : count = {}", count);
                 // put to info level so we can see this separately from the debug statement
                 LOGGER.info("AWS putRecord error:" + any.toString());
             }

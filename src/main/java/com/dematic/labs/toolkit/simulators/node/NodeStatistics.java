@@ -1,4 +1,4 @@
-package com.dematic.labs.toolkit.simulators;
+package com.dematic.labs.toolkit.simulators.node;
 
 import com.google.common.collect.Maps;
 
