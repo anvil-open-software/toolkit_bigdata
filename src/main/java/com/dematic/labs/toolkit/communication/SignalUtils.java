@@ -37,6 +37,10 @@ public final class SignalUtils {
         return objectMapper.readValue(json, Signal.class);
     }
 
+    public static Signal jsonByteArrayToSignal(final byte[] json) throws IOException {
+        return objectMapper.readValue(json, Signal.class);
+    }
+
     public static String signalToJson(final Signal signal) throws IOException {
         return objectMapper.writeValueAsString(signal);
     }
