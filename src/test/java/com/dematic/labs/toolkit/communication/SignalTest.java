@@ -27,7 +27,7 @@ public class SignalTest {
                     // assert ==
                     final JsonNode tree1 = mapper.readTree(raw);
                     final JsonNode tree2 = mapper.readTree(json);
-                //todo fix    Assert.assertEquals(tree1, tree2);
+                    Assert.assertEquals(tree1, tree2);
                 } catch (final IOException ignore) {
                 }
             });

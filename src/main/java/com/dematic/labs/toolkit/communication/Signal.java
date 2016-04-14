@@ -26,7 +26,7 @@ public final class Signal implements Serializable {
     private String timestamp;
     private String quality;
     private String opcTagReadingId;
-    private long opcTagId;
+    private String opcTagId;
     private String proxiedTypeName;
     private List<String> extendedProperties;
 
@@ -34,7 +34,7 @@ public final class Signal implements Serializable {
     }
 
     public Signal(final String uniqueId, final String id, final String value, final String timestamp,
-                  final String quality, final String opcTagReadingId, final long opcTagId,
+                  final String quality, final String opcTagReadingId, final String opcTagId,
                   final String proxiedTypeName, final List<String> extendedProperties) {
         this.uniqueId = uniqueId;
         this.id = id;
@@ -95,11 +95,11 @@ public final class Signal implements Serializable {
         this.opcTagReadingId = opcTagReadingId;
     }
 
-    public long getOpcTagId() {
+    public String getOpcTagId() {
         return opcTagId;
     }
 
-    public void setOpcTagId(final long opcTagId) {
+    public void setOpcTagId(final String opcTagId) {
         this.opcTagId = opcTagId;
     }
 

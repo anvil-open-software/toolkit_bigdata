@@ -10,6 +10,7 @@ import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.module.SimpleModule;
+import com.google.common.base.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -51,6 +52,7 @@ public final class SignalUtils {
                               final SerializerProvider serializers)
                 throws IOException {
             try {
+                jsonGenerator.writeStartArray();
                 jsonGenerator.writeStartObject();
                 // write the ExtendedProperties array
                 jsonGenerator.writeFieldName("ExtendedProperties");
@@ -64,18 +66,33 @@ public final class SignalUtils {
                 });
                 jsonGenerator.writeEndArray();
                 jsonGenerator.writeStringField("ProxiedTypeName", signal.getProxiedTypeName());
-                jsonGenerator.writeNumberField("OPCTagID", signal.getOpcTagId());
-                jsonGenerator.writeStringField("OPCTagReadingID", signal.getOpcTagReadingId());
-                jsonGenerator.writeStringField("Quality", signal.getQuality());
+                jsonGenerator.writeNumberField("OPCTagID", Long.valueOf(signal.getOpcTagId()));
+                jsonGenerator.writeNumberField("OPCTagReadingID", toLong(signal.getOpcTagReadingId()));
+                jsonGenerator.writeNumberField("Quality", toLong(signal.getQuality()));
                 jsonGenerator.writeStringField("Timestamp", signal.getTimestamp());
                 jsonGenerator.writeStringField("Value", signal.getValue());
-                jsonGenerator.writeStringField("ID", signal.getId());
-                jsonGenerator.writeStringField("UniqueID", signal.getUniqueId());
+                jsonGenerator.writeNumberField("ID", toLong(signal.getId()));
+                if (Strings.isNullOrEmpty(signal.getUniqueId())) {
+                    jsonGenerator.writeNullField("UniqueID");
+                } else {
+                    jsonGenerator.writeStringField("UniqueID", signal.getUniqueId());
+                }
             } finally {
                 jsonGenerator.writeEndObject();
+                jsonGenerator.writeEndArray();
                 jsonGenerator.close();
             }
         }
+    }
+
+    /**
+     * Convert to long.
+     *
+     * @param value -- value to convert
+     * @return 0 or long value
+     */
+    private static long toLong(final String value) {
+        return Strings.isNullOrEmpty(value) ? 0L : Long.valueOf(value);
     }
 
     private final static class SignalDeserializer extends JsonDeserializer<Signal> {
@@ -86,7 +103,7 @@ public final class SignalUtils {
 
             final JsonNode extendedPropertiesNode = jsonNode.findValue("ExtendedProperties");
             final List<String> extendedProperties = new ArrayList<>();
-            if(extendedPropertiesNode != null) {
+            if (extendedPropertiesNode != null) {
                 for (final JsonNode next : extendedPropertiesNode) {
                     final String property = next.isNull() ? null : next.asText();
                     extendedProperties.add(property);
@@ -97,7 +114,7 @@ public final class SignalUtils {
             final String proxiedTypeName = proxiedTypeNameNode == null ? null : proxiedTypeNameNode.asText();
 
             final JsonNode opcTagIDNode = jsonNode.findValue("OPCTagID");
-            final long opcTagID = opcTagIDNode == null ? 0 : opcTagIDNode.asLong();
+            final String opcTagID = opcTagIDNode == null ? null : opcTagIDNode.asText();
 
             final JsonNode opcTagReadingIDNode = jsonNode.findValue("OPCTagReadingID");
             final String opcTagReadingID = opcTagReadingIDNode == null ? null : opcTagReadingIDNode.asText();
@@ -115,10 +132,14 @@ public final class SignalUtils {
             final String id = idNode == null ? null : idNode.asText();
 
             final JsonNode uniqueIDNode = jsonNode.findValue("UniqueID");
-            final String uniqueID = uniqueIDNode == null ? null : uniqueIDNode.asText();
+            final String uniqueID = uniqueIDNode == null ? null : uniqueId(uniqueIDNode);
 
             return new Signal(uniqueID, id, value, timestamp, quality, opcTagReadingID, opcTagID, proxiedTypeName,
                     extendedProperties);
         }
+    }
+
+    private static String uniqueId(final JsonNode uniqueIDNode) {
+        return uniqueIDNode.isNull() ? null : uniqueIDNode.asText();
     }
 }
