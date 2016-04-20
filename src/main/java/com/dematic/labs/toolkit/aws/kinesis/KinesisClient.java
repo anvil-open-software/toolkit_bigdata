@@ -148,7 +148,6 @@ public class KinesisClient {
                             // 1) generate batched events and dispatch request
                             final List<PutRecordsRequestEntry> putRecordsRequestEntries =
                                     generatePutRecordsRequestEntries(kinesisRecordsPerRequest);
-                            // todo: come back to retries and deal w duplicates
                             dispatch(amazonKinesisClient, kinesisInputStream, putRecordsRequestEntries, 0);
                         });
             }).get();
