@@ -1,7 +1,6 @@
 package com.dematic.labs.toolkit.simulators.grainger;
 
 import com.amazonaws.services.kinesis.AmazonKinesisClient;
-import com.dematic.labs.toolkit.aws.kinesis.KinesisClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -11,6 +10,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 import static com.dematic.labs.toolkit.aws.Connections.getAmazonKinesisClient;
+import static com.dematic.labs.toolkit.aws.kinesis.KinesisClient.dispatchSignalToKinesisWithRetries;
 
 public final class OpcTagExecutor {
     private static final Logger LOGGER = LoggerFactory.getLogger(OpcTagExecutor.class);
@@ -28,7 +28,7 @@ public final class OpcTagExecutor {
                         final byte[] signal = Files.readAllBytes(filePath);
                         //todo: deal with dispatching to different streams, kinesis vs kafka
                         final AmazonKinesisClient amazonKinesisClient = getAmazonKinesisClient(streamEndpoint);
-                        KinesisClient.dispatchSignalToKinesisWithRetries(amazonKinesisClient, streamName, signal, 3);
+                        dispatchSignalToKinesisWithRetries(amazonKinesisClient, streamName, signal, 3);
                     } catch (final IOException ioe) {
                         LOGGER.error("can't read file >{}< moving to next file", filePath);
                     }
