@@ -1,7 +1,7 @@
 package com.dematic.labs.toolkit.aws;
 
 import com.amazonaws.services.kinesis.AmazonKinesisClient;
-import com.dematic.labs.toolkit.aws.kinesis.KinesisEventClient;
+import com.dematic.labs.toolkit.aws.kinesis.KinesisClient;
 import com.dematic.labs.toolkit.communication.Event;
 import com.jayway.awaitility.Awaitility;
 import com.jayway.awaitility.core.ConditionTimeoutException;
@@ -71,6 +71,6 @@ public final class KinesisStreamRule extends ExternalResource {
     public void pushEventsToKinesis(final List<Event> events) {
         final String kinesisEndpoint = System.getProperty("kinesisEndpoint");
         final String kinesisInputStream = System.getProperty("kinesisInputStream");
-        KinesisEventClient.dispatchEventsToKinesisIgnoringExceptions(kinesisEndpoint, kinesisInputStream, events);
+        KinesisClient.dispatchEventsToKinesisIgnoringExceptions(kinesisEndpoint, kinesisInputStream, events);
     }
 }

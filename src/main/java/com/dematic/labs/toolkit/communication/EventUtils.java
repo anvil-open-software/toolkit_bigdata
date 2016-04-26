@@ -20,6 +20,8 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.LongStream;
 
+import static com.google.common.base.Strings.isNullOrEmpty;
+
 /**
  * Utility class to support events.
  */
@@ -35,6 +37,10 @@ public final class EventUtils {
     }
 
     private EventUtils() {
+    }
+
+    public static Event jsonByteArrayToEvent(final byte[] json) throws IOException {
+        return objectMapper.readValue(json, Event.class);
     }
 
     public static Event jsonToEvent(final String json) throws IOException {
@@ -172,11 +178,6 @@ public final class EventUtils {
             final Long version = versionNode == null ? null : versionNode.asLong();
 
             return new Event(uuid, sequence, nodeId, jobId, EventType.valueOf(type), timestamp, generatorId, version);
-        }
-
-        // use a lib
-        private static boolean isNullOrEmpty(final String string) {
-            return string == null || string.length() == 0;
         }
     }
 }
