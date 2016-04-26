@@ -39,6 +39,10 @@ public final class EventUtils {
     private EventUtils() {
     }
 
+    public static Event jsonByteArrayToEvent(final byte[] json) throws IOException {
+        return objectMapper.readValue(json, Event.class);
+    }
+
     public static Event jsonToEvent(final String json) throws IOException {
         return objectMapper.readValue(json, Event.class);
     }
