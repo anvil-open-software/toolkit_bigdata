@@ -19,7 +19,26 @@ import java.util.Objects;
  "UniqueID":null
  }]
  */
+
+@SuppressWarnings("UnusedDeclaration")
 public final class Signal implements Serializable {
+    public static final String TABLE_NAME = "signals";
+
+    public static String createTableCql(final String keyspace) {
+        return String.format("CREATE TABLE if not exists %s.%s (" +
+                "\"uniqueId\" varchar, " +
+                "id bigint, " +
+                "value varchar, " +
+                "timestamp varchar, " +
+                "quality int, " +
+                "\"opcTagReadingId\" bigint, " +
+                "\"opcTagId\" bigint, " +
+                "\"proxiedTypeName\" varchar, " +
+                "\"extendedProperties\" list<text>, " +
+                "PRIMARY KEY (\"opcTagId\", timestamp)) with clustering order by (timestamp desc);", keyspace,
+                TABLE_NAME);
+    }
+
     private String uniqueId;
     private String id;
     private String value;
