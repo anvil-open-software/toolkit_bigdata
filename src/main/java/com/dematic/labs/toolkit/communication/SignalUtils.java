@@ -67,9 +67,9 @@ public final class SignalUtils {
                 jsonGenerator.writeStringField("ProxiedTypeName", signal.getProxiedTypeName());
                 jsonGenerator.writeNumberField("OPCTagID", Long.valueOf(signal.getOpcTagId()));
                 jsonGenerator.writeNumberField("OPCTagReadingID", toLong(signal.getOpcTagReadingId()));
-                jsonGenerator.writeNumberField("Quality", toLong(signal.getQuality()));
+                jsonGenerator.writeNumberField("Quality", signal.getQuality());
                 jsonGenerator.writeStringField("Timestamp", signal.getTimestamp());
-                jsonGenerator.writeStringField("Value", signal.getValue());
+                jsonGenerator.writeStringField("Value", toStringV(signal.getValue())); // write as string
                 jsonGenerator.writeNumberField("ID", toLong(signal.getId()));
                 if (Strings.isNullOrEmpty(signal.getUniqueId())) {
                     jsonGenerator.writeNullField("UniqueID");
@@ -92,6 +92,16 @@ public final class SignalUtils {
      */
     private static long toLong(final String value) {
         return Strings.isNullOrEmpty(value) ? 0L : Long.valueOf(value);
+    }
+
+    /**
+     * Convert long or 0
+     *
+     * @param value -- value to convert
+     * @return string version of 0 or long value
+     */
+    private static String toStringV(final Long value) {
+        return value == null ? "0" : String.valueOf(value);
     }
 
     private final static class SignalDeserializer extends JsonDeserializer<Signal> {
@@ -133,7 +143,7 @@ public final class SignalUtils {
             final JsonNode uniqueIDNode = jsonNode.findValue("UniqueID");
             final String uniqueID = uniqueIDNode == null ? null : uniqueId(uniqueIDNode);
 
-            return new Signal(uniqueID, id, value, timestamp, quality, opcTagReadingID, opcTagID, proxiedTypeName,
+            return new Signal(uniqueID, id, toLong(value), timestamp, toLong(quality), opcTagReadingID, opcTagID, proxiedTypeName,
                     extendedProperties);
         }
     }

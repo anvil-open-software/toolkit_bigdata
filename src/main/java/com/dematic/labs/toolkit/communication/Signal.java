@@ -30,7 +30,7 @@ public final class Signal implements Serializable {
                 "id bigint, " +
                 "value varchar, " +
                 "timestamp varchar, " +
-                "quality int, " +
+                "quality bigint, " +
                 "\"opcTagReadingId\" bigint, " +
                 "\"opcTagId\" bigint, " +
                 "\"proxiedTypeName\" varchar, " +
@@ -41,9 +41,9 @@ public final class Signal implements Serializable {
 
     private String uniqueId;
     private String id;
-    private String value;
+    private Long value;
     private String timestamp;
-    private String quality;
+    private Long quality;
     private String opcTagReadingId;
     private String opcTagId;
     private String proxiedTypeName;
@@ -52,8 +52,8 @@ public final class Signal implements Serializable {
     public Signal() {
     }
 
-    public Signal(final String uniqueId, final String id, final String value, final String timestamp,
-                  final String quality, final String opcTagReadingId, final String opcTagId,
+    public Signal(final String uniqueId, final String id, final Long value, final String timestamp,
+                  final Long quality, final String opcTagReadingId, final String opcTagId,
                   final String proxiedTypeName, final List<String> extendedProperties) {
         this.uniqueId = uniqueId;
         this.id = id;
@@ -82,11 +82,11 @@ public final class Signal implements Serializable {
         this.id = id;
     }
 
-    public String getValue() {
+    public Long getValue() {
         return value;
     }
 
-    public void setValue(final String value) {
+    public void setValue(final Long value) {
         this.value = value;
     }
 
@@ -98,11 +98,11 @@ public final class Signal implements Serializable {
         this.timestamp = timestamp;
     }
 
-    public String getQuality() {
+    public Long getQuality() {
         return quality;
     }
 
-    public void setQuality(final String quality) {
+    public void setQuality(final Long quality) {
         this.quality = quality;
     }
 
