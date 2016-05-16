@@ -15,10 +15,10 @@ import static com.dematic.labs.toolkit.aws.Connections.getAmazonKinesisClient;
 import static com.dematic.labs.toolkit.aws.kinesis.KinesisClient.dispatchSignalToKinesisWithRetries;
 import static com.dematic.labs.toolkit.kafka.Connections.getKafkaProducer;
 
-public final class OpcTagExecutor {
-    private static final Logger LOGGER = LoggerFactory.getLogger(OpcTagExecutor.class);
+public final class OpcTagReadingExecutorFromDir {
+    private static final Logger LOGGER = LoggerFactory.getLogger(OpcTagReadingExecutorFromDir.class);
 
-    private OpcTagExecutor() {
+    private OpcTagReadingExecutorFromDir() {
     }
 
     private static void dispatchOpcTagsToKinesis(final Path dir, final String streamEndpoint, final String streamName) {
