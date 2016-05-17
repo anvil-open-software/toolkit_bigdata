@@ -5,14 +5,14 @@ import com.google.common.collect.Maps;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public final class statistics {
+public final class Statistics {
     private final Map<String, AtomicInteger> totalSuccessCounts;
     private final Map<String, AtomicInteger> totalErrorCounts;
     private final Map<String, AtomicInteger> completedCounts;
     private final Map<String, AtomicInteger> cycleTimeStartErrorCounts;
     private final Map<String, AtomicInteger> cycleTimeEndErrorCounts;
 
-    public statistics() {
+    public Statistics() {
         totalSuccessCounts = Maps.newConcurrentMap();
         totalErrorCounts = Maps.newConcurrentMap();
         completedCounts = Maps.newConcurrentMap();
