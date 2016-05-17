@@ -26,20 +26,20 @@ public final class OpcTagReadingExecutor {
 
     private final int opcTagRangeSize;
     private final Stream<String> opcTagRangeIds;
-    private final int maxSignalsPerMinutePerNode;
+    private final int maxSignalsPerMinutePerOpcTag;
     private final String generatorId;
     private final Statistics statistics;
 
     private OpcTagReadingExecutor(final int opcTagRangeMin, final int opcTagRangeMax,
-                                  final int maxSignalsPerMinutePerNode, final String generatorId) {
+                                  final int maxSignalsPerMinutePerOpcTag, final String generatorId) {
         opcTagRangeSize = opcTagRangeMax - opcTagRangeMin;
         opcTagRangeIds = IntStream.range(opcTagRangeMin, opcTagRangeMax).mapToObj(i -> generatorId + "-" + i);
-        this.maxSignalsPerMinutePerNode = maxSignalsPerMinutePerNode;
+        this.maxSignalsPerMinutePerOpcTag = maxSignalsPerMinutePerOpcTag;
         this.generatorId = generatorId;
         statistics = new Statistics();
         LOGGER.info("OpcTagReadingExecutor: created with a opcTagRangeSize {} between {} and {} with " +
-                        "maxSignalsPerMinutePerNode {} and generatorId {}", opcTagRangeSize, opcTagRangeMin,
-                opcTagRangeMax, maxSignalsPerMinutePerNode, generatorId);
+                        "maxSignalsPerMinutePerOpcTag {} and generatorId {}", opcTagRangeSize, opcTagRangeMin,
+                opcTagRangeMax, maxSignalsPerMinutePerOpcTag, generatorId);
     }
 
     public void execute(final Long durationInMinutes, final String kafkaServerBootstrap, final String kafkaTopics) {
@@ -75,7 +75,7 @@ public final class OpcTagReadingExecutor {
             final CountdownTimer countdownTimer = new CountdownTimer();
             countdownTimer.countDown((int) TimeUnit.MINUTES.toMinutes(durationInMinutes));
 
-            final RateLimiter rateLimiter = RateLimiter.create(signalsPerSecond(maxSignalsPerMinutePerNode));
+            final RateLimiter rateLimiter = RateLimiter.create(signalsPerSecond(maxSignalsPerMinutePerOpcTag));
             final Random randomNumberGenerator = new Random();
 
             while (true) {
@@ -142,12 +142,12 @@ public final class OpcTagReadingExecutor {
         if (args == null || args.length < 7) {
             // 100 110 30 3 10.40.217.211:9092 mm_signals test
             throw new IllegalArgumentException("OpcTagReadingExecutor: Please ensure the following are set: " +
-                    "opcTagRangeMin, opcTagRangeMax, maxSignalsPerMinutePerNode, durationInMinutes," +
+                    "opcTagRangeMin, opcTagRangeMax, maxSignalsPerMinutePerOpcTag, durationInMinutes," +
                     " kafkaServerBootstrap, kafkaTopics, and generatorId");
         }
         final int opcTagRangeMin = Integer.valueOf(args[0]);
         final int opcTagRangeMax = Integer.valueOf(args[1]);
-        final int maxSignalsPerMinutePerNode = Integer.valueOf(args[2]);
+        final int maxSignalsPerMinutePerOpcTag = Integer.valueOf(args[2]);
         final long durationInMinutes = Long.valueOf(args[3]);
         final String kafkaServerBootstrap = args[4];
         final String kafkaTopics = args[5];
@@ -155,7 +155,7 @@ public final class OpcTagReadingExecutor {
 
         try {
             final OpcTagReadingExecutor opcTagReadingExecutor = new OpcTagReadingExecutor(opcTagRangeMin,
-                    opcTagRangeMax, maxSignalsPerMinutePerNode, generatorId);
+                    opcTagRangeMax, maxSignalsPerMinutePerOpcTag, generatorId);
             opcTagReadingExecutor.execute(durationInMinutes, kafkaServerBootstrap, kafkaTopics);
         } finally {
             Runtime.getRuntime().halt(0);
