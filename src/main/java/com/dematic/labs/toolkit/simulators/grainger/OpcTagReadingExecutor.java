@@ -33,7 +33,7 @@ public final class OpcTagReadingExecutor {
     private OpcTagReadingExecutor(final int opcTagRangeMin, final int opcTagRangeMax,
                                   final int maxSignalsPerMinutePerOpcTag, final String generatorId) {
         opcTagRangeSize = opcTagRangeMax - opcTagRangeMin;
-        opcTagRangeIds = IntStream.range(opcTagRangeMin, opcTagRangeMax).mapToObj(i -> generatorId + "-" + i);
+        opcTagRangeIds = IntStream.range(opcTagRangeMin, opcTagRangeMax).mapToObj(String::valueOf);
         this.maxSignalsPerMinutePerOpcTag = maxSignalsPerMinutePerOpcTag;
         this.generatorId = generatorId;
         statistics = new Statistics();
@@ -100,7 +100,7 @@ public final class OpcTagReadingExecutor {
         rateLimiter.acquire();
         // signals will just be created from json string provided by grainger and updated OPCTagID, Timestamp, Value
         final String timestamp = DateTime.now().toDateTimeISO().toString(); // 2016-03-03T19:13:13.3980463Z
-        final double value = randomNumberGenerator.nextGaussian();
+        final long value = nextRandomNumber(randomNumberGenerator);
         final String signal = String.format(" [{\n" +
                 " \"ExtendedProperties\":[\"%s\"],\n" +
                 " \"ProxiedTypeName\":\"Odatech.Business.Integration.OPCTagReading\",\n" +
@@ -136,6 +136,12 @@ public final class OpcTagReadingExecutor {
 
     private static double signalsPerSecond(final int signalsPerMinutes) {
         return (double) Math.round((signalsPerMinutes / 60d) * 100) / 100;
+    }
+
+    private static long nextRandomNumber(final Random randomNumberGenerator) {
+        // to generate values with an average of 500 and a standard deviation of 100
+        final double val = randomNumberGenerator.nextGaussian() * 25 + 1000;
+        return Math.round(val);
     }
 
     public static void main(String[] args) {
