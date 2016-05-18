@@ -102,7 +102,7 @@ public final class OpcTagReadingExecutor {
         final String timestamp = DateTime.now().toDateTimeISO().toString(); // 2016-03-03T19:13:13.3980463Z
         final double value = randomNumberGenerator.nextGaussian();
         final String signal = String.format(" [{\n" +
-                " \"ExtendedProperties\":[%s],\n" +
+                " \"ExtendedProperties\":[\"%s\"],\n" +
                 " \"ProxiedTypeName\":\"Odatech.Business.Integration.OPCTagReading\",\n" +
                 " \"OPCTagID\":%s,\n" +
                 " \"OPCTagReadingID\":0,\n" +
