@@ -143,8 +143,8 @@ public final class SignalUtils {
             final JsonNode uniqueIDNode = jsonNode.findValue("UniqueID");
             final String uniqueID = uniqueIDNode == null ? null : uniqueId(uniqueIDNode);
 
-            return new Signal(uniqueID, id, toLong(value), timestamp, toLong(quality), opcTagReadingID, opcTagID, proxiedTypeName,
-                    extendedProperties);
+            return new Signal(uniqueID, id, toLong(value), timestamp, toLong(quality), opcTagReadingID, opcTagID,
+                    proxiedTypeName, extendedProperties);
         }
     }
 
