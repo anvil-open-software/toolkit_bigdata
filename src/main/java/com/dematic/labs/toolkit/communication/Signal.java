@@ -1,59 +1,61 @@
 package com.dematic.labs.toolkit.communication;
 
 import java.io.Serializable;
+import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 
 /**
  * VALID JSON (RFC 4627)
- [{
- "ExtendedProperties":[
- ],
- "ProxiedTypeName":"Odatech.Business.Integration.OPCTagReading",
- "OPCTagID":1549,
- "OPCTagReadingID":0,
- "Quality":192,
- "Timestamp":"2016-03-03T19:13:13.3980463Z",
- "Value":"1995603996",
- "ID":0,
- "UniqueID":null
- }]
+ * [{
+ * "ExtendedProperties":[
+ * ],
+ * "ProxiedTypeName":"Odatech.Business.Integration.OPCTagReading",
+ * "OPCTagID":1549,
+ * "OPCTagReadingID":0,
+ * "Quality":192,
+ * "Timestamp":"2016-03-03T19:13:13.3980463Z",
+ * "Value":"1995603996",
+ * "ID":0,
+ * "UniqueID":null
+ * }]
  */
 
+// todo: create a partition key... by day, hour, etc
 @SuppressWarnings("UnusedDeclaration")
 public final class Signal implements Serializable {
     public static final String TABLE_NAME = "signals";
 
     public static String createTableCql(final String keyspace) {
         return String.format("CREATE TABLE if not exists %s.%s (" +
-                "\"uniqueId\" varchar, " +
-                "id bigint, " +
-                "value varchar, " +
-                "timestamp varchar, " +
-                "quality bigint, " +
-                "\"opcTagReadingId\" bigint, " +
-                "\"opcTagId\" bigint, " +
-                "\"proxiedTypeName\" varchar, " +
-                "\"extendedProperties\" list<text>, " +
-                "PRIMARY KEY (\"opcTagId\", timestamp)) with clustering order by (timestamp desc);", keyspace,
-                TABLE_NAME);
+                        " unique_id text, " +
+                        " id bigint, " +
+                        " value bigint, " +
+                        " timestamp timestamp, " +
+                        " quality bigint, " +
+                        " opc_tag_reading_id bigint, " +
+                        " opc_tag_id bigint, " +
+                        " proxied_type_name text, " +
+                        " extended_properties list<text>, " +
+                        " PRIMARY KEY ((opc_tag_id), timestamp)) WITH CLUSTERING ORDER BY (timestamp desc);",
+                keyspace, TABLE_NAME);
     }
 
     private String uniqueId;
-    private String id;
+    private Long id;
     private Long value;
-    private String timestamp;
+    private Date timestamp;
     private Long quality;
-    private String opcTagReadingId;
-    private String opcTagId;
+    private Long opcTagReadingId;
+    private Long opcTagId;
     private String proxiedTypeName;
     private List<String> extendedProperties;
 
     public Signal() {
     }
 
-    public Signal(final String uniqueId, final String id, final Long value, final String timestamp,
-                  final Long quality, final String opcTagReadingId, final String opcTagId,
+    public Signal(final String uniqueId, final Long id, final Long value, final Date timestamp,
+                  final Long quality, final Long opcTagReadingId, final Long opcTagId,
                   final String proxiedTypeName, final List<String> extendedProperties) {
         this.uniqueId = uniqueId;
         this.id = id;
@@ -74,11 +76,11 @@ public final class Signal implements Serializable {
         this.uniqueId = uniqueId;
     }
 
-    public String getId() {
+    public Long getId() {
         return id;
     }
 
-    public void setId(final String id) {
+    public void setId(final Long id) {
         this.id = id;
     }
 
@@ -90,11 +92,11 @@ public final class Signal implements Serializable {
         this.value = value;
     }
 
-    public String getTimestamp() {
+    public Date getTimestamp() {
         return timestamp;
     }
 
-    public void setTimestamp(final String timestamp) {
+    public void setTiNmestamp(final Date timestamp) {
         this.timestamp = timestamp;
     }
 
@@ -106,19 +108,19 @@ public final class Signal implements Serializable {
         this.quality = quality;
     }
 
-    public String getOpcTagReadingId() {
+    public Long getOpcTagReadingId() {
         return opcTagReadingId;
     }
 
-    public void setOpcTagReadingId(final String opcTagReadingId) {
+    public void setOpcTagReadingId(final Long opcTagReadingId) {
         this.opcTagReadingId = opcTagReadingId;
     }
 
-    public String getOpcTagId() {
+    public Long getOpcTagId() {
         return opcTagId;
     }
 
-    public void setOpcTagId(final String opcTagId) {
+    public void setOpcTagId(final Long opcTagId) {
         this.opcTagId = opcTagId;
     }
 

@@ -3,23 +3,28 @@ package com.dematic.labs.toolkit.communication;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.ObjectCodec;
-import com.fasterxml.jackson.databind.DeserializationContext;
-import com.fasterxml.jackson.databind.JsonDeserializer;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.JsonSerializer;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializerProvider;
+import com.fasterxml.jackson.databind.*;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.google.common.base.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.*;
 
 public final class SignalUtils {
     private static final Logger LOGGER = LoggerFactory.getLogger(SignalUtils.class);
+
+    private static String ISO_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSS zzz";
+    private static final TimeZone UTC = TimeZone.getTimeZone("UTC");
+    private static final SimpleDateFormat ISO_FORMATTER = new SimpleDateFormat(ISO_FORMAT);
+
+    static {
+        ISO_FORMATTER.setTimeZone(UTC);
+    }
+
     private final static ObjectMapper objectMapper;
 
     static {
@@ -65,12 +70,12 @@ public final class SignalUtils {
                 });
                 jsonGenerator.writeEndArray();
                 jsonGenerator.writeStringField("ProxiedTypeName", signal.getProxiedTypeName());
-                jsonGenerator.writeNumberField("OPCTagID", Long.valueOf(signal.getOpcTagId()));
-                jsonGenerator.writeNumberField("OPCTagReadingID", toLong(signal.getOpcTagReadingId()));
+                jsonGenerator.writeNumberField("OPCTagID", signal.getOpcTagId());
+                jsonGenerator.writeNumberField("OPCTagReadingID", signal.getOpcTagReadingId());
                 jsonGenerator.writeNumberField("Quality", signal.getQuality());
-                jsonGenerator.writeStringField("Timestamp", signal.getTimestamp());
-                jsonGenerator.writeStringField("Value", toStringV(signal.getValue())); // write as string
-                jsonGenerator.writeNumberField("ID", toLong(signal.getId()));
+                jsonGenerator.writeStringField("Timestamp", ISO_FORMATTER.format(signal.getTimestamp()));
+                jsonGenerator.writeNumberField("Value", signal.getValue());
+                jsonGenerator.writeNumberField("ID", signal.getId());
                 if (Strings.isNullOrEmpty(signal.getUniqueId())) {
                     jsonGenerator.writeNullField("UniqueID");
                 } else {
@@ -82,26 +87,6 @@ public final class SignalUtils {
                 jsonGenerator.close();
             }
         }
-    }
-
-    /**
-     * Convert to long.
-     *
-     * @param value -- value to convert
-     * @return 0 or long value
-     */
-    private static long toLong(final String value) {
-        return Strings.isNullOrEmpty(value) ? 0L : Long.valueOf(value);
-    }
-
-    /**
-     * Convert long or 0
-     *
-     * @param value -- value to convert
-     * @return string version of 0 or long value
-     */
-    private static String toStringV(final Long value) {
-        return value == null ? "0" : String.valueOf(value);
     }
 
     private final static class SignalDeserializer extends JsonDeserializer<Signal> {
@@ -123,28 +108,40 @@ public final class SignalUtils {
             final String proxiedTypeName = proxiedTypeNameNode == null ? null : proxiedTypeNameNode.asText();
 
             final JsonNode opcTagIDNode = jsonNode.findValue("OPCTagID");
-            final String opcTagID = opcTagIDNode == null ? null : opcTagIDNode.asText();
+            final Long opcTagID = opcTagIDNode == null ? null : opcTagIDNode.asLong();
 
             final JsonNode opcTagReadingIDNode = jsonNode.findValue("OPCTagReadingID");
-            final String opcTagReadingID = opcTagReadingIDNode == null ? null : opcTagReadingIDNode.asText();
+            final Long opcTagReadingID = opcTagReadingIDNode == null ? null : opcTagReadingIDNode.asLong();
 
             final JsonNode qualityNode = jsonNode.findValue("Quality");
-            final String quality = qualityNode == null ? null : qualityNode.asText();
+            final Long quality = qualityNode == null ? null : qualityNode.asLong();
 
-            final JsonNode timestampNode = jsonNode.findValue("Timestamp");
-            final String timestamp = timestampNode == null ? null : timestampNode.asText();
+            final Date timestamp = timestamp(jsonNode.findValue("Timestamp"));
 
             final JsonNode valueNode = jsonNode.findValue("Value");
-            final String value = valueNode == null ? null : valueNode.asText();
+            final Long value = valueNode == null ? null : valueNode.asLong();
 
             final JsonNode idNode = jsonNode.findValue("ID");
-            final String id = idNode == null ? null : idNode.asText();
+            final Long id = idNode == null ? null : idNode.asLong();
 
             final JsonNode uniqueIDNode = jsonNode.findValue("UniqueID");
             final String uniqueID = uniqueIDNode == null ? null : uniqueId(uniqueIDNode);
 
-            return new Signal(uniqueID, id, toLong(value), timestamp, toLong(quality), opcTagReadingID, opcTagID,
+            return new Signal(uniqueID, id, value, timestamp, quality, opcTagReadingID, opcTagID,
                     proxiedTypeName, extendedProperties);
+        }
+    }
+
+    private static Date timestamp(final JsonNode timestampNode) {
+        final String timestamp = timestampNode == null ? null : timestampNode.asText();
+        if (Strings.isNullOrEmpty(timestamp)) {
+            return null;
+        } else {
+            try {
+                return ISO_FORMATTER.parse(timestamp);
+            } catch (final ParseException parseEx) {
+                throw new IllegalArgumentException(String.format("Not ISO Format >%s<", timestamp));
+            }
         }
     }
 
