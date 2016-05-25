@@ -45,11 +45,17 @@ public final class SignalUtils {
         return objectMapper.writeValueAsString(signal);
     }
 
-    public static Date toJavaUtilDateFromZonedDateTime(final ZonedDateTime zonedDateTime) {
-        final Instant instant = zonedDateTime.toInstant();
-        final long millisecondsSinceEpoch = instant.toEpochMilli();  // Data-loss, going from nanosecond resolution to milliseconds.
+    public static Date toJavaUtilDateFromInstance(final Instant instant) {
+        final ZonedDateTime zonedDateTime = ZonedDateTime.ofInstant(instant, ZoneId.of("Z"));
+        final Instant zonedInstant = zonedDateTime.toInstant();
+        final long millisecondsSinceEpoch = zonedInstant.toEpochMilli();  // Data-loss, going from nanosecond resolution to milliseconds.
         return new Date(millisecondsSinceEpoch);
     }
+
+    public static Instant toInstantFromJavaUtilDate(final Date date) {
+        return ZonedDateTime.ofInstant(date.toInstant(), ZoneId.of("Z")).toInstant();
+    }
+
 
     private final static class SignalSerializer extends JsonSerializer<Signal> {
         @Override
@@ -74,8 +80,8 @@ public final class SignalUtils {
                 jsonGenerator.writeNumberField("OPCTagID", signal.getOpcTagId());
                 jsonGenerator.writeNumberField("OPCTagReadingID", signal.getOpcTagReadingId());
                 jsonGenerator.writeNumberField("Quality", signal.getQuality());
-                jsonGenerator.writeStringField("Timestamp", ZonedDateTime.ofInstant(signal.getTimestamp().toInstant(),
-                        ZoneId.of("Z")).truncatedTo(ChronoUnit.NANOS).toString());
+                jsonGenerator.writeStringField("Timestamp", toInstantFromJavaUtilDate(signal.getTimestamp()).
+                        truncatedTo(ChronoUnit.NANOS).toString());
                 jsonGenerator.writeNumberField("Value", signal.getValue());
                 jsonGenerator.writeNumberField("ID", signal.getId());
                 if (Strings.isNullOrEmpty(signal.getUniqueId())) {
@@ -144,6 +150,6 @@ public final class SignalUtils {
         if (instant == null) {
             return null;
         }
-        return toJavaUtilDateFromZonedDateTime(ZonedDateTime.ofInstant(instant, ZoneId.of("Z")));
+        return toJavaUtilDateFromInstance(instant);
     }
 }
