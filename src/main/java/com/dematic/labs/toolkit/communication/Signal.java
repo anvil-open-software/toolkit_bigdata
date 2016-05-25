@@ -54,9 +54,9 @@ public final class Signal implements Serializable {
     public Signal() {
     }
 
-    public Signal(final String uniqueId, final Long id, final Long value, final Date timestamp,
-                  final Long quality, final Long opcTagReadingId, final Long opcTagId,
-                  final String proxiedTypeName, final List<String> extendedProperties) {
+    public Signal(final String uniqueId, final Long id, final Long value, final Date timestamp, final Long quality,
+                  final Long opcTagReadingId, final Long opcTagId, final String proxiedTypeName,
+                  final List<String> extendedProperties) {
         this.uniqueId = uniqueId;
         this.id = id;
         this.value = value;

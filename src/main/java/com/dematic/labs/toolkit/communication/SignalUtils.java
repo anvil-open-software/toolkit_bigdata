@@ -10,21 +10,16 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.*;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
 
 public final class SignalUtils {
     private static final Logger LOGGER = LoggerFactory.getLogger(SignalUtils.class);
-
-    private static String ISO_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSS zzz";
-    private static final TimeZone UTC = TimeZone.getTimeZone("UTC");
-    private static final SimpleDateFormat ISO_FORMATTER = new SimpleDateFormat(ISO_FORMAT);
-
-    static {
-        ISO_FORMATTER.setTimeZone(UTC);
-    }
-
     private final static ObjectMapper objectMapper;
 
     static {
@@ -50,6 +45,12 @@ public final class SignalUtils {
         return objectMapper.writeValueAsString(signal);
     }
 
+    public static Date toJavaUtilDateFromZonedDateTime(final ZonedDateTime zonedDateTime) {
+        final Instant instant = zonedDateTime.toInstant();
+        final long millisecondsSinceEpoch = instant.toEpochMilli();  // Data-loss, going from nanosecond resolution to milliseconds.
+        return new Date(millisecondsSinceEpoch);
+    }
+
     private final static class SignalSerializer extends JsonSerializer<Signal> {
         @Override
         public void serialize(final Signal signal, final JsonGenerator jsonGenerator,
@@ -73,7 +74,8 @@ public final class SignalUtils {
                 jsonGenerator.writeNumberField("OPCTagID", signal.getOpcTagId());
                 jsonGenerator.writeNumberField("OPCTagReadingID", signal.getOpcTagReadingId());
                 jsonGenerator.writeNumberField("Quality", signal.getQuality());
-                jsonGenerator.writeStringField("Timestamp", ISO_FORMATTER.format(signal.getTimestamp()));
+                jsonGenerator.writeStringField("Timestamp", ZonedDateTime.ofInstant(signal.getTimestamp().toInstant(),
+                        ZoneId.of("Z")).truncatedTo(ChronoUnit.NANOS).toString());
                 jsonGenerator.writeNumberField("Value", signal.getValue());
                 jsonGenerator.writeNumberField("ID", signal.getId());
                 if (Strings.isNullOrEmpty(signal.getUniqueId())) {
@@ -99,13 +101,13 @@ public final class SignalUtils {
             final List<String> extendedProperties = new ArrayList<>();
             if (extendedPropertiesNode != null) {
                 for (final JsonNode next : extendedPropertiesNode) {
-                    final String property = next.isNull() ? null : next.asText();
+                    final String property = next.isNull() ? null : next.textValue();
                     extendedProperties.add(property);
                 }
             }
 
             final JsonNode proxiedTypeNameNode = jsonNode.findValue("ProxiedTypeName");
-            final String proxiedTypeName = proxiedTypeNameNode == null ? null : proxiedTypeNameNode.asText();
+            final String proxiedTypeName = proxiedTypeNameNode == null ? null : proxiedTypeNameNode.textValue();
 
             final JsonNode opcTagIDNode = jsonNode.findValue("OPCTagID");
             final Long opcTagID = opcTagIDNode == null ? null : opcTagIDNode.asLong();
@@ -116,7 +118,9 @@ public final class SignalUtils {
             final JsonNode qualityNode = jsonNode.findValue("Quality");
             final Long quality = qualityNode == null ? null : qualityNode.asLong();
 
-            final Date timestamp = timestamp(jsonNode.findValue("Timestamp"));
+            final JsonNode timestampNode = jsonNode.findValue("Timestamp");
+            final Instant timestamp = timestampNode == null ? null : Instant.parse(timestampNode.textValue()).
+                    truncatedTo(ChronoUnit.NANOS);
 
             final JsonNode valueNode = jsonNode.findValue("Value");
             final Long value = valueNode == null ? null : valueNode.asLong();
@@ -127,25 +131,19 @@ public final class SignalUtils {
             final JsonNode uniqueIDNode = jsonNode.findValue("UniqueID");
             final String uniqueID = uniqueIDNode == null ? null : uniqueId(uniqueIDNode);
 
-            return new Signal(uniqueID, id, value, timestamp, quality, opcTagReadingID, opcTagID,
+            return new Signal(uniqueID, id, value, toDate(timestamp), quality, opcTagReadingID, opcTagID,
                     proxiedTypeName, extendedProperties);
         }
     }
 
-    private static Date timestamp(final JsonNode timestampNode) {
-        final String timestamp = timestampNode == null ? null : timestampNode.asText();
-        if (Strings.isNullOrEmpty(timestamp)) {
-            return null;
-        } else {
-            try {
-                return ISO_FORMATTER.parse(timestamp);
-            } catch (final ParseException parseEx) {
-                throw new IllegalArgumentException(String.format("Not ISO Format >%s<", timestamp));
-            }
-        }
+    private static String uniqueId(final JsonNode uniqueIDNode) {
+        return uniqueIDNode.isNull() ? null : uniqueIDNode.textValue();
     }
 
-    private static String uniqueId(final JsonNode uniqueIDNode) {
-        return uniqueIDNode.isNull() ? null : uniqueIDNode.asText();
+    private static Date toDate(final Instant instant) {
+        if (instant == null) {
+            return null;
+        }
+        return toJavaUtilDateFromZonedDateTime(ZonedDateTime.ofInstant(instant, ZoneId.of("Z")));
     }
 }
