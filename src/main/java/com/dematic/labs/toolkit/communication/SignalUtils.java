@@ -3,7 +3,12 @@ package com.dematic.labs.toolkit.communication;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.ObjectCodec;
-import com.fasterxml.jackson.databind.*;
+import com.fasterxml.jackson.databind.DeserializationContext;
+import com.fasterxml.jackson.databind.JsonDeserializer;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.JsonSerializer;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.google.common.base.Strings;
 import org.slf4j.Logger;
@@ -11,6 +16,8 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
@@ -137,8 +144,8 @@ public final class SignalUtils {
             final JsonNode uniqueIDNode = jsonNode.findValue("UniqueID");
             final String uniqueID = uniqueIDNode == null ? null : uniqueId(uniqueIDNode);
 
-            return new Signal(uniqueID, id, value, toDate(timestamp), quality, opcTagReadingID, opcTagID,
-                    proxiedTypeName, extendedProperties);
+            return new Signal(uniqueID, id, value, toLocalDate(timestamp), toDate(timestamp), quality, opcTagReadingID,
+                    opcTagID, proxiedTypeName, extendedProperties);
         }
     }
 
@@ -151,5 +158,13 @@ public final class SignalUtils {
             return null;
         }
         return toJavaUtilDateFromInstance(instant);
+    }
+
+    private static Date toLocalDate(final Instant instant) {
+        if (instant == null) {
+            return null;
+        }
+        final LocalDate localDate = LocalDateTime.ofInstant(Instant.now(), ZoneId.of("Z")).toLocalDate();
+        return toDate(localDate.atStartOfDay().atZone(ZoneId.of("Z")).toInstant());
     }
 }
