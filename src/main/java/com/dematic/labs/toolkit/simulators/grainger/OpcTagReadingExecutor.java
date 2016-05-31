@@ -6,11 +6,11 @@ import com.google.common.util.concurrent.RateLimiter;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
-import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.nio.charset.Charset;
+import java.time.Instant;
 import java.util.Random;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ForkJoinPool;
@@ -99,7 +99,7 @@ public final class OpcTagReadingExecutor {
                                       final Random randomNumberGenerator) {
         rateLimiter.acquire();
         // signals will just be created from json string provided by grainger and updated OPCTagID, Timestamp, Value
-        final String timestamp = DateTime.now().toDateTimeISO().toString(); // 2016-03-03T19:13:13.3980463Z
+        final String timestamp = Instant.now().toString(); // 2016-03-03T19:13:13.3980463Z
         final long value = nextRandomNumber(randomNumberGenerator);
         final String signal = String.format(" [{\n" +
                 " \"ExtendedProperties\":[\"%s\"],\n" +
