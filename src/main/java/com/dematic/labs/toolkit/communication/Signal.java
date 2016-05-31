@@ -31,14 +31,14 @@ public final class Signal implements Serializable {
                         " unique_id text, " +
                         " id bigint, " +
                         " value bigint, " +
-                        " date timestamp, " +
+                        " day timestamp, " +
                         " timestamp timestamp, " +
                         " quality bigint, " +
                         " opc_tag_reading_id bigint, " +
                         " opc_tag_id bigint, " +
                         " proxied_type_name text, " +
                         " extended_properties list<text>, " +
-                        " PRIMARY KEY ((opc_tag_id, date), timestamp)) WITH CLUSTERING ORDER BY (date desc, timestamp desc);",
+                        " PRIMARY KEY ((opc_tag_id, day), timestamp)) WITH CLUSTERING ORDER BY (timestamp desc);",
                 keyspace, TABLE_NAME);
     }
 
