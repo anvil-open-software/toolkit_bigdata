@@ -31,19 +31,21 @@ public final class Signal implements Serializable {
                         " unique_id text, " +
                         " id bigint, " +
                         " value bigint, " +
+                        " date timestamp, " +
                         " timestamp timestamp, " +
                         " quality bigint, " +
                         " opc_tag_reading_id bigint, " +
                         " opc_tag_id bigint, " +
                         " proxied_type_name text, " +
                         " extended_properties list<text>, " +
-                        " PRIMARY KEY ((opc_tag_id), timestamp)) WITH CLUSTERING ORDER BY (timestamp desc);",
+                        " PRIMARY KEY ((opc_tag_id, date), timestamp)) WITH CLUSTERING ORDER BY (date desc, timestamp desc);",
                 keyspace, TABLE_NAME);
     }
 
     private String uniqueId;
     private Long id;
     private Long value;
+    private Date day; // partition by day
     private Date timestamp;
     private Long quality;
     private Long opcTagReadingId;
@@ -54,12 +56,13 @@ public final class Signal implements Serializable {
     public Signal() {
     }
 
-    public Signal(final String uniqueId, final Long id, final Long value, final Date timestamp, final Long quality,
-                  final Long opcTagReadingId, final Long opcTagId, final String proxiedTypeName,
-                  final List<String> extendedProperties) {
+    public Signal(final String uniqueId, final Long id, final Long value, final Date day, final Date timestamp,
+                  final Long quality, final Long opcTagReadingId, final Long opcTagId,
+                  final String proxiedTypeName, final List<String> extendedProperties) {
         this.uniqueId = uniqueId;
         this.id = id;
         this.value = value;
+        this.day = day;
         this.timestamp = timestamp;
         this.quality = quality;
         this.opcTagReadingId = opcTagReadingId;
@@ -90,6 +93,14 @@ public final class Signal implements Serializable {
 
     public void setValue(final Long value) {
         this.value = value;
+    }
+
+    public Date getDay() {
+        return day;
+    }
+
+    public void setDay(final Date day) {
+        this.day = day;
     }
 
     public Date getTimestamp() {
@@ -148,6 +159,7 @@ public final class Signal implements Serializable {
         return Objects.equals(uniqueId, signal.uniqueId) &&
                 Objects.equals(id, signal.id) &&
                 Objects.equals(value, signal.value) &&
+                Objects.equals(day, signal.day) &&
                 Objects.equals(timestamp, signal.timestamp) &&
                 Objects.equals(quality, signal.quality) &&
                 Objects.equals(opcTagReadingId, signal.opcTagReadingId) &&
@@ -158,20 +170,20 @@ public final class Signal implements Serializable {
 
     @Override
     public int hashCode() {
-        return Objects.hash(uniqueId, id, value, timestamp, quality, opcTagReadingId, opcTagId, proxiedTypeName,
-                extendedProperties);
+        return Objects.hash(uniqueId, id, value, day, timestamp, quality, opcTagReadingId, opcTagId, proxiedTypeName, extendedProperties);
     }
 
     @Override
     public String toString() {
         return "Signal{" +
                 "uniqueId='" + uniqueId + '\'' +
-                ", id='" + id + '\'' +
-                ", value='" + value + '\'' +
-                ", timestamp='" + timestamp + '\'' +
-                ", quality='" + quality + '\'' +
-                ", opcTagReadingID='" + opcTagReadingId + '\'' +
-                ", opcTagID='" + opcTagId + '\'' +
+                ", id=" + id +
+                ", value=" + value +
+                ", day=" + day +
+                ", timestamp=" + timestamp +
+                ", quality=" + quality +
+                ", opcTagReadingId=" + opcTagReadingId +
+                ", opcTagId=" + opcTagId +
                 ", proxiedTypeName='" + proxiedTypeName + '\'' +
                 ", extendedProperties=" + extendedProperties +
                 '}';
