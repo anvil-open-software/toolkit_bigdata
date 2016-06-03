@@ -16,8 +16,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.time.Instant;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
@@ -144,7 +142,7 @@ public final class SignalUtils {
             final JsonNode uniqueIDNode = jsonNode.findValue("UniqueID");
             final String uniqueID = uniqueIDNode == null ? null : uniqueId(uniqueIDNode);
 
-            return new Signal(uniqueID, id, value, toLocalDate(timestamp), toDate(timestamp), quality, opcTagReadingID,
+            return new Signal(uniqueID, id, value, toDayString(timestamp), toDate(timestamp), quality, opcTagReadingID,
                     opcTagID, proxiedTypeName, extendedProperties);
         }
     }
@@ -160,11 +158,10 @@ public final class SignalUtils {
         return toJavaUtilDateFromInstance(instant);
     }
 
-    private static Date toLocalDate(final Instant instant) {
+    private static String toDayString(final Instant instant) {
         if (instant == null) {
             return null;
         }
-        final LocalDate localDate = LocalDateTime.ofInstant(Instant.now(), ZoneId.of("Z")).toLocalDate();
-        return toDate(localDate.atStartOfDay().atZone(ZoneId.of("Z")).toInstant());
+        return instant.truncatedTo(ChronoUnit.DAYS).toString();
     }
 }

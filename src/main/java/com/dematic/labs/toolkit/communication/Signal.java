@@ -31,7 +31,7 @@ public final class Signal implements Serializable {
                         " unique_id text, " +
                         " id bigint, " +
                         " value bigint, " +
-                        " day timestamp, " +
+                        " day text, " +
                         " timestamp timestamp, " +
                         " quality bigint, " +
                         " opc_tag_reading_id bigint, " +
@@ -45,7 +45,7 @@ public final class Signal implements Serializable {
     private String uniqueId;
     private Long id;
     private Long value;
-    private Date day; // partition by day
+    private String day; // partition by day, form 2016-12-23
     private Date timestamp;
     private Long quality;
     private Long opcTagReadingId;
@@ -56,7 +56,7 @@ public final class Signal implements Serializable {
     public Signal() {
     }
 
-    public Signal(final String uniqueId, final Long id, final Long value, final Date day, final Date timestamp,
+    public Signal(final String uniqueId, final Long id, final Long value, final String day, final Date timestamp,
                   final Long quality, final Long opcTagReadingId, final Long opcTagId,
                   final String proxiedTypeName, final List<String> extendedProperties) {
         this.uniqueId = uniqueId;
@@ -95,11 +95,11 @@ public final class Signal implements Serializable {
         this.value = value;
     }
 
-    public Date getDay() {
+    public String getDay() {
         return day;
     }
 
-    public void setDay(final Date day) {
+    public void setDay(final String day) {
         this.day = day;
     }
 
