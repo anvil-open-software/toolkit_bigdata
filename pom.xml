@@ -44,11 +44,17 @@
                     </exclusion>
                 </exclusions>
             </dependency>
-            <!-- cassandra connector -->
+            <!-- cassandra connector for spark -->
             <dependency>
                 <groupId>com.datastax.spark</groupId>
                 <artifactId>spark-cassandra-connector-java_2.11</artifactId>
                 <version>1.5.0</version>
+            </dependency>
+            <!-- cassandra client driver for java apps -->
+            <dependency>
+                <groupId>com.datastax.cassandra</groupId>
+                <artifactId>cassandra-driver-core</artifactId>
+                <version>3.0.1</version>
             </dependency>
             <!-- kafka -->
             <dependency>
