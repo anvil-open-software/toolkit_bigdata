@@ -67,6 +67,11 @@
             <groupId>com.datastax.cassandra</groupId>
             <artifactId>cassandra-driver-core</artifactId>
         </dependency>
+        <!-- cassandra unit test -->
+        <dependency>
+            <groupId>org.cassandraunit</groupId>
+            <artifactId>cassandra-unit</artifactId>
+        </dependency>
         <!-- kafka -->
         <dependency>
             <groupId>org.apache.kafka</groupId>
