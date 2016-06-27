@@ -56,6 +56,13 @@
                 <artifactId>cassandra-driver-core</artifactId>
                 <version>3.0.1</version>
             </dependency>
+            <!-- cassandra unit test -->
+            <dependency>
+                <groupId>org.cassandraunit</groupId>
+                <artifactId>cassandra-unit</artifactId>
+                <version>3.0.0.1</version>
+                <scope>test</scope>
+            </dependency>
             <!-- kafka -->
             <dependency>
                 <groupId>org.apache.kafka</groupId>
