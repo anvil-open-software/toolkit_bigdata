@@ -48,19 +48,44 @@
             <dependency>
                 <groupId>com.datastax.spark</groupId>
                 <artifactId>spark-cassandra-connector-java_2.11</artifactId>
-                <version>1.5.0</version>
+                <version>1.5.1</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>org.apache.cassandra</groupId>
+                        <artifactId>cassandra-clientutil</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+            <!-- cassandra client utils -->
+            <dependency>
+                <groupId>org.apache.cassandra</groupId>
+                <artifactId>cassandra-clientutil</artifactId>
+                <version>3.4</version>
             </dependency>
             <!-- cassandra client driver for java apps -->
             <dependency>
                 <groupId>com.datastax.cassandra</groupId>
                 <artifactId>cassandra-driver-core</artifactId>
-                <version>3.0.1</version>
+                <version>3.0.2</version>
+            </dependency>
+            <!-- cassandra unit test -->
+            <dependency>
+                <groupId>org.cassandraunit</groupId>
+                <artifactId>cassandra-unit</artifactId>
+                <version>3.0.0.1</version>
+                <scope>test</scope>
             </dependency>
             <!-- kafka -->
             <dependency>
                 <groupId>org.apache.kafka</groupId>
                 <artifactId>kafka-clients</artifactId>
                 <version>0.9.0.1</version>
+                <exclusions>
+                    <exclusion>
+                        <artifactId>lz4</artifactId>
+                        <groupId>net.jpountz.lz4</groupId>
+                    </exclusion>
+                </exclusions>
             </dependency>
             <!-- jedis redis client -->
             <dependency>
