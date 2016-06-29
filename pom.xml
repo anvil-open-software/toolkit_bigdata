@@ -87,6 +87,20 @@
                     </exclusion>
                 </exclusions>
             </dependency>
+            <!-- kafka unit test (kb : kafka_2.11:0.8.2.1, zk : 3.4.6)-->
+            <dependency>
+                <groupId>info.batey.kafka</groupId>
+                <artifactId>kafka-unit</artifactId>
+                <version>0.2</version>
+                <scope>test</scope>
+            </dependency>
+            <!-- kafka dep -->
+            <dependency>
+                <groupId>net.sf.jopt-simple</groupId>
+                <artifactId>jopt-simple</artifactId>
+                <version>5.0.2</version>
+                <scope>test</scope>
+            </dependency>
             <!-- jedis redis client -->
             <dependency>
                 <groupId>redis.clients</groupId>
