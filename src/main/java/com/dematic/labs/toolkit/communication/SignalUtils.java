@@ -16,6 +16,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
@@ -61,6 +62,9 @@ public final class SignalUtils {
         return ZonedDateTime.ofInstant(date.toInstant(), ZoneId.of("Z")).toInstant();
     }
 
+    public static LocalDate toLocalDateFromJavaUtilDate(final Date date) {
+        return ZonedDateTime.ofInstant(date.toInstant(), ZoneId.of("Z")).toLocalDate();
+    }
 
     private final static class SignalSerializer extends JsonSerializer<Signal> {
         @Override
