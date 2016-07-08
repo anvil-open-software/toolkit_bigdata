@@ -4,8 +4,10 @@ import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.amazonaws.services.dynamodbv2.document.DynamoDB;
 import com.amazonaws.services.dynamodbv2.document.Item;
 import com.amazonaws.services.dynamodbv2.document.Table;
+import com.dematic.labs.toolkit.SystemPropertyRule;
 import com.dematic.labs.toolkit.aws.EventRunParms;
 import org.joda.time.DateTime;
+import org.junit.Rule;
 import org.junit.Test;
 
 import static com.dematic.labs.toolkit.aws.Connections.deleteDynamoTable;
@@ -18,6 +20,9 @@ import static junit.framework.TestCase.assertNotNull;
  */
 
 public class KinesisStreamSummaryTest {
+
+    @Rule
+    public final SystemPropertyRule systemPropertyRule = new SystemPropertyRule();
 
     @Test
     public void testEntry() {
@@ -54,15 +59,14 @@ public class KinesisStreamSummaryTest {
         }
     }
 
-    protected String getDynamoDBEndPoint() {
+    private String getDynamoDBEndPoint() {
         return System.getProperty("dynamoDBEndpoint");
     }
 
-    public Item getSummaryRow(String inTable, String inKey, String inRange) {
+    private Item getSummaryRow(String inTable, String inKey, String inRange) {
         final AmazonDynamoDBClient dynamoDBClient = getAmazonDynamoDBClient(getDynamoDBEndPoint());
         DynamoDB dynamoDB = new DynamoDB(dynamoDBClient);
         Table table = dynamoDB.getTable(inTable);
-        Item item= table.getItem("kinesisStream", inKey, "runStartTime", inRange);
-        return item;
+        return table.getItem("kinesisStream", inKey, "runStartTime", inRange);
     }
 }
