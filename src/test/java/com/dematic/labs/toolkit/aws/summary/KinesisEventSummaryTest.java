@@ -4,8 +4,10 @@ import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.amazonaws.services.dynamodbv2.document.DynamoDB;
 import com.amazonaws.services.dynamodbv2.document.Item;
 import com.amazonaws.services.dynamodbv2.document.Table;
+import com.dematic.labs.toolkit.SystemPropertyRule;
 import com.dematic.labs.toolkit.aws.EventRunParms;
 import org.joda.time.DateTime;
+import org.junit.Rule;
 import org.junit.Test;
 
 import static com.dematic.labs.toolkit.aws.Connections.deleteDynamoTable;
@@ -19,10 +21,13 @@ import static junit.framework.TestCase.assertNotNull;
 
 public class KinesisEventSummaryTest {
 
+    @Rule
+    public final SystemPropertyRule systemPropertyRule = new SystemPropertyRule();
+
     @Test
     public void testEntry() {
-        final Long attemtpsSucceeded = 100323l;
-        final Long attemptsFailed = 1290l;
+        final Long attemtpsSucceeded = 100323L;
+        final Long attemptsFailed = 1290L;
         final String userNamePrefix = System.getProperty("user.name") + "_";
         KinesisEventSummaryPersister persister = new KinesisEventSummaryPersister(getDynamoDBEndPoint(), userNamePrefix);
         String[] inRawArgs = null;
@@ -34,7 +39,7 @@ public class KinesisEventSummaryTest {
             KinesisEventSummary summary = new KinesisEventSummary(runParms);
             summary.setTotalEventsFailed(attemptsFailed);
             summary.setTotalEventsSucceeded(attemtpsSucceeded);
-            summary.setTotalEventsFailedKinesisErrors(333l);
+            summary.setTotalEventsFailedKinesisErrors(333L);
             runParms.setRunEndTime(endTime);
             persister.persistSummary(summary);
 
@@ -59,11 +64,10 @@ public class KinesisEventSummaryTest {
         return System.getProperty("dynamoDBEndpoint");
     }
 
-    public Item getSummaryRow(String inTable, String inKey, String inRange) {
+    private Item getSummaryRow(String inTable, String inKey, String inRange) {
         final AmazonDynamoDBClient dynamoDBClient = getAmazonDynamoDBClient(getDynamoDBEndPoint());
         DynamoDB dynamoDB = new DynamoDB(dynamoDBClient);
         Table table = dynamoDB.getTable(inTable);
-        Item item= table.getItem("kinesisStream", inKey, "runStartTime", inRange);
-        return item;
+        return table.getItem("kinesisStream", inKey, "runStartTime", inRange);
     }
 }
