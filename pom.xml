@@ -60,7 +60,7 @@
         <!-- cassandra connector -->
         <dependency>
             <groupId>com.datastax.spark</groupId>
-            <artifactId>spark-cassandra-connector-java_2.11</artifactId>
+            <artifactId>spark-cassandra-connector_2.11</artifactId>
         </dependency>
         <!-- cassandra client utils -->
         <dependency>
