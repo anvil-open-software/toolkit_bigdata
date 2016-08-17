@@ -14,6 +14,7 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <!-- version supported by Spark 2.0 -->
         <jackson.version>2.6.5</jackson.version>
     </properties>
 
