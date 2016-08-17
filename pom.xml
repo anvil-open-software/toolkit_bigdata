@@ -19,6 +19,7 @@
         <sonar.jacoco.itReportPath>${env.WORKSPACE}/target/${jacoco-it.out.file}</sonar.jacoco.itReportPath>
     </properties>
 
+    <!--test -->
     <dependencyManagement>
         <dependencies>
             <dependency>
