@@ -154,7 +154,7 @@ public final class OpcTagReadingExecutor {
             // 100 110 30 3 10.40.217.211:9092 mm_signals test
             throw new IllegalArgumentException("OpcTagReadingExecutor: Please ensure the following are set: " +
                     "opcTagRangeMin, opcTagRangeMax, maxSignalsPerMinutePerOpcTag, durationInMinutes," +
-                    " kafkaServerBootstrap, kafkaTopics, Cassandra Keyspace, Cassandra Server, Cassandra Username, " +
+                    " kafkaServerBootstrap, kafkaTopics, Cassandra Server, Cassandra Keyspace, Cassandra Username, " +
                     "Cassandra Password, ApplicationName, and generatorId");
         }
 
@@ -168,7 +168,12 @@ public final class OpcTagReadingExecutor {
         // 1) check validation, table exist
         if (VALIDATE) {
             // todo: cleanup setting parameters
-            validateTableExist(args[6], args[7], args[8], args[9], args[10]);
+            try {
+                validateTableExist(args[6], args[7], args[8], args[9]);
+            } catch (final Throwable any) {
+                LOGGER.error("OpcTagReadingExecutor: can't validate cassandra table", any);
+                Runtime.getRuntime().halt(0);
+            }
         }
 
         final String generatorId;
@@ -184,38 +189,46 @@ public final class OpcTagReadingExecutor {
             opcTagReadingExecutor.execute(durationInMinutes, kafkaServerBootstrap, kafkaTopics);
         } finally {
             if (VALIDATE) {
-                LOGGER.info("OpcTagReadingExecutor: publishing statistics to server >%s<", args[7]);
-                publishStatistics(args[6], args[7], args[8], args[9], args[10]);
-                LOGGER.info("OpcTagReadingExecutor: completed publishing statistics to server >%s<", args[7]);
+                LOGGER.info("OpcTagReadingExecutor: publishing statistics to server >{}<", args[7]);
+                try {
+                    publishStatistics(args[6], args[7], args[8], args[9], args[10]);
+                    LOGGER.info("OpcTagReadingExecutor: completed publishing statistics to server >{}<", args[6]);
+                } catch (final Throwable any) {
+                    LOGGER.error("OpcTagReadingExecutor: unable to publish statistics to server >{}<", args[6], any);
+                    Runtime.getRuntime().halt(0);
+                }
             }
             Runtime.getRuntime().halt(0);
         }
     }
 
-    private static void validateTableExist(final String keyspace, final String serverAddress, final String username,
-                                           final String password, final String appName) {
+    private static void validateTableExist(final String serverAddress, final String keyspace, final String username,
+                                           final String password) {
         final Cluster cluster = Cluster.builder().withCredentials(username, password).
                 addContactPoints(serverAddress).build();
         try (final Session session = cluster.connect(keyspace)) {
-            final ResultSet execute =
-                    session.execute(String.format("Select * From %s", appName));
+            final ResultSet execute = session.execute("Select * From signal_validation");
             final List<Row> all = execute.all();
-            all.forEach(System.out::println);
+            all.forEach(row -> LOGGER.info(row.toString()));
         }
     }
 
-    private static void publishStatistics(final String keyspace, final String serverAddress, final String username,
+    private static void publishStatistics(final String serverAddress, final String keyspace, final String username,
                                           final String password, final String appName) {
         final Cluster cluster = Cluster.builder().withCredentials(username, password).
                 addContactPoints(serverAddress).build();
         try (final Session session = cluster.connect(keyspace)) {
             final ResultSet execute =
                     session.execute(
-                            String.format("Update %s.%s SET producer_count = producer_count + %s, " +
-                                            "producer_error = producer_error + %s", keyspace, appName,
-                                    STATISTICS.getTotalSuccessCounts(), STATISTICS.getTotalErrorCounts()));
+                            String.format("Update %s.signal_validation SET producer_count = producer_count + %s, " +
+                                            "producer_error_count = producer_error_count + %s WHERE id='%s'",
+                                    keyspace,
+                                    STATISTICS.getTotalSuccessCounts(),
+                                    STATISTICS.getTotalErrorCounts(),
+                                    appName
+                            ));
             final List<Row> all = execute.all();
-            all.forEach(System.out::println);
+            all.forEach(row -> LOGGER.info(row.toString()));
         }
     }
 }
