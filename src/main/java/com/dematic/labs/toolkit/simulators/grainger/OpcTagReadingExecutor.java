@@ -189,12 +189,12 @@ public final class OpcTagReadingExecutor {
             opcTagReadingExecutor.execute(durationInMinutes, kafkaServerBootstrap, kafkaTopics);
         } finally {
             if (VALIDATE) {
-                LOGGER.info("OpcTagReadingExecutor: publishing statistics to server >{}<", args[7]);
+                LOGGER.info("OpcTagReadingExecutor: publishing statistics to server >{}<", args[6]);
                 try {
                     publishStatistics(args[6], args[7], args[8], args[9], args[10]);
-                    LOGGER.info("OpcTagReadingExecutor: completed publishing statistics to server >{}<", args[7]);
+                    LOGGER.info("OpcTagReadingExecutor: completed publishing statistics to server >{}<", args[6]);
                 } catch (final Throwable any) {
-                    LOGGER.error("OpcTagReadingExecutor: unable to publish statistics to server >{}<", args[7], any);
+                    LOGGER.error("OpcTagReadingExecutor: unable to publish statistics to server >{}<", args[6], any);
                     Runtime.getRuntime().halt(0);
                 }
             }
