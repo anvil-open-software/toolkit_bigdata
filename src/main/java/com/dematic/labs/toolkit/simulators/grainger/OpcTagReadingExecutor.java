@@ -192,9 +192,9 @@ public final class OpcTagReadingExecutor {
                 LOGGER.info("OpcTagReadingExecutor: publishing statistics to server >{}<", args[7]);
                 try {
                     publishStatistics(args[6], args[7], args[8], args[9], args[10]);
-                    LOGGER.info("OpcTagReadingExecutor: completed publishing statistics to server >{}<", args[6]);
+                    LOGGER.info("OpcTagReadingExecutor: completed publishing statistics to server >{}<", args[7]);
                 } catch (final Throwable any) {
-                    LOGGER.error("OpcTagReadingExecutor: unable to publish statistics to server >{}<", args[6], any);
+                    LOGGER.error("OpcTagReadingExecutor: unable to publish statistics to server >{}<", args[7], any);
                     Runtime.getRuntime().halt(0);
                 }
             }
