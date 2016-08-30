@@ -171,7 +171,7 @@ public final class OpcTagReadingExecutor {
             try {
                 validateTableExist(args[6], args[7], args[8], args[9]);
             } catch (final Throwable any) {
-                LOGGER.error("OpcTagReadingExecutor: can't validate cassandra table", any);
+                LOGGER.error("OpcTagReadingExecutor: can't validate table >{}.signal_validation<", args[7], any);
                 Runtime.getRuntime().halt(0);
             }
         }
