@@ -203,7 +203,7 @@
     </build>
 
     <scm>
-        <developerConnection>scm:git:https://github.com/Dematiclabs/common-dep/</developerConnection>
+        <developerConnection>scm:git:git@gitlab.ops.cld:Dematiclabs/common-dep.git</developerConnection>
       <tag>HEAD</tag>
   </scm>
 
