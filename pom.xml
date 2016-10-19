@@ -33,7 +33,7 @@
     </dependencyManagement>
 
     <scm>
-        <developerConnection>scm:git:https://github.com/Dematiclabs/toolkit/</developerConnection>
+        <developerConnection>scm:git:git@gitlab.ops.cld:Dematiclabs/toolkit.git</developerConnection>
         <tag>HEAD</tag>
     </scm>
 
