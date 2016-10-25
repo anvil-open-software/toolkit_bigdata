@@ -20,7 +20,7 @@
 
     <dependencyManagement>
         <dependencies>
-            <!-- cassandra connector for spark 2.0 -->/
+            <!-- cassandra connector for Spark 2.0 -->/
             <dependency>
                 <groupId>com.datastax.spark</groupId>
                 <artifactId>spark-cassandra-connector_2.11</artifactId>
