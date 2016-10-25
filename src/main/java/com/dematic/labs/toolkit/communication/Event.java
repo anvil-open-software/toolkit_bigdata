@@ -1,11 +1,5 @@
 package com.dematic.labs.toolkit.communication;
 
-import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBAttribute;
-import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBHashKey;
-import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMarshalling;
-import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBRangeKey;
-import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBTable;
-import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBVersionAttribute;
 import org.joda.time.DateTime;
 import org.joda.time.ReadableInstant;
 
@@ -18,7 +12,6 @@ import java.util.concurrent.TimeUnit;
  * Event needs to be defined,
  */
 @SuppressWarnings("UnusedDeclaration")
-@DynamoDBTable(tableName = Event.TABLE_NAME)
 public final class Event implements Serializable {
     public static final String TABLE_NAME = "Events";
 
@@ -59,8 +52,6 @@ public final class Event implements Serializable {
         this.version = version;
     }
 
-    @DynamoDBMarshalling(marshallerClass = UUIDMarshaller.class)
-    @DynamoDBHashKey(attributeName = "id")
     public UUID getId() {
         return id;
     }
@@ -69,7 +60,6 @@ public final class Event implements Serializable {
         this.id = id;
     }
 
-    @DynamoDBAttribute
     public Long getSequence() {
         return sequence;
     }
@@ -78,7 +68,6 @@ public final class Event implements Serializable {
         this.sequence = sequence;
     }
 
-    @DynamoDBAttribute
     public String getNodeId() {
         return nodeId;
     }
@@ -87,8 +76,6 @@ public final class Event implements Serializable {
         this.nodeId = nodeId;
     }
 
-    @DynamoDBMarshalling(marshallerClass = UUIDMarshaller.class)
-    @DynamoDBAttribute
     public UUID getJobId() {
         return jobId;
     }
@@ -97,8 +84,6 @@ public final class Event implements Serializable {
         this.jobId = jobId;
     }
 
-    @DynamoDBMarshalling(marshallerClass = EventTypeMarshaller.class)
-    @DynamoDBAttribute
     public EventType getType() {
         return type;
     }
@@ -107,8 +92,6 @@ public final class Event implements Serializable {
         this.type = type;
     }
 
-    @DynamoDBMarshalling(marshallerClass = ReadableInstantMarshaller.class)
-    @DynamoDBRangeKey
     public ReadableInstant getTimestamp() {
         return timestamp;
     }
@@ -117,7 +100,6 @@ public final class Event implements Serializable {
         this.timestamp = timestamp;
     }
 
-    @DynamoDBAttribute
     public String getGeneratorId() {
         return generatorId;
     }
@@ -126,7 +108,6 @@ public final class Event implements Serializable {
         this.generatorId = generatorId;
     }
 
-    @DynamoDBVersionAttribute
     public Long getVersion() {
         return version;
     }
