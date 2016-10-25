@@ -1,4 +1,4 @@
-package com.dematic.labs.toolkit.aws;
+package com.dematic.labs.toolkit;
 
 import static java.util.stream.StreamSupport.stream;
 
