@@ -5,7 +5,7 @@
 
     <groupId>com.dematic.labs</groupId>
     <artifactId>common-dep</artifactId>
-    <version>1.0.2</version>
+    <version>1.0.3-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <!-- common dependencies for all projects -->
@@ -179,7 +179,7 @@
 
     <scm>
         <developerConnection>scm:git:git@gitlab.ops.cld:Dematiclabs/common-dep.git</developerConnection>
-      <tag>v1.0.2</tag>
+      <tag>HEAD</tag>
   </scm>
 
     <distributionManagement>
