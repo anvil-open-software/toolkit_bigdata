@@ -1,15 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>com.dematic.labs</groupId>
-    <artifactId>common-dep</artifactId>
+    <groupId>com.dematic.labs.toolkit.bom</groupId>
+    <artifactId>common</artifactId>
     <version>1.0.3-SNAPSHOT</version>
     <packaging>pom</packaging>
 
-    <!-- common dependencies for all projects -->
-    <name>Common Bill of Materials</name>
+    <name>toolkit/bom/common</name>
+    <description>common dependencies for all projects</description>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -159,28 +160,10 @@
         </dependencies>
     </dependencyManagement>
 
-    <build>
-        <defaultGoal>clean install</defaultGoal>
-        <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-release-plugin</artifactId>
-                <version>2.5.3</version>
-                <configuration>
-                    <!-- currently Jenkins m2 release plugin defaults to proj-version
-                         and does not provide a way to set a new default in the screen.
-                         However this setting is for manual invokes not via plugin -->
-                    <tagNameFormat>v${project.version}</tagNameFormat>
-                </configuration>
-            </plugin>
-
-        </plugins>
-    </build>
-
     <scm>
         <developerConnection>scm:git:git@gitlab.ops.cld:Dematiclabs/common-dep.git</developerConnection>
-      <tag>HEAD</tag>
-  </scm>
+        <tag>HEAD</tag>
+    </scm>
 
     <distributionManagement>
         <repository>
