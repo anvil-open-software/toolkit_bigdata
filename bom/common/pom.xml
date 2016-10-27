@@ -1,20 +1,22 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-
     <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>com.dematic.labs</groupId>
+        <artifactId>toolkit</artifactId>
+        <version>1.0.4-SNAPSHOT</version>
+        <relativePath>../../pom.xml</relativePath>
+    </parent>
 
     <groupId>com.dematic.labs.toolkit.bom</groupId>
     <artifactId>common</artifactId>
-    <version>1.0.3-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <name>toolkit/bom/common</name>
     <description>common dependencies for all projects</description>
 
     <properties>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <!-- version supported by Spark 2.0 -->
         <jackson.version>2.6.5</jackson.version>
     </properties>
@@ -59,8 +61,8 @@
                 <version>0.10.1.0</version>
                 <exclusions>
                     <exclusion>
-                        <artifactId>lz4</artifactId>
                         <groupId>net.jpountz.lz4</groupId>
+                        <artifactId>lz4</artifactId>
                     </exclusion>
                 </exclusions>
             </dependency>
@@ -159,23 +161,5 @@
             </dependency>
         </dependencies>
     </dependencyManagement>
-
-    <scm>
-        <developerConnection>scm:git:git@gitlab.ops.cld:Dematiclabs/common-dep.git</developerConnection>
-        <tag>HEAD</tag>
-    </scm>
-
-    <distributionManagement>
-        <repository>
-            <id>nexus</id>
-            <name>Releases</name>
-            <url>http://nexus:8081/nexus/content/repositories/releases/</url>
-        </repository>
-        <snapshotRepository>
-            <id>nexus</id>
-            <name>Snapshots</name>
-            <url>http://nexus:8081/nexus/content/repositories/snapshots/</url>
-        </snapshotRepository>
-    </distributionManagement>
 
 </project>

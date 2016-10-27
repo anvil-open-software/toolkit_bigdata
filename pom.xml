@@ -8,6 +8,7 @@
     <version>1.0.4-SNAPSHOT</version>
     <packaging>pom</packaging>
     <modules>
+        <module>bom/common</module>
         <module>helpers/bigdata</module>
         <module>helpers/common</module>
         <module>helpers/test_util</module>
@@ -42,18 +43,6 @@
         <sonar.jacoco.reportPath>${env.WORKSPACE}/target/${jacoco.out.file}</sonar.jacoco.reportPath>
         <sonar.jacoco.itReportPath>${env.WORKSPACE}/target/${jacoco-it.out.file}</sonar.jacoco.itReportPath>
     </properties>
-
-    <dependencyManagement>
-        <dependencies>
-            <dependency>
-                <groupId>com.dematic.labs</groupId>
-                <artifactId>common-dep</artifactId>
-                <version>1.0.2</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
-        </dependencies>
-    </dependencyManagement>
 
     <build>
         <defaultGoal>clean install</defaultGoal>
