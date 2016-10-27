@@ -19,7 +19,14 @@
         <dependencies>
             <dependency>
                 <groupId>com.dematic.labs.toolkit.bom</groupId>
-                <artifactId>common</artifactId>
+                <artifactId>bigdata-dep</artifactId>
+                <version>1.0.4-SNAPSHOT</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <dependency>
+                <groupId>com.dematic.labs.toolkit.bom</groupId>
+                <artifactId>common-dep</artifactId>
                 <version>1.0.4-SNAPSHOT</version>
                 <type>pom</type>
                 <scope>import</scope>
