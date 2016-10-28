@@ -72,6 +72,12 @@
                 <artifactId>kafka-unit</artifactId>
                 <version>0.6</version>
                 <scope>test</scope>
+                <exclusions>
+                    <exclusion>
+                        <groupId>org.slf4j</groupId>
+                        <artifactId>slf4j-log4</artifactId>
+                    </exclusion>
+                </exclusions>
             </dependency>
             <!-- kafka dep -->
             <dependency>
