@@ -13,6 +13,7 @@
         <module>helpers/bigdata</module>
         <module>helpers/common</module>
         <module>helpers/test_util</module>
+        <module>helpers/simulators</module>
     </modules>
 
     <scm>

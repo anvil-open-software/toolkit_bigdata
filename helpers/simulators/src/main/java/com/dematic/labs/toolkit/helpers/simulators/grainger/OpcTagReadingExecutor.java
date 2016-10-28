@@ -1,11 +1,11 @@
-package com.dematic.labs.toolkit.helpers.bigdata.simulators.grainger;
+package com.dematic.labs.toolkit.helpers.simulators.grainger;
 
 import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
 import com.dematic.labs.toolkit.helpers.bigdata.CountdownTimer;
-import com.dematic.labs.toolkit.helpers.bigdata.simulators.Statistics;
+import com.dematic.labs.toolkit.helpers.simulators.Statistics;
 import com.google.common.util.concurrent.RateLimiter;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
