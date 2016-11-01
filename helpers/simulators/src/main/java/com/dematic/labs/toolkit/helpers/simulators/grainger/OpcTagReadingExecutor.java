@@ -30,6 +30,14 @@ public final class OpcTagReadingExecutor {
     private static final Logger LOGGER = LoggerFactory.getLogger(OpcTagReadingExecutor.class);
     private static final boolean VALIDATE = System.getProperty("dematiclabs.driver.validate.counts") != null;
 
+    // 100 110 30 3 10.40.217.211:9092 mm_signals test
+    private static final String HELP = "OpcTagReadingExecutor " +
+            "opcTagRangeMin opcTagRangeMax maxSignalsPerMinutePerOpcTag durationInMinutes kafkaServerBootstrap kafkaTopics\n" +
+            "... and, if dematiclabs.driver.validate.counts is set:\n" +
+            "Cassandra_Server Cassandra_Keyspace  Cassandra_Username Cassandra_Password\n" + "" +
+            "... always followed by\n" +
+            "ApplicationName generatorId";
+
     private final int opcTagRangeSize;
     private final Stream<String> opcTagRangeIds;
     private final int maxSignalsPerMinutePerOpcTag;
@@ -118,7 +126,7 @@ public final class OpcTagReadingExecutor {
                 " \"UniqueID\":null\n" +
                 " }]", generatorId, opcTagId, timestamp, value);
 
-        // for now signal time and value are just randomly genetated
+        // for now signal time and value are just randomly generated
         try {
             final Future<RecordMetadata> send =
                     kafkaProducer.send(new ProducerRecord<>(kafkaTopics, signal.getBytes(Charset.defaultCharset())));
@@ -150,12 +158,13 @@ public final class OpcTagReadingExecutor {
     }
 
     public static void main(String[] args) {
-        if (args == null || args.length < 7) {
-            // 100 110 30 3 10.40.217.211:9092 mm_signals test
-            throw new IllegalArgumentException("OpcTagReadingExecutor: Please ensure the following are set: " +
-                    "opcTagRangeMin, opcTagRangeMax, maxSignalsPerMinutePerOpcTag, durationInMinutes," +
-                    " kafkaServerBootstrap, kafkaTopics, Cassandra Server, Cassandra Keyspace, Cassandra Username, " +
-                    "Cassandra Password, ApplicationName, and generatorId");
+        if (args.length == 1) {
+            LOGGER.info(HELP);
+            return;
+        }
+
+        if (args.length < 7) {
+            throw new IllegalArgumentException("Missing arguments. \n" + HELP);
         }
 
         final int opcTagRangeMin = Integer.valueOf(args[0]);
