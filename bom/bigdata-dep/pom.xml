@@ -66,6 +66,11 @@
                     </exclusion>
                 </exclusions>
             </dependency>
+            <dependency>
+                <groupId>org.apache.kafka</groupId>
+                <artifactId>kafka_2.11</artifactId>
+                <version>0.10.1.0</version>
+            </dependency>
             <!-- kafka unit test (kb : kafka_2.11:0.10.0.1, zk : 3.4.6)-->
             <dependency>
                 <groupId>info.batey.kafka</groupId>
@@ -76,6 +81,10 @@
                     <exclusion>
                         <groupId>org.slf4j</groupId>
                         <artifactId>slf4j-log4</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>org.apache.kafka</groupId>
+                        <artifactId>kafka_2.11</artifactId>
                     </exclusion>
                 </exclusions>
             </dependency>
