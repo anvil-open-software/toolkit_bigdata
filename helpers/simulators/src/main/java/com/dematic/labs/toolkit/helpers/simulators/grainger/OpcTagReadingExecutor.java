@@ -30,7 +30,7 @@ public final class OpcTagReadingExecutor {
     private static final Logger LOGGER = LoggerFactory.getLogger(OpcTagReadingExecutor.class);
     private static final boolean VALIDATE = System.getProperty("dematiclabs.driver.validate.counts") != null;
 
-    // 100 110 30 3 10.40.217.211:9092 mm_signals test
+    // EX: 100 110 30 3 10.102.20.10:9092,10.102.20.11:9092 mm_test 10.102.20.30 mm_test sparkUserId sparkPassword test_app
     private static final String HELP = "OpcTagReadingExecutor " +
             "opcTagRangeMin opcTagRangeMax maxSignalsPerMinutePerOpcTag durationInMinutes kafkaServerBootstrap kafkaTopics\n" +
             "... and, if dematiclabs.driver.validate.counts is set:\n" +

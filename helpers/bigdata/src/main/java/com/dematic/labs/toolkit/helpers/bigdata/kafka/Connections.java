@@ -8,9 +8,9 @@ import java.util.Map;
 
 public final class Connections {
     // key is for the partition
-    private static final String STRING_SERIALIZER = "org.apache.kafka.common.serialization.StringSerializer";
+    private static final Class STRING_SERIALIZER = org.apache.kafka.common.serialization.StringSerializer.class;
     // value is the data sent to kafka
-    private static final String BYTE_ARRAY_SERIALIZER = "org.apache.kafka.common.serialization.ByteArraySerializer";
+    private static final Class BYTE_ARRAY_SERIALIZER = org.apache.kafka.common.serialization.ByteArraySerializer.class;
 
     public static KafkaProducer<String, byte[]> getKafkaProducer(final String serverIpAddress) {
         final Map<String, Object> properties = new HashMap<>();
