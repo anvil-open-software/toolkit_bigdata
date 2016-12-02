@@ -55,7 +55,7 @@ public final class OpcTagReadingExecutor {
                 opcTagRangeMax, maxSignalsPerMinutePerOpcTag, generatorId);
     }
 
-    public void execute(final Long durationInMinutes, final String kafkaServerBootstrap, final String kafkaTopics) {
+    private void execute(final Long durationInMinutes, final String kafkaServerBootstrap, final String kafkaTopics) {
         final CountDownLatch latch = new CountDownLatch(opcTagRangeSize);
         final ForkJoinPool forkJoinPool =
                 new ForkJoinPool(opcTagRangeSize, ForkJoinPool.defaultForkJoinWorkerThreadFactory, null, true);
