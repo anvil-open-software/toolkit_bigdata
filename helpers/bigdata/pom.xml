@@ -4,7 +4,7 @@
     <parent>
         <groupId>com.dematic.labs</groupId>
         <artifactId>toolkit</artifactId>
-        <version>1.0.4-SNAPSHOT</version>
+        <version>1.0.4</version>
         <relativePath>../../pom.xml</relativePath>
     </parent>
 
@@ -18,14 +18,14 @@
             <dependency>
                 <groupId>com.dematic.labs.toolkit.bom</groupId>
                 <artifactId>bigdata-dep</artifactId>
-                <version>1.0.4-SNAPSHOT</version>
+                <version>1.0.4</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
             <dependency>
                 <groupId>com.dematic.labs.toolkit.bom</groupId>
                 <artifactId>common-dep</artifactId>
-                <version>1.0.4-SNAPSHOT</version>
+                <version>1.0.4</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
