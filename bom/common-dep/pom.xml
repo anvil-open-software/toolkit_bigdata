@@ -4,7 +4,7 @@
     <parent>
         <groupId>com.dematic.labs</groupId>
         <artifactId>toolkit</artifactId>
-        <version>1.0.4.1-test</version>
+        <version>1.0.5.1-SNAPSHOT</version>
         <relativePath>../../pom.xml</relativePath>
     </parent>
 
