@@ -16,13 +16,13 @@
     <description>common dependencies for all bigdata projects</description>
 
     <properties>
-        <!-- version supported by Spark 2.0 -->
+        <!-- version supported by Spark 2.x -->
         <jackson.version>2.6.5</jackson.version>
     </properties>
 
     <dependencyManagement>
         <dependencies>
-            <!-- cassandra connector for Spark 2.0.1 -->
+            <!-- cassandra connector for Spark 2.x -->
             <dependency>
                 <groupId>com.datastax.spark</groupId>
                 <artifactId>spark-cassandra-connector_2.11</artifactId>
