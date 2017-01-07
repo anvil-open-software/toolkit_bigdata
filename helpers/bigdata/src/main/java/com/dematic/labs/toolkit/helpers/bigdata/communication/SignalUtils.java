@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+@SuppressWarnings("WeakerAccess")
 public final class SignalUtils {
     private static final Logger LOGGER = LoggerFactory.getLogger(SignalUtils.class);
     private final static ObjectMapper objectMapper;
