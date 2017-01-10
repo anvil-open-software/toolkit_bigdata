@@ -20,9 +20,7 @@ import java.util.Objects;
  * "UniqueID":null
  * }]
  */
-
-// todo: create a partition key... by day, hour, etc
-@SuppressWarnings("UnusedDeclaration")
+@SuppressWarnings({"UnusedDeclaration", "WeakerAccess"})
 public final class Signal implements Serializable {
     public static final String TABLE_NAME = "signals";
 
