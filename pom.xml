@@ -4,7 +4,7 @@
 
     <groupId>com.dematic.labs</groupId>
     <artifactId>toolkit</artifactId>
-    <version>1.0.6</version>
+    <version>1.0.7-SNAPSHOT</version>
     <packaging>pom</packaging>
     <modules>
         <module>bom/bigdata-dep</module>
@@ -18,7 +18,7 @@
     <scm>
         <connection>scm:git:git@gitlab.ops.cld:Dematiclabs/toolkit.git</connection>
         <developerConnection>${project.scm.connection}</developerConnection>
-        <tag>v1.0.6</tag>
+        <tag>HEAD</tag>
     </scm>
 
     <properties>
