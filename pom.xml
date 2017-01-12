@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.dematic.labs</groupId>
@@ -16,9 +17,10 @@
     </modules>
 
     <scm>
-        <developerConnection>scm:git:git@gitlab.ops.cld:Dematiclabs/toolkit.git</developerConnection>
-      <tag>HEAD</tag>
-  </scm>
+        <connection>scm:git:git@gitlab.ops.cld:Dematiclabs/toolkit.git</connection>
+        <developerConnection>${project.scm.connection}</developerConnection>
+        <tag>HEAD</tag>
+    </scm>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -76,8 +78,9 @@
                     <artifactId>maven-release-plugin</artifactId>
                     <version>2.5.3</version>
                     <configuration>
-                        <tagNameFormat>v@{project.version}</tagNameFormat>
                         <addSchema>false</addSchema>
+                        <autoVersionSubmodules>true</autoVersionSubmodules>
+                        <tagNameFormat>v@{project.version}</tagNameFormat>
                     </configuration>
                 </plugin>
                 <plugin>
