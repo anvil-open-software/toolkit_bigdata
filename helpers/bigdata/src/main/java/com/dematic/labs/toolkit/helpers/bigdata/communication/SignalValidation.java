@@ -2,6 +2,7 @@ package com.dematic.labs.toolkit.helpers.bigdata.communication;
 
 import java.util.Objects;
 
+@SuppressWarnings("unused")
 public final class SignalValidation {
     public static final String TABLE_NAME = "signal_validation";
 
