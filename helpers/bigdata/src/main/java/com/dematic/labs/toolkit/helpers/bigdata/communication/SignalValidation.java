@@ -6,12 +6,19 @@ import java.util.Objects;
 public final class SignalValidation {
     public static final String TABLE_NAME = "signal_validation";
 
-    public static String createTableCql(final String keyspace) {
+    public static String createCounterTableCql(final String keyspace) {
         return String.format("CREATE TABLE if not exists %s.%s (" +
                 " id text," +
                 " producer_count counter," +
                 " producer_error_count counter," +
                 " spark_count counter," +
+                " PRIMARY KEY (id));", keyspace, TABLE_NAME);
+    }
+
+    public static String createSparkTableCql(final String keyspace) {
+        return String.format("CREATE TABLE if not exists %s.%s (" +
+                " id text," +
+                " spark_count text," +
                 " PRIMARY KEY (id));", keyspace, TABLE_NAME);
     }
 
