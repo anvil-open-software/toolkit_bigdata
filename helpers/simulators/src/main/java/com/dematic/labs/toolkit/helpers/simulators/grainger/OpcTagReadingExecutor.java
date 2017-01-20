@@ -5,6 +5,7 @@ import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
 import com.dematic.labs.toolkit.helpers.bigdata.CountdownTimer;
+import com.dematic.labs.toolkit.helpers.bigdata.communication.SignalValidation;
 import com.dematic.labs.toolkit.helpers.simulators.Statistics;
 import com.google.common.util.concurrent.RateLimiter;
 import org.apache.kafka.clients.producer.KafkaProducer;
@@ -213,18 +214,11 @@ public final class OpcTagReadingExecutor {
 
     private static void validateAndCreateTable(final String serverAddress, final String keyspace, final String username,
                                                final String password) {
-        // todo: table creation should be done within signal class
-        final String table = String.format("CREATE TABLE if not exists %s.signal_validation (" +
-                " id text," +
-                " producer_count counter," +
-                " producer_error_count counter," +
-                " spark_count counter," +
-                " PRIMARY KEY (id));", keyspace);
 
         final Cluster cluster = Cluster.builder().withCredentials(username, password).
                 addContactPoints(serverAddress).build();
         try (final Session session = cluster.connect(keyspace)) {
-            final ResultSet execute = session.execute(table);
+            final ResultSet execute = session.execute(SignalValidation.createCounterTableCql(keyspace));
             final List<Row> all = execute.all();
             all.forEach(row -> LOGGER.info(row.toString()));
         }

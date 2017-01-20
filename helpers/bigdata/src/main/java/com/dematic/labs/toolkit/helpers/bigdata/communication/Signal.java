@@ -105,7 +105,7 @@ public final class Signal implements Serializable {
         return timestamp;
     }
 
-    public void setTiNmestamp(final Date timestamp) {
+    public void setTimestamp(final Date timestamp) {
         this.timestamp = timestamp;
     }
 
