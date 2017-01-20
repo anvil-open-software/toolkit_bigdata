@@ -5,6 +5,7 @@ import java.util.Objects;
 @SuppressWarnings("unused")
 public final class SignalValidation {
     public static final String TABLE_NAME = "signal_validation";
+    public static final String SS_TABLE_NAME = "ss_signal_validation";
 
     public static String createCounterTableCql(final String keyspace) {
         return String.format("CREATE TABLE if not exists %s.%s (" +
@@ -15,11 +16,11 @@ public final class SignalValidation {
                 " PRIMARY KEY (id));", keyspace, TABLE_NAME);
     }
 
-    public static String createSparkTableCql(final String keyspace) {
+    public static String createSSTableCql(final String keyspace) {
         return String.format("CREATE TABLE if not exists %s.%s (" +
                 " id text," +
-                " spark_count text," +
-                " PRIMARY KEY (id));", keyspace, TABLE_NAME);
+                " spark_count bigint," +
+                " PRIMARY KEY (id));", keyspace, SS_TABLE_NAME);
     }
 
     private String id;
