@@ -1,39 +1,47 @@
 #!groovy​
 
 def currentPomVersion
-node {
-    ansiColor('xterm') {
-        stage('checkout') {
-            checkout scm
-            sh "git clean -dfx && git reset --hard"
+parallel( // provided that two builds can actually run at the same time without conflicts...
+        "build": {
 
-            currentPomVersion = readMavenPom().version
+            node {
+                ansiColor('xterm') {
+                    stage('checkout') {
+                        checkout scm
+                        sh "git clean -dfx && git reset --hard"
+
+                        currentPomVersion = readMavenPom().version
+                    }
+
+                    stage('build') {
+                        maven("", "-Snapshot")
+                    }
+                }
+            }
+        },
+        "sonar": {
+            if (branchProhibitsSonar()) {
+                return
+            }
+            node {
+                ansiColor('xterm') {
+                    stage('checkout') {
+                        checkout scm
+                        sh "git clean -dfx && git reset --hard"
+                    }
+
+                    stage('SonarQube analysis') {
+                        withSonarQubeEnv('dlabs') {
+                            maven("clean verify ${env.SONAR_MAVEN_GOAL} -Dsonar.host.url=${env.SONAR_HOST_URL} -Pjacoco".toString(), "-Sonar")
+                        }
+                    }
+                }
+            }
         }
-
-        stage('build') {
-            maven()
-        }
-    }
-}
-
+)
 
 if (branchProhibitsRelease() || !currentPomVersion.endsWith("-SNAPSHOT")) {
     return
-}
-
-node {
-    ansiColor('xterm') {
-        stage('checkout') {
-            checkout scm
-            sh "git clean -dfx && git reset --hard"
-        }
-
-        stage('SonarQube analysis') {
-            withSonarQubeEnv('dlabs') {
-                maven("clean install ${env.SONAR_MAVEN_GOAL} -Dsonar.host.url=${env.SONAR_HOST_URL} -Pjacoco".toString())
-            }
-        }
-    }
 }
 
 def releaseVersion
@@ -57,9 +65,16 @@ node {
     stage('checkout Release') {
         checkout scm
         sh "git clean -dfx && git reset --hard"
+        sh "git tag v${releaseVersion}"
 
-        maven('-DreleaseVersion=${releaseVersion}" ' +
-                '-DsuppressCommitBeforeTag=true -DremoteTagging=false -DupdateWorkingCopyVersions=false')
+        def descriptor = Artifactory.mavenDescriptor()
+        descriptor.version = releaseVersion
+        descriptor.failOnSnapshot = true
+        descriptor.transform()
+
+        maven('', "-Release")
+
+        sh "git push --tags"
     }
 
     stage('update version in HEAD') {
@@ -67,14 +82,22 @@ node {
         sh "git clean -dfx && git reset --hard"
 
         def snapshotVersion = nextSnapshotVersionFor(releaseVersion)
-        maven("release:update-versions -DdevelopmentVersion=${snapshotVersion}".toString())
+
+        def descriptor = Artifactory.mavenDescriptor()
+        descriptor.version = snapshotVersion
+        descriptor.transform()
+
         sh "git commit -a -m '[CD] change version to ${snapshotVersion}'"
         sh "git push"
     }
 }
 
 def branchProhibitsRelease() {
-    return env.BRANCH_NAME != 'DLABS-901'
+    return env.BRANCH_NAME != 'master'
+}
+
+def branchProhibitsSonar() {
+    return branchProhibitsRelease()
 }
 
 static nextSnapshotVersionFor(version) {
@@ -83,7 +106,7 @@ static nextSnapshotVersionFor(version) {
 }
 
 // https://wiki.jenkins-ci.org/display/JENKINS/Artifactory+-+Working+With+the+Pipeline+Jenkins+Plugin
-def maven(goals) {
+def maven(goals, buildInfoQualifier) {
     def artifactory = Artifactory.server 'artifactory'
 
     configFileProvider([configFile(fileId: 'simple-maven-settings', variable: 'MAVEN_USER_SETTINGS')]) {
@@ -94,7 +117,10 @@ def maven(goals) {
 
         try {
             def buildInfo = mavenRuntime.run pom: 'pom.xml', goals: "-B -s ${MAVEN_USER_SETTINGS} ${goals}".toString()
-            artifactory.publishBuildInfo buildInfo
+            if (buildInfoQualifier != '-Sonar') {
+                buildInfo.number += buildInfoQualifier
+                artifactory.publishBuildInfo buildInfo
+            }
         } finally {
             junit allowEmptyResults: true, testResults: '**/target/*-reports/TEST-*.xml'
         }
