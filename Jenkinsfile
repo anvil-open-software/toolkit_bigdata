@@ -2,24 +2,24 @@
 
 def currentPomVersion
 parallel( // provided that two builds can actually run at the same time without conflicts...
-        "build": {
+        'build': {
 
             node {
                 ansiColor('xterm') {
                     stage('checkout') {
                         checkout scm
-                        sh "git clean -dfx && git reset --hard"
+                        sh 'git clean -dfx && git reset --hard'
 
                         currentPomVersion = readMavenPom().version
                     }
 
                     stage('build') {
-                        maven("", "-Snapshot")
+                        maven('', '-Snapshot')
                     }
                 }
             }
         },
-        "sonar": {
+        'sonar': {
             if (branchProhibitsSonar()) {
                 return
             }
@@ -27,12 +27,12 @@ parallel( // provided that two builds can actually run at the same time without 
                 ansiColor('xterm') {
                     stage('checkout') {
                         checkout scm
-                        sh "git clean -dfx && git reset --hard"
+                        sh 'git clean -dfx && git reset --hard'
                     }
 
                     stage('SonarQube analysis') {
                         withSonarQubeEnv('dlabs') {
-                            maven("clean verify ${env.SONAR_MAVEN_GOAL} -Dsonar.host.url=${env.SONAR_HOST_URL} -Pjacoco".toString(), "-Sonar")
+                            maven("clean verify ${env.SONAR_MAVEN_GOAL} -Dsonar.host.url=${env.SONAR_HOST_URL} -Pjacoco".toString(), '-Sonar')
                         }
                     }
                 }
@@ -40,7 +40,7 @@ parallel( // provided that two builds can actually run at the same time without 
         }
 )
 
-if (branchProhibitsRelease() || !currentPomVersion.endsWith("-SNAPSHOT")) {
+if (branchProhibitsRelease() || !currentPomVersion.endsWith('-SNAPSHOT')) {
     return
 }
 
@@ -64,7 +64,7 @@ stage('Continue to Release') {
 node {
     stage('checkout Release') {
         checkout scm
-        sh "git clean -dfx && git reset --hard"
+        sh 'git clean -dfx && git reset --hard'
         sh "git tag v${releaseVersion}"
 
         def descriptor = Artifactory.mavenDescriptor()
@@ -72,14 +72,14 @@ node {
         descriptor.failOnSnapshot = true
         descriptor.transform()
 
-        maven('', "-Release")
+        maven('', '-Release')
 
-        sh "git push --tags"
+        sh 'git push --tags'
     }
 
     stage('update version in HEAD') {
         sh "git checkout ${env.BRANCH_NAME}"
-        sh "git clean -dfx && git reset --hard"
+        sh 'git clean -dfx && git reset --hard'
 
         def snapshotVersion = nextSnapshotVersionFor(releaseVersion)
 
@@ -88,7 +88,7 @@ node {
         descriptor.transform()
 
         sh "git commit -a -m '[CD] change version to ${snapshotVersion}'"
-        sh "git push"
+        sh 'git push'
     }
 }
 
