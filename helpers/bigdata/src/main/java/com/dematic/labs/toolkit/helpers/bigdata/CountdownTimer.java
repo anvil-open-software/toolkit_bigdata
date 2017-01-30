@@ -28,7 +28,7 @@ public final class CountdownTimer {
                     }
                 }
             }
-        }, 0, 60 * 1000);
+        }, 0, 60 * 1000L);
     }
 
     public boolean isFinished() {
