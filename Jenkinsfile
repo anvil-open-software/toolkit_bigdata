@@ -1,12 +1,12 @@
 #!groovy​
 
-def currentPomVersion
-parallel( // provided that two builds can actually run at the same time without conflicts...
-        'build': {
+timestamps {
+    def currentPomVersion
+    parallel( // provided that two builds can actually run at the same time without conflicts...
+            'build': {
 
-            node {
-                ansiColor('xterm') {
-                    timestamps {
+                node {
+                    ansiColor('xterm') {
                         stage('checkout') {
                             checkout scm
                             sh 'git clean -dfx && git reset --hard'
@@ -19,15 +19,13 @@ parallel( // provided that two builds can actually run at the same time without 
                         }
                     }
                 }
-            }
-        },
-        'sonar': {
-            if (branchProhibitsSonar()) {
-                return
-            }
-            node {
-                ansiColor('xterm') {
-                    timestamps {
+            },
+            'sonar': {
+                if (branchProhibitsSonar()) {
+                    return
+                }
+                node {
+                    ansiColor('xterm') {
                         stage('checkout') {
                             checkout scm
                             sh 'git clean -dfx && git reset --hard'
@@ -41,33 +39,31 @@ parallel( // provided that two builds can actually run at the same time without 
                     }
                 }
             }
-        }
-)
+    )
 
-if (isFeatureBranch() || !currentPomVersion.endsWith('-SNAPSHOT')) {
-    return
-}
-
-def releaseVersion
-stage('Continue to Release') {
-    milestone label: 'preReleaseConfirmation'
-    timeout(time: 1, unit: 'DAYS') {
-        releaseVersion = input(
-                message: 'Publish ?',
-                parameters: [
-                        [name        : 'version',
-                         defaultValue: currentPomVersion.minus('-SNAPSHOT'),
-                         description : 'Release version',
-                         $class      : 'hudson.model.StringParameterDefinition']
-                ]
-        )
+    if (isFeatureBranch() || !currentPomVersion.endsWith('-SNAPSHOT')) {
+        return
     }
-    milestone label: 'postReleaseConfirmation'
-}
 
-node {
-    ansiColor('xterm') {
-        timestamps {
+    def releaseVersion
+    stage('Continue to Release') {
+        milestone label: 'preReleaseConfirmation'
+        timeout(time: 1, unit: 'DAYS') {
+            releaseVersion = input(
+                    message: 'Publish ?',
+                    parameters: [
+                            [name        : 'version',
+                             defaultValue: currentPomVersion.minus('-SNAPSHOT'),
+                             description : 'Release version',
+                             $class      : 'hudson.model.StringParameterDefinition']
+                    ]
+            )
+        }
+        milestone label: 'postReleaseConfirmation'
+    }
+
+    node {
+        ansiColor('xterm') {
             stage('checkout Release') {
                 checkout scm
                 sh 'git clean -dfx && git reset --hard'
