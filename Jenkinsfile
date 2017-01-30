@@ -1,103 +1,107 @@
 #!groovy​
 
-def currentPomVersion
-parallel( // provided that two builds can actually run at the same time without conflicts...
-        'build': {
+timestamps {
+    def currentPomVersion
+    parallel( // provided that two builds can actually run at the same time without conflicts...
+            'build': {
 
-            node {
-                ansiColor('xterm') {
-                    stage('checkout') {
-                        checkout scm
-                        sh 'git clean -dfx && git reset --hard'
+                node {
+                    ansiColor('xterm') {
+                        stage('checkout') {
+                            checkout scm
+                            sh 'git clean -dfx && git reset --hard'
 
-                        currentPomVersion = readMavenPom().version
-                    }
+                            currentPomVersion = readMavenPom().version
+                        }
 
-                    stage('build') {
-                        maven('', '-Snapshot')
+                        stage('build') {
+                            maven('', '-Snapshot')
+                        }
                     }
                 }
-            }
-        },
-        'sonar': {
-            if (branchProhibitsSonar()) {
-                return
-            }
-            node {
-                ansiColor('xterm') {
-                    stage('checkout') {
-                        checkout scm
-                        sh 'git clean -dfx && git reset --hard'
-                    }
+            },
+            'sonar': {
+                if (branchProhibitsSonar()) {
+                    return
+                }
+                node {
+                    ansiColor('xterm') {
+                        stage('checkout') {
+                            checkout scm
+                            sh 'git clean -dfx && git reset --hard'
+                        }
 
-                    stage('SonarQube analysis') {
-                        withSonarQubeEnv('dlabs') {
-                            maven("clean verify ${env.SONAR_MAVEN_GOAL} -Dsonar.host.url=${env.SONAR_HOST_URL} -Pjacoco".toString(), '-Sonar')
+                        stage('SonarQube analysis') {
+                            withSonarQubeEnv('dlabs') {
+                                maven("clean verify ${env.SONAR_MAVEN_GOAL} -Dsonar.host.url=${env.SONAR_HOST_URL} -Pjacoco".toString(), '-Sonar')
+                            }
                         }
                     }
                 }
             }
+    )
+
+    if (isFeatureBranch() || !currentPomVersion.endsWith('-SNAPSHOT')) {
+        return
+    }
+
+    def releaseVersion
+    stage('Continue to Release') {
+        milestone label: 'preReleaseConfirmation'
+        timeout(time: 1, unit: 'DAYS') {
+            releaseVersion = input(
+                    message: 'Publish ?',
+                    parameters: [
+                            [name        : 'version',
+                             defaultValue: currentPomVersion.minus('-SNAPSHOT'),
+                             description : 'Release version',
+                             $class      : 'hudson.model.StringParameterDefinition']
+                    ]
+            )
         }
-)
-
-if (branchProhibitsRelease() || !currentPomVersion.endsWith('-SNAPSHOT')) {
-    return
-}
-
-def releaseVersion
-stage('Continue to Release') {
-    milestone label: 'preReleaseConfirmation'
-    timeout(time: 1, unit: 'DAYS') {
-        releaseVersion = input(
-                message: 'Publish ?',
-                parameters: [
-                        [name        : 'version',
-                         defaultValue: currentPomVersion.minus('-SNAPSHOT'),
-                         description : 'Release version',
-                         $class      : 'hudson.model.StringParameterDefinition']
-                ]
-        )
-    }
-    milestone label: 'postReleaseConfirmation'
-}
-
-node {
-    stage('checkout Release') {
-        checkout scm
-        sh 'git clean -dfx && git reset --hard'
-        sh "git tag v${releaseVersion}"
-
-        def descriptor = Artifactory.mavenDescriptor()
-        descriptor.version = releaseVersion
-        descriptor.failOnSnapshot = true
-        descriptor.transform()
-
-        maven('', '-Release')
-
-        sh 'git push --tags'
+        milestone label: 'postReleaseConfirmation'
     }
 
-    stage('update version in HEAD') {
-        sh "git checkout ${env.BRANCH_NAME}"
-        sh 'git clean -dfx && git reset --hard'
+    node {
+        ansiColor('xterm') {
+            stage('checkout Release') {
+                checkout scm
+                sh 'git clean -dfx && git reset --hard'
+                sh "git tag v${releaseVersion}"
 
-        def snapshotVersion = nextSnapshotVersionFor(releaseVersion)
+                def descriptor = Artifactory.mavenDescriptor()
+                descriptor.version = releaseVersion
+                descriptor.failOnSnapshot = true
+                descriptor.transform()
 
-        def descriptor = Artifactory.mavenDescriptor()
-        descriptor.version = snapshotVersion
-        descriptor.transform()
+                maven('', '-Release')
 
-        sh "git commit -a -m '[CD] change version to ${snapshotVersion}'"
-        sh 'git push'
+                sh 'git push --tags'
+            }
+
+            stage('update version in HEAD') {
+                sh "git checkout ${env.BRANCH_NAME}"
+                sh 'git clean -dfx && git reset --hard'
+
+                def snapshotVersion = nextSnapshotVersionFor(releaseVersion)
+
+                def descriptor = Artifactory.mavenDescriptor()
+                descriptor.version = snapshotVersion
+                descriptor.transform()
+
+                sh "git commit -a -m '[CD] change version to ${snapshotVersion}'"
+                sh 'git push'
+            }
+        }
     }
 }
 
-def branchProhibitsRelease() {
+def isFeatureBranch() {
     return env.BRANCH_NAME != 'master'
 }
 
 def branchProhibitsSonar() {
-    return branchProhibitsRelease()
+    return isFeatureBranch()
 }
 
 static nextSnapshotVersionFor(version) {
@@ -113,11 +117,12 @@ def maven(goals, buildInfoQualifier) {
         def mavenRuntime = Artifactory.newMavenBuild()
         mavenRuntime.resolver server: artifactory, releaseRepo: 'maven-dlabs', snapshotRepo: 'maven-dlabs'
         mavenRuntime.deployer server: artifactory, releaseRepo: 'maven-dlabs-release', snapshotRepo: 'maven-dlabs-snapshot'
+        mavenRuntime.deployer.deployArtifacts = !isFeatureBranch()
         mavenRuntime.tool = 'Maven'
 
         try {
             def buildInfo = mavenRuntime.run pom: 'pom.xml', goals: "-B -s ${MAVEN_USER_SETTINGS} ${goals}".toString()
-            if (buildInfoQualifier != '-Sonar') {
+            if (!isFeatureBranch() && buildInfoQualifier != '-Sonar') {
                 buildInfo.number += buildInfoQualifier
                 artifactory.publishBuildInfo buildInfo
             }
