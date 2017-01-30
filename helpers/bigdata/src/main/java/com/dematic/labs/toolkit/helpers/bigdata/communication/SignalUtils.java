@@ -3,25 +3,19 @@ package com.dematic.labs.toolkit.helpers.bigdata.communication;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.ObjectCodec;
-import com.fasterxml.jackson.databind.DeserializationContext;
-import com.fasterxml.jackson.databind.JsonDeserializer;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.JsonSerializer;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializerProvider;
+import com.fasterxml.jackson.databind.*;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.google.common.base.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.sql.Timestamp;
 import java.time.Instant;
-import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 @SuppressWarnings("WeakerAccess")
@@ -52,19 +46,15 @@ public final class SignalUtils {
         return objectMapper.writeValueAsString(signal);
     }
 
-    public static Date toJavaUtilDateFromInstance(final Instant instant) {
-        final ZonedDateTime zonedDateTime = ZonedDateTime.ofInstant(instant, ZoneId.of("Z"));
-        final Instant zonedInstant = zonedDateTime.toInstant();
-        final long millisecondsSinceEpoch = zonedInstant.toEpochMilli();  // Data-loss, going from nanosecond resolution to milliseconds.
-        return new Date(millisecondsSinceEpoch);
+    public static Timestamp toTimestampFromInstance(final Instant instant) {
+        if (instant == null) {
+            return null;
+        }
+        return Timestamp.from(instant);
     }
 
-    public static Instant toInstantFromJavaUtilDate(final Date date) {
-        return ZonedDateTime.ofInstant(date.toInstant(), ZoneId.of("Z")).toInstant();
-    }
-
-    public static LocalDate toLocalDateFromJavaUtilDate(final Date date) {
-        return ZonedDateTime.ofInstant(date.toInstant(), ZoneId.of("Z")).toLocalDate();
+    public static Instant toInstantFromTimestamp(final Timestamp timestamp) {
+        return ZonedDateTime.ofInstant(timestamp.toInstant(), ZoneId.of("Z")).toInstant();
     }
 
     private final static class SignalSerializer extends JsonSerializer<Signal> {
@@ -90,7 +80,7 @@ public final class SignalUtils {
                 jsonGenerator.writeNumberField("OPCTagID", signal.getOpcTagId());
                 jsonGenerator.writeNumberField("OPCTagReadingID", signal.getOpcTagReadingId());
                 jsonGenerator.writeNumberField("Quality", signal.getQuality());
-                jsonGenerator.writeStringField("Timestamp", toInstantFromJavaUtilDate(signal.getTimestamp()).
+                jsonGenerator.writeStringField("Timestamp", toInstantFromTimestamp(signal.getTimestamp()).
                         truncatedTo(ChronoUnit.NANOS).toString());
                 jsonGenerator.writeNumberField("Value", signal.getValue());
                 jsonGenerator.writeNumberField("ID", signal.getId());
@@ -147,20 +137,13 @@ public final class SignalUtils {
             final JsonNode uniqueIDNode = jsonNode.findValue("UniqueID");
             final String uniqueID = uniqueIDNode == null ? null : uniqueId(uniqueIDNode);
 
-            return new Signal(uniqueID, id, value, toDayString(timestamp), toDate(timestamp), quality, opcTagReadingID,
-                    opcTagID, proxiedTypeName, extendedProperties);
+            return new Signal(uniqueID, id, value, toDayString(timestamp), toTimestampFromInstance(timestamp),
+                    quality, opcTagReadingID, opcTagID, proxiedTypeName, extendedProperties);
         }
     }
 
     private static String uniqueId(final JsonNode uniqueIDNode) {
         return uniqueIDNode.isNull() ? null : uniqueIDNode.textValue();
-    }
-
-    private static Date toDate(final Instant instant) {
-        if (instant == null) {
-            return null;
-        }
-        return toJavaUtilDateFromInstance(instant);
     }
 
     private static String toDayString(final Instant instant) {

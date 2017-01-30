@@ -1,7 +1,7 @@
 package com.dematic.labs.toolkit.helpers.bigdata.communication;
 
 import java.io.Serializable;
-import java.util.Date;
+import java.sql.Timestamp;
 import java.util.List;
 import java.util.Objects;
 
@@ -44,7 +44,7 @@ public final class Signal implements Serializable {
     private Long id;
     private Long value;
     private String day; // partition by day, form 2016-12-23
-    private Date timestamp;
+    private Timestamp timestamp;
     private Long quality;
     private Long opcTagReadingId;
     private Long opcTagId;
@@ -54,7 +54,7 @@ public final class Signal implements Serializable {
     public Signal() {
     }
 
-    public Signal(final String uniqueId, final Long id, final Long value, final String day, final Date timestamp,
+    public Signal(final String uniqueId, final Long id, final Long value, final String day, final Timestamp timestamp,
                   final Long quality, final Long opcTagReadingId, final Long opcTagId,
                   final String proxiedTypeName, final List<String> extendedProperties) {
         this.uniqueId = uniqueId;
@@ -101,11 +101,11 @@ public final class Signal implements Serializable {
         this.day = day;
     }
 
-    public Date getTimestamp() {
+    public Timestamp getTimestamp() {
         return timestamp;
     }
 
-    public void setTimestamp(final Date timestamp) {
+    public void setTimestamp(final Timestamp timestamp) {
         this.timestamp = timestamp;
     }
 
