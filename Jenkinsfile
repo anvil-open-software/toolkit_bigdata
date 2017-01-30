@@ -44,7 +44,7 @@ parallel( // provided that two builds can actually run at the same time without 
         }
 )
 
-if (branchProhibitsRelease() || !currentPomVersion.endsWith('-SNAPSHOT')) {
+if (isFeatureBranch() || !currentPomVersion.endsWith('-SNAPSHOT')) {
     return
 }
 
@@ -100,12 +100,12 @@ node {
     }
 }
 
-def branchProhibitsRelease() {
+def isFeatureBranch() {
     return env.BRANCH_NAME != 'master'
 }
 
 def branchProhibitsSonar() {
-    return branchProhibitsRelease()
+    return isFeatureBranch()
 }
 
 static nextSnapshotVersionFor(version) {
@@ -121,11 +121,12 @@ def maven(goals, buildInfoQualifier) {
         def mavenRuntime = Artifactory.newMavenBuild()
         mavenRuntime.resolver server: artifactory, releaseRepo: 'maven-dlabs', snapshotRepo: 'maven-dlabs'
         mavenRuntime.deployer server: artifactory, releaseRepo: 'maven-dlabs-release', snapshotRepo: 'maven-dlabs-snapshot'
+        mavenRuntime.deployer.deployArtifacts = !isFeatureBranch()
         mavenRuntime.tool = 'Maven'
 
         try {
             def buildInfo = mavenRuntime.run pom: 'pom.xml', goals: "-B -s ${MAVEN_USER_SETTINGS} ${goals}".toString()
-            if (buildInfoQualifier != '-Sonar') {
+            if (!isFeatureBranch() && buildInfoQualifier != '-Sonar') {
                 buildInfo.number += buildInfoQualifier
                 artifactory.publishBuildInfo buildInfo
             }
