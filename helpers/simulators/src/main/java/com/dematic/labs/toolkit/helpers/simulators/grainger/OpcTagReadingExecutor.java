@@ -177,7 +177,6 @@ public final class OpcTagReadingExecutor {
 
         // 1) check validation, table exist
         if (VALIDATE) {
-            // todo: cleanup setting parameters
             try {
                 validateAndCreateTable(args[6], args[7], args[8], args[9]);
             } catch (final Throwable any) {
