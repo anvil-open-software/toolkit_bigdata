@@ -176,7 +176,7 @@ public final class OpcTagReadingExecutor {
         final String kafkaTopics = args[5];
 
         // 1) check validation, table exist
-        if (VALIDATE) {
+        if (true) {
             // todo: cleanup setting parameters
             try {
                 validateAndCreateTable(args[6], args[7], args[8], args[9]);
@@ -198,7 +198,7 @@ public final class OpcTagReadingExecutor {
                     opcTagRangeMax, maxSignalsPerMinutePerOpcTag, generatorId);
             opcTagReadingExecutor.execute(durationInMinutes, kafkaServerBootstrap, kafkaTopics);
         } finally {
-            if (VALIDATE) {
+            if (true) {
                 LOGGER.info("OpcTagReadingExecutor: publishing statistics to server >{}<", args[6]);
                 try {
                     publishStatistics(args[6], args[7], args[8], args[9], args[10]);
