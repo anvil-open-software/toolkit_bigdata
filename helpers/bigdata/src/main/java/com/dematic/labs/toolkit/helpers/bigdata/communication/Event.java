@@ -40,8 +40,8 @@ public final class Event implements Serializable {
         sequence = EventSequenceNumber.next();
     }
 
-    public Event(final UUID id, final Long sequence, final String nodeId, final UUID jobId, final EventType type,
-                 final ReadableInstant timestamp, final String generatorId, final Long version) {
+    Event(final UUID id, final Long sequence, final String nodeId, final UUID jobId, final EventType type,
+          final ReadableInstant timestamp, final String generatorId, final Long version) {
         this.id = id;
         this.sequence = sequence;
         this.nodeId = nodeId;
@@ -60,7 +60,7 @@ public final class Event implements Serializable {
         this.id = id;
     }
 
-    public Long getSequence() {
+    Long getSequence() {
         return sequence;
     }
 
@@ -68,7 +68,7 @@ public final class Event implements Serializable {
         this.sequence = sequence;
     }
 
-    public String getNodeId() {
+    String getNodeId() {
         return nodeId;
     }
 
@@ -76,7 +76,7 @@ public final class Event implements Serializable {
         this.nodeId = nodeId;
     }
 
-    public UUID getJobId() {
+    UUID getJobId() {
         return jobId;
     }
 
@@ -84,7 +84,7 @@ public final class Event implements Serializable {
         this.jobId = jobId;
     }
 
-    public EventType getType() {
+    EventType getType() {
         return type;
     }
 
@@ -100,7 +100,7 @@ public final class Event implements Serializable {
         this.timestamp = timestamp;
     }
 
-    public String getGeneratorId() {
+    String getGeneratorId() {
         return generatorId;
     }
 
