@@ -6,20 +6,21 @@ import java.util.Spliterator;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
-public class FixedBatchSpliterator<T> extends FixedBatchSpliteratorBase<T> {
+@SuppressWarnings("unused")
+public class FixedBatchSplitIterator<T> extends FixedBatchSplitIteratorBase<T> {
     private final Spliterator<T> spliterator;
 
-    public FixedBatchSpliterator(final Spliterator<T> toWrap, final int batchSize, final long est) {
+    private FixedBatchSplitIterator(final Spliterator<T> toWrap, final int batchSize, final long est) {
         super(toWrap.characteristics(), batchSize, est);
         this.spliterator = toWrap;
     }
 
-    public FixedBatchSpliterator(final Spliterator<T> toWrap, int batchSize) {
+    private FixedBatchSplitIterator(final Spliterator<T> toWrap, int batchSize) {
         this(toWrap, batchSize, toWrap.estimateSize());
     }
 
     public static <T> Stream<T> withBatchSize(final Stream<T> in, int batchSize) {
-        return stream(new FixedBatchSpliterator<>(in.spliterator(), batchSize), true);
+        return stream(new FixedBatchSplitIterator<>(in.spliterator(), batchSize), true);
     }
 
     @Override

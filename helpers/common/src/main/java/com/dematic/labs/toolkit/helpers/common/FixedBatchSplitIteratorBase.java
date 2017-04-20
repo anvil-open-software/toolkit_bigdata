@@ -6,12 +6,12 @@ import java.util.Comparator;
 import java.util.Spliterator;
 import java.util.function.Consumer;
 
-public abstract class FixedBatchSpliteratorBase<T> implements Spliterator<T> {
+public abstract class FixedBatchSplitIteratorBase<T> implements Spliterator<T> {
     private final int batchSize;
     private final int characteristics;
     private long est;
 
-    public FixedBatchSpliteratorBase(int characteristics, int batchSize, long est) {
+    FixedBatchSplitIteratorBase(int characteristics, int batchSize, long est) {
         characteristics |= ORDERED;
         if ((characteristics & SIZED) != 0) characteristics |= SUBSIZED;
         this.characteristics = characteristics;
