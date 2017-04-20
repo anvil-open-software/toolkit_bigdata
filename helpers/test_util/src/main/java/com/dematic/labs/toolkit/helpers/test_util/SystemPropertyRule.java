@@ -37,7 +37,7 @@ public final class SystemPropertyRule extends ExternalResource {
         }
     }
 
-    public void put(final String propertyKey, final String propertyValue) {
+    private void put(final String propertyKey, final String propertyValue) {
         previousProperties.put(propertyKey, setProperty(propertyKey, propertyValue));
     }
 
