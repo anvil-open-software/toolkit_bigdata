@@ -25,6 +25,7 @@ import static com.google.common.base.Strings.isNullOrEmpty;
 /**
  * Utility class to support events.
  */
+@SuppressWarnings("unused")
 public final class EventUtils {
     private final static ObjectMapper objectMapper;
 
@@ -43,11 +44,11 @@ public final class EventUtils {
         return objectMapper.readValue(json, Event.class);
     }
 
-    public static Event jsonToEvent(final String json) throws IOException {
+    static Event jsonToEvent(final String json) throws IOException {
         return objectMapper.readValue(json, Event.class);
     }
 
-    public static String eventToJson(final Event event) throws IOException {
+    static String eventToJson(final Event event) throws IOException {
         return objectMapper.writeValueAsString(event);
     }
 
@@ -62,7 +63,7 @@ public final class EventUtils {
      * @param nodeId         -- amount of nodes
      * @return List<Event>   -- list of generated events
      */
-    public static List<Event> generateEvents(final long numberOfEvents, final String nodeId) {
+    static List<Event> generateEvents(final long numberOfEvents, final String nodeId) {
         // startInclusive the (inclusive) initial value, endExclusive the exclusive upper bound
         return LongStream.range(1, numberOfEvents + 1)
                 .parallel()

@@ -5,6 +5,7 @@ import com.google.common.collect.Maps;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
+@SuppressWarnings("unused")
 public final class Statistics {
     private final Map<String, AtomicInteger> totalSuccessCounts;
     private final Map<String, AtomicInteger> totalErrorCounts;
@@ -62,7 +63,7 @@ public final class Statistics {
 
     public int getTotalSuccessCounts() {
         final int[] count = {0};
-        totalSuccessCounts.values().stream().forEach(value -> count[0] = count[0] + value.get());
+        totalSuccessCounts.values().forEach(value -> count[0] = count[0] + value.get());
         return count[0];
     }
 
@@ -73,7 +74,7 @@ public final class Statistics {
 
     public int getTotalErrorCounts() {
         final int[] count = {0};
-        totalErrorCounts.values().stream().forEach(value -> count[0] = count[0] + value.get());
+        totalErrorCounts.values().forEach(value -> count[0] = count[0] + value.get());
         return count[0];
     }
 
@@ -84,7 +85,7 @@ public final class Statistics {
 
     public int getCompletedCounts() {
         final int[] count = {0};
-        completedCounts.values().stream().forEach(value -> count[0] = count[0] + value.get());
+        completedCounts.values().forEach(value -> count[0] = count[0] + value.get());
         return count[0];
     }
 
@@ -95,7 +96,7 @@ public final class Statistics {
 
     public int getCycleTimeStartErrorCounts() {
         final int[] count = {0};
-        cycleTimeStartErrorCounts.values().stream().forEach(value -> count[0] = count[0] + value.get());
+        cycleTimeStartErrorCounts.values().forEach(value -> count[0] = count[0] + value.get());
         return count[0];
     }
 
@@ -106,7 +107,7 @@ public final class Statistics {
 
     public int getCycleTimeEndErrorCounts() {
         final int[] count = {0};
-        cycleTimeEndErrorCounts.values().stream().forEach(value -> count[0] = count[0] + value.get());
+        cycleTimeEndErrorCounts.values().forEach(value -> count[0] = count[0] + value.get());
         return count[0];
     }
 
