@@ -28,6 +28,7 @@ public final class OpcTagReadingExecutor {
             "opcTagRangeMin opcTagRangeMax maxSignalsPerMinutePerOpcTag durationInMinutes kafkaServerBootstrap kafkaTopics " +
             "ApplicationName generatorId";
 
+    
     private final int opcTagRangeSize;
     private final Stream<String> opcTagRangeIds;
     private final int maxSignalsPerMinutePerOpcTag;
