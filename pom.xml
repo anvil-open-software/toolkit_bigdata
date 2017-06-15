@@ -9,8 +9,6 @@
     <modules>
         <module>bom/bigdata-dep</module>
         <module>bom/common-dep</module>
-        <module>helpers/bigdata</module>
-        <module>helpers/common</module>
         <module>helpers/test_util</module>
         <module>helpers/simulators</module>
     </modules>
