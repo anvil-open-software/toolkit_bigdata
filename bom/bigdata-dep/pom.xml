@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>com.dematic.labs</groupId>
+        <artifactId>toolkit</artifactId>
+        <version>1.0.9-SNAPSHOT</version>
+        <relativePath>../../pom.xml</relativePath>
+    </parent>
+
+    <groupId>com.dematic.labs.toolkit.bom</groupId>
+    <artifactId>bigdata-dep</artifactId>
+    <packaging>pom</packaging>
+
+    <name>toolkit/bom/bigdata</name>
+    <description>common dependencies for all bigdata projects</description>
+
+    <properties>
+        <!-- version supported by Spark 2.x -->
+        <jackson.version>2.6.5</jackson.version>
+    </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <!-- cassandra connector for Spark 2.x -->
+            <dependency>
+                <groupId>com.datastax.spark</groupId>
+                <artifactId>spark-cassandra-connector_2.11</artifactId>
+                <version>2.0.0-M3</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>org.apache.cassandra</groupId>
+                        <artifactId>cassandra-clientutil</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+            <!-- cassandra client utils -->
+            <dependency>
+                <groupId>org.apache.cassandra</groupId>
+                <artifactId>cassandra-clientutil</artifactId>
+                <version>3.9</version>
+            </dependency>
+            <!-- cassandra client driver for java apps -->
+            <dependency>
+                <groupId>com.datastax.cassandra</groupId>
+                <artifactId>cassandra-driver-core</artifactId>
+                <version>3.1.1</version>
+            </dependency>
+            <!-- cassandra unit test -->
+            <dependency>
+                <groupId>org.cassandraunit</groupId>
+                <artifactId>cassandra-unit</artifactId>
+                <version>3.0.0.1</version>
+                <scope>test</scope>
+            </dependency>
+            <!-- kafka -->
+            <dependency>
+                <groupId>org.apache.kafka</groupId>
+                <artifactId>kafka-clients</artifactId>
+                <version>0.10.0.1</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>net.jpountz.lz4</groupId>
+                        <artifactId>lz4</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.kafka</groupId>
+                <artifactId>kafka_2.11</artifactId>
+                <version>0.10.0.1</version>
+            </dependency>
+            <!-- kafka unit test (kb : kafka_2.11:0.10.0.1, zk : 3.4.6)-->
+            <dependency>
+                <groupId>info.batey.kafka</groupId>
+                <artifactId>kafka-unit</artifactId>
+                <version>0.6</version>
+                <scope>test</scope>
+                <exclusions>
+                    <exclusion>
+                        <groupId>org.slf4j</groupId>
+                        <artifactId>slf4j-log4</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>org.apache.kafka</groupId>
+                        <artifactId>kafka_2.11</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+            <!-- kafka dep -->
+            <dependency>
+                <groupId>net.sf.jopt-simple</groupId>
+                <artifactId>jopt-simple</artifactId>
+                <version>5.0.2</version>
+                <scope>test</scope>
+            </dependency>
+            <!-- jedis redis client -->
+            <dependency>
+                <groupId>redis.clients</groupId>
+                <artifactId>jedis</artifactId>
+                <version>2.7.3</version>
+            </dependency>
+            <!-- json/xml -->
+            <dependency>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-databind</artifactId>
+                <version>${jackson.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-core</artifactId>
+                <version>${jackson.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-annotations</artifactId>
+                <version>${jackson.version}</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+</project>
