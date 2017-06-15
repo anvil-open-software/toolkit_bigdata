@@ -3,16 +3,16 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>com.dematic.labs</groupId>
-        <artifactId>toolkit</artifactId>
+        <artifactId>toolkit_bigdata</artifactId>
         <version>1.0.9-SNAPSHOT</version>
         <relativePath>../../pom.xml</relativePath>
     </parent>
 
-    <groupId>com.dematic.labs.toolkit.bom</groupId>
+    <groupId>com.dematic.labs.toolkit_bigdata.bom</groupId>
     <artifactId>bigdata-dep</artifactId>
     <packaging>pom</packaging>
 
-    <name>toolkit/bom/bigdata</name>
+    <name>toolkit_bigdata/bom/bigdata</name>
     <description>common dependencies for all bigdata projects</description>
 
     <properties>

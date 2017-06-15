@@ -3,18 +3,16 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.dematic.labs</groupId>
-    <artifactId>toolkit</artifactId>
+    <artifactId>toolkit_bigdata</artifactId>
     <version>1.0.9-SNAPSHOT</version>
     <packaging>pom</packaging>
     <modules>
         <module>bom/bigdata-dep</module>
-        <module>bom/common-dep</module>
-        <module>helpers/test_util</module>
-        <module>helpers/simulators</module>
+        <module>simulators</module>
     </modules>
 
     <scm>
-        <connection>scm:git:git@gitlab.ops.cld:Dematiclabs/toolkit.git</connection>
+        <connection>scm:git:git@gitlab.ops.cld:Dematiclabs/toolkit_bigdata.git</connection>
         <developerConnection>${project.scm.connection}</developerConnection>
         <tag>HEAD</tag>
     </scm>
