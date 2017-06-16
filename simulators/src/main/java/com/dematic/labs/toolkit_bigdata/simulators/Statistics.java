@@ -1,4 +1,4 @@
-package com.dematic.labs.toolkit_bigdata.helpers.simulators;
+package com.dematic.labs.toolkit_bigdata.simulators;
 
 import com.google.common.collect.Maps;
 

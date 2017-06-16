@@ -1,6 +1,6 @@
-package com.dematic.labs.toolkit_bigdata.helpers.simulators.grainger;
+package com.dematic.labs.toolkit_bigdata.simulators.grainger;
 
-import com.dematic.labs.toolkit.helpers.bigdata.CountdownTimer;
+import com.dematic.labs.toolkit_bigdata.simulators.CountdownTimer;
 import com.google.common.util.concurrent.RateLimiter;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
@@ -18,8 +18,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-import static com.dematic.labs.toolkit.helpers.bigdata.kafka.Connections.getKafkaProducer;
-
 public final class OpcTagReadingExecutor {
     private static final Logger LOGGER = LoggerFactory.getLogger(OpcTagReadingExecutor.class);
 
@@ -28,7 +26,7 @@ public final class OpcTagReadingExecutor {
             "opcTagRangeMin opcTagRangeMax maxSignalsPerMinutePerOpcTag durationInMinutes kafkaServerBootstrap kafkaTopics " +
             "ApplicationName generatorId";
 
-    
+
     private final int opcTagRangeSize;
     private final Stream<String> opcTagRangeIds;
     private final int maxSignalsPerMinutePerOpcTag;
@@ -68,7 +66,7 @@ public final class OpcTagReadingExecutor {
                                           final String opcTagId, final Long durationInMinutes, final CountDownLatch latch) {
         LOGGER.debug("OpcTagReadingExecutor: Dispatching signals for {}", opcTagId);
 
-        try (final KafkaProducer<String, byte[]> kafkaProducer = getKafkaProducer(kafkaServerBootstrap)) {
+        /*try (final KafkaProducer<String, byte[]> kafkaProducer = getKafkaProducer(kafkaServerBootstrap)) {
             // generate signals for the specific amount of time in minutes for a specific opc tag reading
             final CountdownTimer countdownTimer = new CountdownTimer();
             countdownTimer.countDown((int) TimeUnit.MINUTES.toMinutes(durationInMinutes));
@@ -86,7 +84,7 @@ public final class OpcTagReadingExecutor {
             }
         } finally {
             latch.countDown();
-        }
+        }*/
     }
 
     private void dispatchSingleSignal(final KafkaProducer<String, byte[]> kafkaProducer, final String kafkaTopics,

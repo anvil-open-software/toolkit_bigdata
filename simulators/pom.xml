@@ -59,7 +59,7 @@
                             <transformers>
                                 <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
                                     <mainClass>
-                                        com.dematic.labs.toolkit_bigdata.helpers.simulators.grainger.OpcTagReadingExecutor
+                                        com.dematic.labs.toolkit_bigdata.simulators.grainger.OpcTagReadingExecutor
                                     </mainClass>
                                 </transformer>
                             </transformers>
