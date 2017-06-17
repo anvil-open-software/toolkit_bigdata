@@ -1,5 +1,8 @@
 #!groovy​
-properties([[$class: 'GitLabConnectionProperty', gitLabConnection: 'gitlab']])
+properties([
+        buildDiscarder(logRotator(numToKeepStr: '5')),
+        gitLabConnection('gitlab')
+])
 
 timestamps {
     def currentPomVersion
