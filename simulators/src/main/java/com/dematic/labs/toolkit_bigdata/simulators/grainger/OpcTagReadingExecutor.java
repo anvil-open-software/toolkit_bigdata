@@ -131,10 +131,7 @@ public final class OpcTagReadingExecutor {
     }
 
     public static void main(String[] args) {
-        if (args.length == 1) {
-            LOGGER.info(HELP);
-            return;
-        }
+        // configuration comes from the application.conf for the driver
 
         if (args.length < 7) {
             throw new IllegalArgumentException("Missing arguments. \n" + HELP);
