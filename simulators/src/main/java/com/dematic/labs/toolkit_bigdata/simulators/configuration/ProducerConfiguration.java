@@ -45,8 +45,8 @@ final class ProducerConfiguration {
         return config.getString(String.format("kafka.%s", ProducerConfig.ACKS_CONFIG));
     }
 
-    static String getRetries() {
-        return config.getString(String.format("kafka.%s", ProducerConfig.RETRIES_CONFIG));
+    static int getRetries() {
+        return config.getInt(String.format("kafka.%s", ProducerConfig.RETRIES_CONFIG));
     }
 }
 
