@@ -1,6 +1,6 @@
 package com.dematic.labs.toolkit_bigdata.simulators.grainger;
 
-import com.dematic.labs.toolkit_bigdata.simulators.CountdownTimer;
+import com.dematic.labs.toolkit_bigdata.simulators.configuration.grainger.OpcTagReaderConfiguration;
 import com.google.common.util.concurrent.RateLimiter;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
@@ -132,29 +132,14 @@ public final class OpcTagReadingExecutor {
 
     public static void main(String[] args) {
         // configuration comes from the application.conf for the driver
-
-        if (args.length < 7) {
-            throw new IllegalArgumentException("Missing arguments. \n" + HELP);
-        }
-
-        final int opcTagRangeMin = Integer.valueOf(args[0]);
-        final int opcTagRangeMax = Integer.valueOf(args[1]);
-        final int maxSignalsPerMinutePerOpcTag = Integer.valueOf(args[2]);
-        final long durationInMinutes = Long.valueOf(args[3]);
-        final String kafkaServerBootstrap = args[4];
-        final String kafkaTopics = args[5];
-
-        final String generatorId;
-        if (args.length == 12) {
-            generatorId = args[11];
-        } else {
-            generatorId = args[6];
-        }
+        final OpcTagReaderConfiguration config = new OpcTagReaderConfiguration.Builder().build();
 
         try {
-            final OpcTagReadingExecutor opcTagReadingExecutor = new OpcTagReadingExecutor(opcTagRangeMin,
-                    opcTagRangeMax, maxSignalsPerMinutePerOpcTag, generatorId);
-            opcTagReadingExecutor.execute(durationInMinutes, kafkaServerBootstrap, kafkaTopics);
+            final OpcTagReadingExecutor opcTagReadingExecutor = new OpcTagReadingExecutor(config.getOpcTagRangeMin(),
+                    config.getOpcTagRangeMax(), config.getMaxSignalsPerMinutePerOpcTag(), config.getId());
+
+            opcTagReadingExecutor.execute(config.getDurationInMinutes(), config.getBootstrapServers(),
+                    config.getTopics());
         } finally {
             Runtime.getRuntime().halt(0);
         }

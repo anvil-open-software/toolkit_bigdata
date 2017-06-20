@@ -4,49 +4,96 @@ import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import org.apache.kafka.clients.producer.ProducerConfig;
 
-final class ProducerConfiguration {
-    // producer keys
-    private static final String PRODUCER_ID = "producer.id";
-    private static final String DURATION_IN_MINUTES = "producer.durationInMinutes";
+public abstract class ProducerConfiguration {
+    public static abstract class Builder<T extends Builder<T>> {
+        // producer keys
+        private static final String PRODUCER_ID = "producer.id";
+        private static final String DURATION_IN_MINUTES = "producer.durationInMinutes";
 
-    // loads all the producer configurations and the reference configuration
-    private static Config config = ConfigFactory.load();
+        // loads all the producer configurations and the reference configuration
+        private final Config config = ConfigFactory.load();
+        // shared producer values
+        private final String id;
+        private final long durationInMinutes;
+        // shared kafka values
+        private final String bootstrapServers;
+        private final String topics;
+        private final String keySerializer;
+        private final String valueSerializer;
+        private final String acks;
+        private final int retries;
 
-    private ProducerConfiguration() {
+        protected Builder() {
+            // all values come from external configuration
+            id = config.getString(PRODUCER_ID);
+            durationInMinutes = config.getLong(DURATION_IN_MINUTES);
+            // kafka configuration, using kafka keys when possible
+            bootstrapServers = config.getString(String.format("kafka.%s", ProducerConfig.BOOTSTRAP_SERVERS_CONFIG));
+            topics = config.getString("kafka.topics");
+            keySerializer = config.getString(String.format("kafka.%s", ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG));
+            valueSerializer = config.getString(String.format("kafka.%s", ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG));
+            acks = config.getString(String.format("kafka.%s", ProducerConfig.ACKS_CONFIG));
+            retries = config.getInt(String.format("kafka.%s", ProducerConfig.RETRIES_CONFIG));
+        }
+
+        protected Config getConfig() {
+            return config;
+        }
+
+        public abstract T getThis();
     }
 
-    // producer configuration
-    static String getProducerId() {
-        return config.getString(PRODUCER_ID);
+    private final String id;
+    private long durationInMinutes;
+    // shared kafka values
+    private final String bootstrapServers;
+    private final String topics;
+    private final String keySerializer;
+    private final String valueSerializer;
+    private final String acks;
+    private final int retries;
+
+    protected ProducerConfiguration(final Builder builder) {
+        id = builder.id;
+        durationInMinutes = builder.durationInMinutes;
+        bootstrapServers = builder.bootstrapServers;
+        topics = builder.topics;
+        keySerializer = builder.keySerializer;
+        valueSerializer = builder.valueSerializer;
+        acks = builder.acks;
+        retries = builder.retries;
     }
 
-    static long getDurationInMinutes() {
-        return config.getLong(DURATION_IN_MINUTES);
+    public String getId() {
+        return id;
     }
 
-    // kafka configuration, using kafka keys when possible
-    static String getBootstrapServers() {
-        return config.getString(String.format("kafka.%s", ProducerConfig.BOOTSTRAP_SERVERS_CONFIG));
+    public long getDurationInMinutes() {
+        return durationInMinutes;
     }
 
-    static String getTopics() {
-        return config.getString("kafka.topics");
+    public String getBootstrapServers() {
+        return bootstrapServers;
     }
 
-    static String getKeySerializer() {
-        return config.getString(String.format("kafka.%s", ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG));
+    public String getTopics() {
+        return topics;
     }
 
-    static String getValueSerializer() {
-        return config.getString(String.format("kafka.%s", ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG));
+    public String getKeySerializer() {
+        return keySerializer;
     }
 
-    static String getAcks() {
-        return config.getString(String.format("kafka.%s", ProducerConfig.ACKS_CONFIG));
+    public String getValueSerializer() {
+        return valueSerializer;
     }
 
-    static int getRetries() {
-        return config.getInt(String.format("kafka.%s", ProducerConfig.RETRIES_CONFIG));
+    public String getAcks() {
+        return acks;
+    }
+
+    public int getRetries() {
+        return retries;
     }
 }
 
