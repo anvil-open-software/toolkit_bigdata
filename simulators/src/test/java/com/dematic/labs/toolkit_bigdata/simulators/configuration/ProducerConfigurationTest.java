@@ -22,7 +22,7 @@ public class ProducerConfigurationTest {
         // from reference.conf
         Assert.assertEquals("org.apache.kafka.common.serialization.StringSerializer",
                 config.getKeySerializer());
-        Assert.assertEquals("org.apache.kafka.common.serialization.StringSerializer",
+        Assert.assertEquals("org.apache.kafka.common.serialization.ByteArraySerializer",
                 config.getValueSerializer());
         Assert.assertEquals("all", config.getAcks());
     }
