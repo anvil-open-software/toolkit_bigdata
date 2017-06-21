@@ -53,21 +53,33 @@ timestamps {
         return
     }
 
+    def userAbortedRelease=false
     def releaseVersion
     stage('Continue to Release') {
         milestone label: 'preReleaseConfirmation'
-        timeout(time: 1, unit: 'DAYS') {
-            releaseVersion = input(
-                    message: 'Publish ?',
-                    parameters: [
-                            [name        : 'version',
-                             defaultValue: currentPomVersion.minus('-SNAPSHOT'),
-                             description : 'Release version',
-                             $class      : 'hudson.model.StringParameterDefinition']
-                    ]
-            )
+
+        try {
+            timeout(time: 1, unit: 'DAYS') {
+                releaseVersion = input(
+                        message: 'Publish ?',
+                        parameters: [
+                                [name        : 'version',
+                                 defaultValue: currentPomVersion.minus('-SNAPSHOT'),
+                                 description : 'Release version',
+                                 $class      : 'hudson.model.StringParameterDefinition']
+                        ]
+                )
+            }
+        } catch (org.jenkinsci.plugins.workflow.steps.FlowInterruptedException e) {
+            currentBuild.result = 'SUCCESS'
+            userAbortedRelease = true
         }
+
         milestone label: 'postReleaseConfirmation'
+    }
+
+    if (userAbortedRelease) {
+        return
     }
 
     node {
