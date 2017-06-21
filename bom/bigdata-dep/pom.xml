@@ -13,7 +13,7 @@
     <packaging>pom</packaging>
 
     <name>toolkit_bigdata/bom/bigdata</name>
-    <description>common dependencies for all bigdata projects</description>
+    <description>common dependencies for all big data projects</description>
 
     <properties>
         <!-- version supported by Spark 2.x -->
@@ -29,7 +29,7 @@
             <dependency>
                 <groupId>org.apache.spark</groupId>
                 <artifactId>spark-streaming_2.11</artifactId>
-                <version>2.1.0</version>
+                <version>2.1.1</version>
                 <scope>provided</scope>
                 <exclusions>
                     <exclusion>
@@ -53,7 +53,7 @@
             <dependency>
                 <groupId>org.apache.spark</groupId>
                 <artifactId>spark-streaming-kafka-0-10_2.11</artifactId>
-                <version>2.1.0</version>
+                <version>2.1.1</version>
                 <exclusions>
                     <exclusion>
                         <groupId>org.apache.kafka</groupId>
@@ -77,7 +77,7 @@
             <dependency>
                 <groupId>org.apache.spark</groupId>
                 <artifactId>spark-sql_2.11</artifactId>
-                <version>2.1.0</version>
+                <version>2.1.1</version>
                 <exclusions>
                     <exclusion>
                         <groupId>net.java.dev.jets3t</groupId>
@@ -100,7 +100,7 @@
             <dependency>
                 <groupId>org.apache.spark</groupId>
                 <artifactId>spark-sql-kafka-0-10_2.11</artifactId>
-                <version>2.1.0</version>
+                <version>2.1.1</version>
                 <exclusions>
                     <exclusion>
                         <groupId>net.java.dev.jets3t</groupId>
@@ -206,6 +206,18 @@
                 <groupId>com.fasterxml.jackson.core</groupId>
                 <artifactId>jackson-annotations</artifactId>
                 <version>${jackson.version}</version>
+            </dependency>
+            <!-- scala json support -->
+            <dependency>
+                <groupId>com.fasterxml.jackson.module</groupId>
+                <artifactId>jackson-module-scala_2.11</artifactId>
+                <version>${jackson.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>org.scala-lang</groupId>
+                        <artifactId>scala-reflect</artifactId>
+                    </exclusion>
+                </exclusions>
             </dependency>
 
             <!-- test dependencies -->
