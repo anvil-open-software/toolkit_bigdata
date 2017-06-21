@@ -3,16 +3,16 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>com.dematic.labs</groupId>
-        <artifactId>toolkit</artifactId>
+        <artifactId>toolkit_bigdata</artifactId>
         <version>1.0.9-SNAPSHOT</version>
         <relativePath>../../pom.xml</relativePath>
     </parent>
 
-    <groupId>com.dematic.labs.toolkit.bom</groupId>
+    <groupId>com.dematic.labs.toolkit_bigdata.bom</groupId>
     <artifactId>bigdata-dep</artifactId>
     <packaging>pom</packaging>
 
-    <name>toolkit/bom/bigdata</name>
+    <name>toolkit_bigdata/bom/bigdata</name>
     <description>common dependencies for all bigdata projects</description>
 
     <properties>
@@ -22,11 +22,153 @@
 
     <dependencyManagement>
         <dependencies>
+
+            <!-- spark dependencies -->
+
+            <!-- spark streaming dependencies -->
+            <dependency>
+                <groupId>org.apache.spark</groupId>
+                <artifactId>spark-streaming_2.11</artifactId>
+                <version>2.1.0</version>
+                <scope>provided</scope>
+                <exclusions>
+                    <exclusion>
+                        <groupId>net.java.dev.jets3t</groupId>
+                        <artifactId>jets3t</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>commons-httpclient</groupId>
+                        <artifactId>commons-httpclient</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>org.slf4j</groupId>
+                        <artifactId>slf4j-log4j12</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>log4j</groupId>
+                        <artifactId>log4j</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.spark</groupId>
+                <artifactId>spark-streaming-kafka-0-10_2.11</artifactId>
+                <version>2.1.0</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>org.apache.kafka</groupId>
+                        <artifactId>kafka_2.11</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>net.java.dev.jets3t</groupId>
+                        <artifactId>jets3t</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>commons-httpclient</groupId>
+                        <artifactId>commons-httpclient</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>org.slf4j</groupId>
+                        <artifactId>slf4j-log4j12</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+            <!-- spark sql/data frames/data sets -->
+            <dependency>
+                <groupId>org.apache.spark</groupId>
+                <artifactId>spark-sql_2.11</artifactId>
+                <version>2.1.0</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>net.java.dev.jets3t</groupId>
+                        <artifactId>jets3t</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>commons-httpclient</groupId>
+                        <artifactId>commons-httpclient</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>org.slf4j</groupId>
+                        <artifactId>slf4j-log4j12</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>log4j</groupId>
+                        <artifactId>log4j</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.spark</groupId>
+                <artifactId>spark-sql-kafka-0-10_2.11</artifactId>
+                <version>2.1.0</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>net.java.dev.jets3t</groupId>
+                        <artifactId>jets3t</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>commons-httpclient</groupId>
+                        <artifactId>commons-httpclient</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>org.slf4j</groupId>
+                        <artifactId>slf4j-log4j12</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>log4j</groupId>
+                        <artifactId>log4j</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+            <!-- used by spark -->
+            <dependency>
+                <groupId>org.apache.parquet</groupId>
+                <artifactId>parquet-avro</artifactId>
+                <version>1.9.0</version>
+            </dependency>
+            <!-- spark monitoring dependencies -->
+            <dependency>
+                <groupId>com.dematic.labs.analytics.monitor</groupId>
+                <artifactId>analytics-monitor</artifactId>
+                <version>0.0.1-SNAPSHOT</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>io.prometheus</groupId>
+                        <artifactId>*</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>io.dropwizard.metrics</groupId>
+                        <artifactId>*</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+
+            <!-- kafka dependencies -->
+            <dependency>
+                <groupId>org.apache.kafka</groupId>
+                <artifactId>kafka-clients</artifactId>
+                <version>0.10.0.1</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>net.jpountz.lz4</groupId>
+                        <artifactId>lz4</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.kafka</groupId>
+                <artifactId>kafka_2.11</artifactId>
+                <version>0.10.0.1</version>
+            </dependency>
+
+
+            <!-- cassandra dependencies -->
+
             <!-- cassandra connector for Spark 2.x -->
             <dependency>
                 <groupId>com.datastax.spark</groupId>
                 <artifactId>spark-cassandra-connector_2.11</artifactId>
-                <version>2.0.0-M3</version>
+                <version>2.0.2</version>
                 <exclusions>
                     <exclusion>
                         <groupId>org.apache.cassandra</groupId>
@@ -44,31 +186,36 @@
             <dependency>
                 <groupId>com.datastax.cassandra</groupId>
                 <artifactId>cassandra-driver-core</artifactId>
-                <version>3.1.1</version>
+                <version>3.2.0</version>
             </dependency>
+
+            <!-- utilities -->
+
+            <!-- json/xml -->
+            <dependency>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-databind</artifactId>
+                <version>${jackson.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-core</artifactId>
+                <version>${jackson.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-annotations</artifactId>
+                <version>${jackson.version}</version>
+            </dependency>
+
+            <!-- test dependencies -->
+
             <!-- cassandra unit test -->
             <dependency>
                 <groupId>org.cassandraunit</groupId>
                 <artifactId>cassandra-unit</artifactId>
-                <version>3.0.0.1</version>
+                <version>3.1.3.2</version>
                 <scope>test</scope>
-            </dependency>
-            <!-- kafka -->
-            <dependency>
-                <groupId>org.apache.kafka</groupId>
-                <artifactId>kafka-clients</artifactId>
-                <version>0.10.0.1</version>
-                <exclusions>
-                    <exclusion>
-                        <groupId>net.jpountz.lz4</groupId>
-                        <artifactId>lz4</artifactId>
-                    </exclusion>
-                </exclusions>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.kafka</groupId>
-                <artifactId>kafka_2.11</artifactId>
-                <version>0.10.0.1</version>
             </dependency>
             <!-- kafka unit test (kb : kafka_2.11:0.10.0.1, zk : 3.4.6)-->
             <dependency>
@@ -87,35 +234,7 @@
                     </exclusion>
                 </exclusions>
             </dependency>
-            <!-- kafka dep -->
-            <dependency>
-                <groupId>net.sf.jopt-simple</groupId>
-                <artifactId>jopt-simple</artifactId>
-                <version>5.0.2</version>
-                <scope>test</scope>
-            </dependency>
-            <!-- jedis redis client -->
-            <dependency>
-                <groupId>redis.clients</groupId>
-                <artifactId>jedis</artifactId>
-                <version>2.7.3</version>
-            </dependency>
-            <!-- json/xml -->
-            <dependency>
-                <groupId>com.fasterxml.jackson.core</groupId>
-                <artifactId>jackson-databind</artifactId>
-                <version>${jackson.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.fasterxml.jackson.core</groupId>
-                <artifactId>jackson-core</artifactId>
-                <version>${jackson.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.fasterxml.jackson.core</groupId>
-                <artifactId>jackson-annotations</artifactId>
-                <version>${jackson.version}</version>
-            </dependency>
+
         </dependencies>
     </dependencyManagement>
 
