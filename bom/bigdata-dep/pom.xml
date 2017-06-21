@@ -222,6 +222,13 @@
 
             <!-- test dependencies -->
 
+            <!-- scala tests -->
+            <dependency>
+                <groupId>org.scalatest</groupId>
+                <artifactId>scalatest_2.11</artifactId>
+                <version>3.0.3</version>
+                <scope>test</scope>
+            </dependency>
             <!-- cassandra unit test -->
             <dependency>
                 <groupId>org.cassandraunit</groupId>
