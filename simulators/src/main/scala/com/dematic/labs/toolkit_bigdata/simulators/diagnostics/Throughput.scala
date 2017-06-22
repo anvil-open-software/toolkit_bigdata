@@ -1,11 +1,16 @@
 package com.dematic.labs.toolkit_bigdata.simulators.diagnostics
 
 import java.time.Instant
+import java.util
 import java.util.concurrent.ThreadPoolExecutor.DiscardPolicy
 import java.util.concurrent.{Executors, LinkedBlockingQueue, ThreadPoolExecutor, TimeUnit}
 
 import com.dematic.labs.toolkit_bigdata.simulators.CountdownTimer
 import com.dematic.labs.toolkit_bigdata.simulators.configuration.MinimalProducerConfiguration
+import com.dematic.labs.toolkit_bigdata.simulators.diagnostics.data.Signal
+import com.dematic.labs.toolkit_bigdata.simulators.diagnostics.data.Utils.toJson
+import org.apache.kafka.clients.producer.{KafkaProducer, ProducerConfig, ProducerRecord}
+import org.slf4j.LoggerFactory
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Random
@@ -15,6 +20,8 @@ import scala.util.Random
   *
   */
 object Throughput extends App {
+  val logger = LoggerFactory.getLogger("Throughput")
+
   // load all the configuration
   val config = new MinimalProducerConfiguration.Builder().build
   // define how long to run the throughput simulator
@@ -48,24 +55,33 @@ object Throughput extends App {
   // the ExecutionContext that wraps the thread pool
   implicit val ec = ExecutionContext.fromExecutorService(executorService)
 
+  // configure and create kafka producer
+  val properties: util.Map[String, AnyRef] = new util.HashMap[String, AnyRef]
+  properties.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, config.getBootstrapServers)
+  properties.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, config.getKeySerializer)
+  properties.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, config.getValueSerializer)
+  properties.put(ProducerConfig.ACKS_CONFIG, config.getAcks)
+  properties.put(ProducerConfig.RETRIES_CONFIG, Predef.int2Integer(config.getRetries))
+
+  val producer = new KafkaProducer[String, AnyRef](properties)
+
   // fire and forget, until timer is finished
-  //val producer = new Producer
   try {
     while (!countdownTimer.isFinished) {
       val result = Future {
         // create random json
-       // val json = toJson(new Signal(nextId(), Instant.now.toString, nextRandomValue(), config.getId))
-        //producer.send(json)
+        val json = toJson(new Signal(nextId(), Instant.now.toString, nextRandomValue(), config.getId))
+        producer.send(new ProducerRecord[String, AnyRef](config.getTopics, json))
       }
       // only print exception if, something goes wrong
       result onFailure {
-        case t => println(s"Unexpected Error:\n ${t.printStackTrace()}")
+        case any => logger.error("Unexpected Error:", any)
       }
     }
   } finally {
     // close execution context
     ec.shutdownNow()
     // close producer
-  //  producer.close()
+    producer.close()
   }
 }

@@ -7,10 +7,13 @@ import org.junit.Test;
 public class ProducerConfigurationTest {
     @Test
     public void opcTagReadingExecutorConfiguration() {
-        // configuration comes from the application.conf for the driver
+        // configuration comes from the opcTagReadingExecutor.conf for the producer,
+        // set system property to ensure correct file used.
+        System.setProperty("config.resource", "opcTagReadingExecutor.conf");
+
         final OpcTagReaderConfiguration config = new OpcTagReaderConfiguration.Builder().build();
 
-        // from application.conf
+        // from opcTagReadingExecutor.conf
         Assert.assertEquals("opcTagExecutor", config.getId());
         Assert.assertEquals(100, config.getOpcTagRangeMin());
         Assert.assertEquals(200, config.getOpcTagRangeMax());
