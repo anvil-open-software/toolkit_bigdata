@@ -1,10 +1,11 @@
 package com.dematic.labs.toolkit_bigdata.simulators;
 
-import com.dematic.labs.toolkit.helpers.bigdata.communication.EventUtils;
 import org.joda.time.DateTime;
 
 import java.util.Timer;
 import java.util.TimerTask;
+
+import static org.joda.time.DateTime.now;
 
 public final class CountdownTimer {
     private boolean finished;
@@ -15,12 +16,12 @@ public final class CountdownTimer {
      * @param inMinutes -- number of minutes to count down
      */
     public void countDown(final int inMinutes) {
-        final DateTime nowPlusMinutes = DateTime.now().plusMinutes(inMinutes);
+        final DateTime nowPlusMinutes = now().plusMinutes(inMinutes);
         final Timer timer = new Timer();
         timer.scheduleAtFixedRate(new TimerTask() {
             @Override
             public void run() {
-                if (EventUtils.now().isAfter(nowPlusMinutes)) {
+                if (now().toDateTimeISO().isAfter(nowPlusMinutes)) {
                     try {
                         timer.cancel();
                     } finally {
