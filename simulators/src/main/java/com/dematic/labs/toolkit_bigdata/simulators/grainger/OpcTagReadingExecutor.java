@@ -129,11 +129,13 @@ public final class OpcTagReadingExecutor {
         return Math.round(val);
     }
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception {
         try {
             // configuration comes from the application.conf for the driver
             final OpcTagReaderConfiguration config = new OpcTagReaderConfiguration.Builder().build();
             new OpcTagReadingExecutor(config).execute();
+        } catch (final Throwable any) {
+            LOGGER.error("Producer failed to startup:", any);
         } finally {
             Runtime.getRuntime().halt(0);
         }
