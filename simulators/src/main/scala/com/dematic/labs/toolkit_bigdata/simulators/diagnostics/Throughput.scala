@@ -86,6 +86,6 @@ object Throughput extends App {
     // close producer
     producer.close()
     val lastId = nextId() - 1
-    logger.info(s"Completed: pushed '$lastId'")
+    logger.info(s"Approximately: pushed '$lastId'")
   }
 }
