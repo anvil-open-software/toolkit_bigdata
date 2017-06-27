@@ -52,6 +52,8 @@ object Throughput extends App {
   val executorService = new ThreadPoolExecutor(numWorkers, numWorkers, 0L, TimeUnit.MILLISECONDS,
     new LinkedBlockingQueue[Runnable], Executors.defaultThreadFactory, new DiscardPolicy)
 
+  logger.info(s"Producer using '$numWorkers' workers" )
+
   // the ExecutionContext that wraps the thread pool
   implicit val ec = ExecutionContext.fromExecutorService(executorService)
 
@@ -83,5 +85,7 @@ object Throughput extends App {
     ec.shutdownNow()
     // close producer
     producer.close()
+    val lastId = nextId() - 1
+    logger.info(s"Completed: pushed '$lastId'")
   }
 }
