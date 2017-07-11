@@ -20,12 +20,12 @@ import scala.util.Random
   *
   */
 object Throughput extends App {
-  val logger = LoggerFactory.getLogger("Throughput")
+  private val logger = LoggerFactory.getLogger("Throughput")
 
   // load all the configuration
-  val config = new MinimalProducerConfiguration.Builder().build
+  private val config = new MinimalProducerConfiguration.Builder().build
   // define how long to run the throughput simulator
-  val countdownTimer = new CountdownTimer
+  private val countdownTimer = new CountdownTimer
   countdownTimer.countDown(config.getDurationInMinutes.toInt)
 
   // generated ids
@@ -46,26 +46,26 @@ object Throughput extends App {
   }
 
   // number of threads on the box
-  val numWorkers = sys.runtime.availableProcessors
+  private val numWorkers = sys.runtime.availableProcessors
   // underlying thread pool with a fixed number of worker threads, backed by an unbounded LinkedBlockingQueue[Runnable]
   // define a DiscardPolicy to silently passes over RejectedExecutionException
-  val executorService = new ThreadPoolExecutor(numWorkers, numWorkers, 0L, TimeUnit.MILLISECONDS,
+  private val executorService = new ThreadPoolExecutor(numWorkers, numWorkers, 0L, TimeUnit.MILLISECONDS,
     new LinkedBlockingQueue[Runnable], Executors.defaultThreadFactory, new DiscardPolicy)
 
   logger.info(s"Producer using '$numWorkers' workers" )
 
   // the ExecutionContext that wraps the thread pool
-  implicit val ec = ExecutionContext.fromExecutorService(executorService)
+  private implicit val ec = ExecutionContext.fromExecutorService(executorService)
 
   // configure and create kafka producer
-  val properties: util.Map[String, AnyRef] = new util.HashMap[String, AnyRef]
+  private val properties: util.Map[String, AnyRef] = new util.HashMap[String, AnyRef]
   properties.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, config.getBootstrapServers)
   properties.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, config.getKeySerializer)
   properties.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, config.getValueSerializer)
   properties.put(ProducerConfig.ACKS_CONFIG, config.getAcks)
   properties.put(ProducerConfig.RETRIES_CONFIG, Predef.int2Integer(config.getRetries))
 
-  val producer = new KafkaProducer[String, AnyRef](properties)
+  private val producer = new KafkaProducer[String, AnyRef](properties)
 
   // fire and forget, until timer is finished
   try {
