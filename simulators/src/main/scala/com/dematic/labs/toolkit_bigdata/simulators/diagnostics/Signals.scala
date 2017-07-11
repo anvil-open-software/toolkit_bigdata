@@ -12,7 +12,7 @@ import scala.util.Random
 
 // will use the reference.conf file, override kafka.bootstrap.servers, kafka.topics, and producer.id using system
 // properties. Pass in the number of signals to be sent to Kafka.
-object Signal extends App {
+object Signals extends App {
   // load all the configuration
   private val config = new MinimalProducerConfiguration.Builder().build
 
