@@ -7,15 +7,12 @@ import com.dematic.labs.toolkit_bigdata.simulators.configuration.MinimalProducer
 import com.dematic.labs.toolkit_bigdata.simulators.diagnostics.data.Signal
 import com.dematic.labs.toolkit_bigdata.simulators.diagnostics.data.Utils.toJson
 import org.apache.kafka.clients.producer.{KafkaProducer, ProducerConfig, ProducerRecord}
-import org.slf4j.LoggerFactory
 
 import scala.util.Random
 
 // will use the reference.conf file, override kafka.bootstrap.servers, kafka.topics, and producer.id using system
 // properties. Pass in the number of signals to be sent to Kafka.
 object Test extends App {
-  private val logger = LoggerFactory.getLogger("Throughput")
-
   // load all the configuration
   private val config = new MinimalProducerConfiguration.Builder().build
 
