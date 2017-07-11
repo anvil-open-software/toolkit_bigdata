@@ -100,6 +100,23 @@
                     </execution>
                 </executions>
             </plugin>
+            <!-- test scala -->
+            <plugin>
+                <groupId>org.scalatest</groupId>
+                <artifactId>scalatest-maven-plugin</artifactId>
+                <version>1.0</version>
+                <configuration>
+                    <parallel>false</parallel>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>test</id>
+                        <goals>
+                            <goal>test</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
             <!-- We use the maven-shade plugin to create a fat jar that contains all dependencies except transitive -->
             <!-- dependencies. Change the value of Program-Class if your program entry point changes. -->
             <plugin>

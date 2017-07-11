@@ -19,6 +19,5 @@ class ConfigurationSuite extends FunSuite {
     assert("org.apache.kafka.common.serialization.StringSerializer" === config.getKeySerializer)
     assert("org.apache.kafka.common.serialization.StringSerializer" === config.getValueSerializer)
     assert("all" === config.getAcks)
-
   }
 }
