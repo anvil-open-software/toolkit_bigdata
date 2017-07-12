@@ -20,7 +20,7 @@ timestamps {
                             }
 
                             stage('build') {
-                                maven('', '-Snapshot')
+                                maven('-U', '-Snapshot')
                             }
                         }
                     }
@@ -61,11 +61,20 @@ timestamps {
         try {
             timeout(time: 1, unit: 'DAYS') {
                 releaseVersion = input(
-                        message: 'Publish ?',
+                        message: 'Publish? You MUST make sure snapshot dependencies are releases!!!',
                         parameters: [
                                 [name        : 'version',
                                  defaultValue: currentPomVersion.minus('-SNAPSHOT'),
                                  description : 'Release version',
+                                 $class      : 'hudson.model.StringParameterDefinition']
+                        ]
+                )
+                releaseMessage = input(
+                        message: 'Release Message',
+                        parameters: [
+                                [name        : 'message',
+                                 defaultValue: 'routine release',
+                                 description : 'Release message, be specific',
                                  $class      : 'hudson.model.StringParameterDefinition']
                         ]
                 )
@@ -88,7 +97,7 @@ timestamps {
                 stage('checkout Release') {
                     checkout scm
                     sh 'git clean -dfx && git reset --hard'
-                    sh "git tag v${releaseVersion}"
+                    sh "git tag v${releaseVersion} -m 'v${releaseMessage}'"
 
                     def descriptor = Artifactory.mavenDescriptor()
                     descriptor.version = releaseVersion
