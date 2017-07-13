@@ -25,7 +25,7 @@
             <dependency>
                 <groupId>com.dematic.labs.toolkit.bom</groupId>
                 <artifactId>common-dep</artifactId>
-                <version>1.0.9</version>
+                <version>2.0.2</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
@@ -76,6 +76,10 @@
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.hamcrest</groupId>
+            <artifactId>hamcrest-junit</artifactId>
         </dependency>
         <dependency>
             <groupId>org.scalatest</groupId>
