@@ -22,6 +22,9 @@ public abstract class ProducerConfiguration {
         private final String valueSerializer;
         private final String acks;
         private final int retries;
+        private final long bufferMemory;
+        private final int batchSize;
+        private final int lingerMs;
 
         protected Builder() {
             // all values come from external configuration
@@ -34,6 +37,9 @@ public abstract class ProducerConfiguration {
             valueSerializer = config.getString(String.format("kafka.%s", ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG));
             acks = config.getString(String.format("kafka.%s", ProducerConfig.ACKS_CONFIG));
             retries = config.getInt(String.format("kafka.%s", ProducerConfig.RETRIES_CONFIG));
+            bufferMemory = config.getLong(String.format("kafka.%s", ProducerConfig.BUFFER_MEMORY_CONFIG));
+            batchSize = config.getInt(String.format("kafka.%s", ProducerConfig.BATCH_SIZE_CONFIG));
+            lingerMs = config.getInt(String.format("kafka.%s", ProducerConfig.LINGER_MS_CONFIG));
         }
 
         protected Config getConfig() {
@@ -52,6 +58,9 @@ public abstract class ProducerConfiguration {
     private final String valueSerializer;
     private final String acks;
     private final int retries;
+    private final long bufferMemory;
+    private final int batchSize;
+    private final int lingerMs;
 
     protected ProducerConfiguration(final Builder builder) {
         id = builder.id;
@@ -62,6 +71,9 @@ public abstract class ProducerConfiguration {
         valueSerializer = builder.valueSerializer;
         acks = builder.acks;
         retries = builder.retries;
+        bufferMemory = builder.bufferMemory;
+        batchSize = builder.batchSize;
+        lingerMs = builder.lingerMs;
     }
 
     public String getId() {
@@ -94,6 +106,18 @@ public abstract class ProducerConfiguration {
 
     public int getRetries() {
         return retries;
+    }
+
+    public long getBufferMemory() {
+        return bufferMemory;
+    }
+
+    public int getBatchSize() {
+        return batchSize;
+    }
+
+    public int getLingerMs() {
+        return lingerMs;
     }
 }
 
