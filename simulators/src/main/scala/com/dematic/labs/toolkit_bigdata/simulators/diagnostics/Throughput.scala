@@ -32,6 +32,7 @@ object Throughput extends App {
       id
     }
   }
+
   // generated values
   private val nextRandomValue = {
     val random = new Random
