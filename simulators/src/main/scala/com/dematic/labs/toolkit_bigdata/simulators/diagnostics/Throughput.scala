@@ -2,17 +2,16 @@ package com.dematic.labs.toolkit_bigdata.simulators.diagnostics
 
 import java.time.Instant
 import java.util
-import java.util.concurrent.ThreadPoolExecutor.DiscardPolicy
-import java.util.concurrent.{Executors, LinkedBlockingQueue, ThreadPoolExecutor, TimeUnit}
+import java.util.concurrent.TimeUnit
 
 import com.dematic.labs.toolkit_bigdata.simulators.CountdownTimer
 import com.dematic.labs.toolkit_bigdata.simulators.configuration.MinimalProducerConfiguration
 import com.dematic.labs.toolkit_bigdata.simulators.diagnostics.data.Signal
 import com.dematic.labs.toolkit_bigdata.simulators.diagnostics.data.Utils.toJson
-import org.apache.kafka.clients.producer.{Callback, KafkaProducer, ProducerConfig, ProducerRecord}
+import monix.eval.Task
+import org.apache.kafka.clients.producer.{KafkaProducer, ProducerConfig, ProducerRecord}
 import org.slf4j.LoggerFactory
 
-import scala.concurrent.{ExecutionContext, ExecutionContextExecutorService, Future}
 import scala.util.Random
 
 /**
@@ -45,18 +44,6 @@ object Throughput extends App {
     }
   }
 
-  // number of threads on the box
-  private val numWorkers = sys.runtime.availableProcessors
-  // underlying thread pool with a fixed number of worker threads, backed by an unbounded LinkedBlockingQueue[Runnable]
-  // define a DiscardPolicy to silently passes over RejectedExecutionException
-  private val executorService = new ThreadPoolExecutor(numWorkers, numWorkers, 0L, TimeUnit.MILLISECONDS,
-    new LinkedBlockingQueue[Runnable], Executors.defaultThreadFactory, new DiscardPolicy)
-
-  logger.info(s"Producer using '$numWorkers' workers")
-
-  // the ExecutionContext that wraps the thread pool
-  private implicit val ec: ExecutionContextExecutorService = ExecutionContext.fromExecutorService(executorService)
-
   // configure and create kafka producer
   private val properties: util.Map[String, AnyRef] = new util.HashMap[String, AnyRef]
   properties.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, config.getBootstrapServers)
@@ -72,33 +59,18 @@ object Throughput extends App {
 
   private val producer = new KafkaProducer[String, AnyRef](properties)
 
-  import org.apache.kafka.clients.producer.RecordMetadata
-
-  val callback = new Callback {
-    override def onCompletion(metadata: RecordMetadata, exception: Exception) {
-      if (exception != null) logger.error("Unexpected Error:", exception)
-    }
-  }
+  import monix.execution.Scheduler.Implicits.global
 
   // fire and forget, until timer is finished
   try {
     while (!countdownTimer.isFinished) {
-      val result = Future {
-        // create random json
+      Task.now({
         val json = toJson(new Signal(nextId(), Instant.now.toString, nextRandomValue(), config.getId))
-        producer.send(new ProducerRecord[String, AnyRef](config.getTopics, json), callback)
-      }
-      // only print exception if, something goes wrong
-      result onFailure {
-        case any => logger.error("Unexpected Error:", any)
-      }
+        producer.send(new ProducerRecord[String, AnyRef](config.getTopics, json))
+      }, global)
     }
   } finally {
-    // close execution context
-    ec.shutdownNow()
     // close producer
-    producer.close()
-    val lastId = nextId() - 1
-    logger.info(s"Approximately: pushed '$lastId'")
+    producer.close(15, TimeUnit.SECONDS)
   }
 }
