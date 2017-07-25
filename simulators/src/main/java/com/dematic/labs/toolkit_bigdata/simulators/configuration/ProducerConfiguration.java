@@ -25,6 +25,7 @@ public abstract class ProducerConfiguration {
         private final long bufferMemory;
         private final int batchSize;
         private final int lingerMs;
+        private final String compressionType;
 
         protected Builder() {
             // all values come from external configuration
@@ -40,6 +41,7 @@ public abstract class ProducerConfiguration {
             bufferMemory = config.getLong(String.format("kafka.%s", ProducerConfig.BUFFER_MEMORY_CONFIG));
             batchSize = config.getInt(String.format("kafka.%s", ProducerConfig.BATCH_SIZE_CONFIG));
             lingerMs = config.getInt(String.format("kafka.%s", ProducerConfig.LINGER_MS_CONFIG));
+            compressionType = config.getString(String.format("kafka.%s", ProducerConfig.COMPRESSION_TYPE_CONFIG));
         }
 
         protected Config getConfig() {
@@ -61,6 +63,7 @@ public abstract class ProducerConfiguration {
     private final long bufferMemory;
     private final int batchSize;
     private final int lingerMs;
+    private final String compressionType;
 
     protected ProducerConfiguration(final Builder builder) {
         id = builder.id;
@@ -74,6 +77,7 @@ public abstract class ProducerConfiguration {
         bufferMemory = builder.bufferMemory;
         batchSize = builder.batchSize;
         lingerMs = builder.lingerMs;
+        compressionType = builder.compressionType;
     }
 
     public String getId() {
@@ -118,6 +122,10 @@ public abstract class ProducerConfiguration {
 
     public int getLingerMs() {
         return lingerMs;
+    }
+
+    public String getCompressionType() {
+        return compressionType;
     }
 }
 

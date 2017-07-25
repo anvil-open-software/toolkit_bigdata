@@ -10,7 +10,6 @@ import com.dematic.labs.toolkit_bigdata.simulators.diagnostics.data.Signal
 import com.dematic.labs.toolkit_bigdata.simulators.diagnostics.data.Utils.toJson
 import monix.eval.Task
 import org.apache.kafka.clients.producer.{KafkaProducer, ProducerConfig, ProducerRecord}
-import org.slf4j.LoggerFactory
 
 import scala.util.Random
 
@@ -19,8 +18,6 @@ import scala.util.Random
   *
   */
 object Throughput extends App {
-  private val logger = LoggerFactory.getLogger("Throughput")
-
   // load all the configuration
   private val config = new MinimalProducerConfiguration.Builder().build
   // define how long to run the throughput simulator
@@ -35,6 +32,7 @@ object Throughput extends App {
       id
     }
   }
+
   // generated values
   private val nextRandomValue = {
     val random = new Random
@@ -56,6 +54,7 @@ object Throughput extends App {
   properties.put(ProducerConfig.BUFFER_MEMORY_CONFIG, Predef.long2Long(config.getBufferMemory))
   properties.put(ProducerConfig.BATCH_SIZE_CONFIG, Predef.int2Integer(config.getBatchSize))
   properties.put(ProducerConfig.LINGER_MS_CONFIG, Predef.int2Integer(config.getLingerMs))
+  properties.put(ProducerConfig.COMPRESSION_TYPE_CONFIG, config.getCompressionType)
 
   private val producer = new KafkaProducer[String, AnyRef](properties)
 
