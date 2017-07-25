@@ -61,6 +61,7 @@
             <groupId>io.monix</groupId>
             <artifactId>monix_2.11</artifactId>
             <version>2.3.0</version>
+            <type>pom</type>
         </dependency>
 
 
