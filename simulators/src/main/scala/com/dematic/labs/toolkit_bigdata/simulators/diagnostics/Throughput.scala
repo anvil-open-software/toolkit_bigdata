@@ -60,7 +60,6 @@ object Throughput extends App {
   private val producer = new KafkaProducer[String, AnyRef](properties)
 
   import monix.execution.Scheduler.Implicits.global
-
   // fire and forget, until timer is finished
   try {
     while (!countdownTimer.isFinished) {
