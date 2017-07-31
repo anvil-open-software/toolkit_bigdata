@@ -137,10 +137,10 @@ def maven(goals, buildInfoQualifier) {
 
     configFileProvider([configFile(fileId: 'simple-maven-settings', variable: 'MAVEN_USER_SETTINGS')]) {
         def mavenRuntime = Artifactory.newMavenBuild()
+        mavenRuntime.tool = 'maven350'
         mavenRuntime.resolver server: artifactory, releaseRepo: 'maven-dlabs', snapshotRepo: 'maven-dlabs'
         mavenRuntime.deployer server: artifactory, releaseRepo: 'maven-dlabs-release', snapshotRepo: 'maven-dlabs-snapshot'
         mavenRuntime.deployer.deployArtifacts = !isFeatureBranch()
-        mavenRuntime.tool = 'Maven'
 
         try {
             def buildInfo = mavenRuntime.run pom: 'pom.xml', goals: "-B -s ${MAVEN_USER_SETTINGS} ${goals}".toString()
