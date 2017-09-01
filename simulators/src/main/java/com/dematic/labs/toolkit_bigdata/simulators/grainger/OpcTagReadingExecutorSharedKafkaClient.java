@@ -24,6 +24,8 @@ import java.util.stream.Stream;
 
 /**
  * All threads share single kafka client for increased performance through batching
+ * Use OpcTagReadingExecutor if you want to simulate each device being it's own kafka client.
+ *
  */
 public final class OpcTagReadingExecutorSharedKafkaClient {
     private static final Logger LOGGER = LoggerFactory.getLogger(OpcTagReadingExecutorSharedKafkaClient.class);
