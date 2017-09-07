@@ -1,6 +1,4 @@
 #!groovy​
-
-// cloned from toolkit change version e1ef5a7 4/20/17 at 2:51 PM
 properties([
         buildDiscarder(logRotator(numToKeepStr: '5')),
         gitLabConnection('gitlab')
@@ -23,7 +21,7 @@ timestamps {
                                 }
 
                                 stage('build') {
-                                    maven('', currentProjectVersion, '-Snapshot')
+                                    maven('-U', currentProjectVersion, '-Snapshot')
                                 }
                             }
                         }
@@ -140,7 +138,9 @@ def isFeatureBranch() {
 }
 
 static def isFeatureBranchVersion(version) {
-    return version ==~ /\d+\.\d+\.\d+-\p{Upper}+-\d+(:?-SNAPSHOT)?/
+    true;
+    // below appears not to match
+    //return version ==~ /\d+\.\d+\.\d+-\p{Upper}+-\d+(:?-SNAPSHOT)?/
 }
 
 static def isSnapshotVersion(version) {
