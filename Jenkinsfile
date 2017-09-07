@@ -1,3 +1,6 @@
+#!groovy​
+
+// cloned from toolkit change version e1ef5a7 4/20/17 at 2:51 PM
 properties([
         buildDiscarder(logRotator(numToKeepStr: '5')),
         gitLabConnection('gitlab')
