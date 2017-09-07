@@ -138,9 +138,7 @@ def isFeatureBranch() {
 }
 
 static def isFeatureBranchVersion(version) {
-    true;
-    // below appears not to match
-    //return version ==~ /\d+\.\d+\.\d+-\p{Upper}+-\d+(:?-SNAPSHOT)?/
+     return version ==~ /\d+\.\d+\.\d+-\p{Upper}+-\d+(:?-SNAPSHOT)?/
 }
 
 static def isSnapshotVersion(version) {
