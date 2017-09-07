@@ -137,12 +137,7 @@
                 <groupId>org.apache.kafka</groupId>
                 <artifactId>kafka-clients</artifactId>
                 <version>0.11.0.0</version>
-                <exclusions>
-                    <exclusion>
-                        <groupId>net.jpountz.lz4</groupId>
-                        <artifactId>lz4</artifactId>
-                    </exclusion>
-                </exclusions>
+
             </dependency>
             <dependency>
                 <groupId>org.apache.kafka</groupId>
