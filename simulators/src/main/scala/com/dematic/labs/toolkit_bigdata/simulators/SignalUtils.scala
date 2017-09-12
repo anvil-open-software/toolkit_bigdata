@@ -13,13 +13,14 @@ import scala.util.Random
 /**
   * Used in unit test to help send signals to kafka.
   *
-  * @param bootstrapServer -- server address
-  * @param topic           -- kafka topic
-  * @param numberOfSignals -- number of signals to send
-  * @param id              -- test id
+  * @param bootstrapServer      -- server address
+  * @param topic                -- kafka topic
+  * @param numberOfSignalsPerId -- number of signals per id to send
+  * @param signalIdRange        -- signal Id range
+  * @param id                   -- test id
   */
-class SignalUtils(val bootstrapServer: String, val topic: String, val numberOfSignals: Int, val signalIdRange:Seq[Int],
-                  val id: String) {
+class SignalUtils(val bootstrapServer: String, val topic: String, val numberOfSignalsPerId: Int,
+                  val signalIdRange: Seq[Integer], val id: String) {
   private val properties: util.Map[String, AnyRef] = new util.HashMap[String, AnyRef]
   properties.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServer)
   properties.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringSerializer")
@@ -38,10 +39,16 @@ class SignalUtils(val bootstrapServer: String, val topic: String, val numberOfSi
   private val producer = new KafkaProducer[String, AnyRef](properties)
 
   try {
-    // number of signals to send
-    for (i <- 1 to numberOfSignals) {
-      val json = toJson(new Signal(i, Instant.now.toString, Sorter, nextRandomValue(), id))
-      producer.send(new ProducerRecord[String, AnyRef](topic, json))
+    // convert to Int and cycle through the range
+    var lowSignalRange: Int = signalIdRange.head
+    var highSignalRange: Int = signalIdRange.last
+
+    for (i <- lowSignalRange to highSignalRange) {
+      // number of signals to send
+      for (i <- 1 to numberOfSignalsPerId) {
+        val json = toJson(new Signal(i, Instant.now.toString, Sorter, nextRandomValue(), id))
+        producer.send(new ProducerRecord[String, AnyRef](topic, json))
+      }
     }
   } finally {
     producer.close()
