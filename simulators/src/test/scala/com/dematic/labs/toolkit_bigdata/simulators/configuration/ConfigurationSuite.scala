@@ -1,6 +1,5 @@
-package com.dematic.labs.toolkit_bigdata.simulators.diagnostics.configuration
+package com.dematic.labs.toolkit_bigdata.simulators.configuration
 
-import com.dematic.labs.toolkit_bigdata.simulators.configuration.MinimalProducerConfiguration
 import org.scalatest.FunSuite
 
 class ConfigurationSuite extends FunSuite {

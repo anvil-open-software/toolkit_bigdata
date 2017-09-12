@@ -1,4 +1,4 @@
-package com.dematic.labs.toolkit_bigdata.simulators.diagnostics.data
+package com.dematic.labs.toolkit_bigdata.simulators.data
 
 import java.nio.charset.Charset
 import java.sql.Timestamp
