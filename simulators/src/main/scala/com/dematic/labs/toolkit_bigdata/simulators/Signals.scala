@@ -1,6 +1,7 @@
 package com.dematic.labs.toolkit_bigdata.simulators
 
 import java.time.Instant
+import java.time.temporal.ChronoUnit.SECONDS
 import java.util
 
 import com.dematic.labs.toolkit_bigdata.simulators.configuration.MinimalProducerConfiguration
@@ -37,11 +38,18 @@ object Signals extends App {
   private val producer = new KafkaProducer[String, AnyRef](properties)
 
   try {
+    // cycle through the range
+    var lowSignalRange: Int = config.getSignalIdRangeLow
+    var highSignalRange: Int = config.getSignalIdRangeHigh
     // number of signals to send
     val numberOfSignals = args(0).toInt
-    for (i <- 1 to numberOfSignals) {
-      val json = toJson(new Signal(i, Instant.now.toString, Sorter, nextRandomValue(), config.getId))
-      producer.send(new ProducerRecord[String, AnyRef](config.getTopics, json))
+
+    for (signalId <- lowSignalRange to highSignalRange) {
+      for (i <- 1 to numberOfSignals) {
+        val json = toJson(new Signal(signalId, Instant.now.plus(1, SECONDS).toString, Sorter, nextRandomValue(),
+          config.getId))
+        producer.send(new ProducerRecord[String, AnyRef](config.getTopics, json))
+      }
     }
   } finally {
     producer.close()
