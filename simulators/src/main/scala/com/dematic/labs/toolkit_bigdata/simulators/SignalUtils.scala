@@ -18,7 +18,8 @@ import scala.util.Random
   * @param numberOfSignals -- number of signals to send
   * @param id              -- test id
   */
-class SignalUtils(val bootstrapServer: String, val topic: String, val numberOfSignals: Int, val id: String) {
+class SignalUtils(val bootstrapServer: String, val topic: String, val numberOfSignals: Int, val signalIdRange:Seq[Int],
+                  val id: String) {
   private val properties: util.Map[String, AnyRef] = new util.HashMap[String, AnyRef]
   properties.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServer)
   properties.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringSerializer")
