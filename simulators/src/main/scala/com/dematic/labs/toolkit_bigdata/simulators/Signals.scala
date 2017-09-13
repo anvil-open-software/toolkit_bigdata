@@ -1,7 +1,6 @@
 package com.dematic.labs.toolkit_bigdata.simulators
 
 import java.time.Instant
-import java.time.temporal.ChronoUnit.SECONDS
 import java.util
 
 import com.dematic.labs.toolkit_bigdata.simulators.configuration.MinimalProducerConfiguration
@@ -46,7 +45,7 @@ object Signals extends App {
 
     for (signalId <- lowSignalRange to highSignalRange) {
       for (i <- 1 to numberOfSignals) {
-        val json = toJson(new Signal(signalId, Instant.now.plus(1, SECONDS).toString, Sorter, nextRandomValue(),
+        val json = toJson(new Signal(signalId, Instant.now.toString, Sorter, nextRandomValue(),
           config.getId))
         producer.send(new ProducerRecord[String, AnyRef](config.getTopics, json))
       }
