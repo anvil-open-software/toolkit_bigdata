@@ -46,9 +46,11 @@ class TestSignalProducer(val bootstrapServer: String, val topic: String, val num
 
     for (signalId <- lowSignalRange to highSignalRange) {
       // number of signals to send
+      var now = Instant.now
       for (_ <- 1 to numberOfSignalsPerId) {
-        val json = toJson(new Signal(signalId, Instant.now.plus(1, SECONDS).toString, Sorter.toString, nextRandomValue(), id))
+        val json = toJson(new Signal(signalId, now.toString, Sorter.toString, nextRandomValue(), id))
         producer.send(new ProducerRecord[String, AnyRef](topic, json))
+        now = now.plus(1, SECONDS)
       }
     }
   } finally {
