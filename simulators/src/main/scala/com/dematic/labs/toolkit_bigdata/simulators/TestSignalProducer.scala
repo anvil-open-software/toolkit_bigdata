@@ -41,13 +41,13 @@ class TestSignalProducer(val bootstrapServer: String, val topic: String, val num
 
   try {
     // cycle through the range
-    var lowSignalRange: Int = signalIdRange.head
-    var highSignalRange: Int = signalIdRange.last
+    val lowSignalRange: Int = signalIdRange.head
+    val highSignalRange: Int = signalIdRange.last
 
     for (signalId <- lowSignalRange to highSignalRange) {
       // number of signals to send
-      for (i <- 1 to numberOfSignalsPerId) {
-        val json = toJson(new Signal(signalId, Instant.now.plus(1, SECONDS).toString, Sorter, nextRandomValue(), id))
+      for (_ <- 1 to numberOfSignalsPerId) {
+        val json = toJson(new Signal(signalId, Instant.now.plus(1, SECONDS).toString, Sorter.toString, nextRandomValue(), id))
         producer.send(new ProducerRecord[String, AnyRef](topic, json))
       }
     }

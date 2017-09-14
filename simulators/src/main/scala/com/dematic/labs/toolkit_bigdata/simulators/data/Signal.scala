@@ -5,7 +5,7 @@ import com.dematic.labs.toolkit_bigdata.simulators.data.SignalType.SignalType
 import scala.beans.BeanProperty
 import scala.util.hashing.MurmurHash3
 
-class Signal(@BeanProperty var id: Long, @BeanProperty var timestamp: String, @BeanProperty var signalType: SignalType,
+class Signal(@BeanProperty var id: Long, @BeanProperty var timestamp: String, @BeanProperty var signalType: String,
              @BeanProperty var value: Int, @BeanProperty val producerId: String) {
   override def equals(other: Any): Boolean = other match {
     case that: Signal => (that canEqual this) &&

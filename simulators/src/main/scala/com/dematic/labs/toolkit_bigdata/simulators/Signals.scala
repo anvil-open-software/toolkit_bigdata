@@ -38,14 +38,14 @@ object Signals extends App {
 
   try {
     // cycle through the range
-    var lowSignalRange: Int = config.getSignalIdRangeLow
-    var highSignalRange: Int = config.getSignalIdRangeHigh
+    val lowSignalRange: Int = config.getSignalIdRangeLow
+    val highSignalRange: Int = config.getSignalIdRangeHigh
     // number of signals to send
     val numberOfSignals = args(0).toInt
 
     for (signalId <- lowSignalRange to highSignalRange) {
-      for (i <- 1 to numberOfSignals) {
-        val json = toJson(new Signal(signalId, Instant.now.toString, Sorter, nextRandomValue(),
+      for (_ <- 1 to numberOfSignals) {
+        val json = toJson(new Signal(signalId, Instant.now.toString, Sorter.toString, nextRandomValue(),
           config.getId))
         producer.send(new ProducerRecord[String, AnyRef](config.getTopics, json))
       }
