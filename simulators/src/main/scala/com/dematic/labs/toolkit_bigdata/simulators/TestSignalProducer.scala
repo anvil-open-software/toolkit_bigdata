@@ -5,7 +5,7 @@ import java.time.temporal.ChronoUnit.SECONDS
 import java.util
 
 import com.dematic.labs.toolkit_bigdata.simulators.data.Signal
-import com.dematic.labs.toolkit_bigdata.simulators.data.SignalType.Sorter
+import com.dematic.labs.toolkit_bigdata.simulators.data.SignalType.SignalType
 import com.dematic.labs.toolkit_bigdata.simulators.data.Utils.toJson
 import org.apache.kafka.clients.producer.{KafkaProducer, ProducerConfig, ProducerRecord}
 
@@ -21,7 +21,7 @@ import scala.util.Random
   * @param id                   -- test id
   */
 class TestSignalProducer(val bootstrapServer: String, val topic: String, val numberOfSignalsPerId: Int,
-                         val signalIdRange: Seq[Int], val id: String) {
+                         val signalIdRange: Seq[Int], val signalType: SignalType, id: String) {
   private val properties: util.Map[String, AnyRef] = new util.HashMap[String, AnyRef]
   properties.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServer)
   properties.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringSerializer")
@@ -48,7 +48,7 @@ class TestSignalProducer(val bootstrapServer: String, val topic: String, val num
       // number of signals to send
       var now = Instant.now
       for (_ <- 1 to numberOfSignalsPerId) {
-        val json = toJson(new Signal(signalId, now.toString, Sorter.toString, nextRandomValue(), id))
+        val json = toJson(new Signal(signalId, now.toString, signalType.toString, nextRandomValue(), id))
         producer.send(new ProducerRecord[String, AnyRef](topic, json))
         now = now.plus(1, SECONDS)
       }
