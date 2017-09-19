@@ -6,7 +6,7 @@ import java.util.concurrent.TimeUnit
 
 import com.dematic.labs.toolkit_bigdata.simulators.configuration.MinimalProducerConfiguration
 import com.dematic.labs.toolkit_bigdata.simulators.data.Signal
-import com.dematic.labs.toolkit_bigdata.simulators.data.SignalType.Sorter
+import com.dematic.labs.toolkit_bigdata.simulators.data.SignalType.SORTER
 import com.dematic.labs.toolkit_bigdata.simulators.data.Utils.toJson
 import monix.eval.Task
 import org.apache.kafka.clients.producer.{KafkaProducer, ProducerConfig, ProducerRecord}
@@ -63,7 +63,7 @@ object Throughput extends App {
   try {
     while (!countdownTimer.isFinished) {
       Task.now({
-        val json = toJson(new Signal(nextId(), Instant.now.toString, Sorter.toString, nextRandomValue(), config.getId))
+        val json = toJson(new Signal(nextId(), Instant.now.toString, SORTER.toString, nextRandomValue(), config.getId))
         producer.send(new ProducerRecord[String, AnyRef](config.getTopics, json))
       }, global)
     }
