@@ -5,5 +5,5 @@ package com.dematic.labs.toolkit_bigdata.simulators.data
   */
 object SignalType extends Enumeration {
   type SignalType = Value
-  val Picker, Sorter = Value
+  val PICKER, SORTER, DMS = Value
 }
