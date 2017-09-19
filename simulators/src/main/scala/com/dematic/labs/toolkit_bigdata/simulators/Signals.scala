@@ -45,7 +45,7 @@ object Signals extends App {
 
     for (signalId <- lowSignalRange to highSignalRange) {
       for (_ <- 1 to numberOfSignals) {
-        val json = toJson(new Signal(signalId, Instant.now.toString, Sorter.toString, nextRandomValue(),
+        val json = toJson(new Signal(signalId, Instant.now.toString, SORTER.toString, nextRandomValue(),
           config.getId))
         producer.send(new ProducerRecord[String, AnyRef](config.getTopics, json))
       }
