@@ -15,8 +15,8 @@ public class ProducerConfigurationTest {
 
         // from opcTagReadingExecutor.conf
         Assert.assertEquals("opcTagExecutor", config.getId());
-        Assert.assertEquals(100, config.getOpcTagRangeMin());
-        Assert.assertEquals(200, config.getOpcTagRangeMax());
+        Assert.assertEquals(100, config.getSignalIdRangeLow().intValue());
+        Assert.assertEquals(200, config.getSignalIdRangeHigh().intValue());
         Assert.assertEquals(30, config.getMaxSignalsPerMinutePerOpcTag());
 
         Assert.assertEquals("test", config.getTopics());

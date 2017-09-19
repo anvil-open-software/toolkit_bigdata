@@ -15,4 +15,9 @@ public final class MinimalProducerConfiguration extends ProducerConfiguration {
     MinimalProducerConfiguration(final Builder builder) {
         super(builder);
     }
+
+    @Override
+    public String toString() {
+        return "MinimalProducerConfiguration{} " + super.toString();
+    }
 }

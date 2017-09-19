@@ -4,19 +4,12 @@ import com.dematic.labs.toolkit_bigdata.simulators.configuration.ProducerConfigu
 
 public final class OpcTagReaderConfiguration extends ProducerConfiguration {
     public static class Builder extends ProducerConfiguration.Builder<Builder> {
-        // OpcTagReaderConfiguration producer keys
-        private static final String OPC_TAG_RANGE_MIN = "producer.opcTagRangeMin";
-        private static final String OPC_TAG_RANGE_MAX = "producer.opcTagRangeMax";
         private static final String MAX_SIGNALS_PER_MINUTE_PER_OPC_TAG = "producer.maxSignalsPerMinutePerOpcTag";
 
-        private final int opcTagRangeMin;
-        private final int opcTagRangeMax;
         private final int maxSignalsPerMinutePerOpcTag;
 
         public Builder() {
             // all values come from external configuration associated to this producer
-            opcTagRangeMin = getConfig().getInt(OPC_TAG_RANGE_MIN);
-            opcTagRangeMax = getConfig().getInt(OPC_TAG_RANGE_MAX);
             maxSignalsPerMinutePerOpcTag = getConfig().getInt(MAX_SIGNALS_PER_MINUTE_PER_OPC_TAG);
         }
 
@@ -30,26 +23,21 @@ public final class OpcTagReaderConfiguration extends ProducerConfiguration {
         }
     }
 
-    private final int opcTagRangeMin;
-    private final int opcTagRangeMax;
     private final int maxSignalsPerMinutePerOpcTag;
 
     OpcTagReaderConfiguration(final Builder builder) {
         super(builder);
-        opcTagRangeMin = builder.opcTagRangeMin;
-        opcTagRangeMax = builder.opcTagRangeMax;
         maxSignalsPerMinutePerOpcTag = builder.maxSignalsPerMinutePerOpcTag;
-    }
-
-    public int getOpcTagRangeMin() {
-        return opcTagRangeMin;
-    }
-
-    public int getOpcTagRangeMax() {
-        return opcTagRangeMax;
     }
 
     public int getMaxSignalsPerMinutePerOpcTag() {
         return maxSignalsPerMinutePerOpcTag;
+    }
+
+    @Override
+    public String toString() {
+        return "OpcTagReaderConfiguration{" +
+                "maxSignalsPerMinutePerOpcTag=" + maxSignalsPerMinutePerOpcTag +
+                "} " + super.toString();
     }
 }

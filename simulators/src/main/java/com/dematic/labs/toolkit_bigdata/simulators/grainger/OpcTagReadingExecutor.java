@@ -32,14 +32,14 @@ public final class OpcTagReadingExecutor {
     }
 
     private void execute() {
-        final int opcTagRangeSize = config.getOpcTagRangeMax() - config.getOpcTagRangeMin();
+        final int opcTagRangeSize = config.getSignalIdRangeHigh() - config.getSignalIdRangeLow();
         final CountDownLatch latch = new CountDownLatch(opcTagRangeSize);
         final ForkJoinPool forkJoinPool =
                 new ForkJoinPool(opcTagRangeSize, ForkJoinPool.defaultForkJoinWorkerThreadFactory, null,
                         true);
         try {
             final Stream<String> opcTagRangeIds =
-                    IntStream.range(config.getOpcTagRangeMin(), config.getOpcTagRangeMax()).mapToObj(String::valueOf);
+                    IntStream.range(config.getSignalIdRangeLow(), config.getSignalIdRangeHigh()).mapToObj(String::valueOf);
             opcTagRangeIds.forEach(opcTagId -> forkJoinPool.submit(() ->
                     dispatchPerOpcTagReading(opcTagId, latch)));
             // wait 5 minutes longer then duration

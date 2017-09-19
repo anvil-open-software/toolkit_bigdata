@@ -1,6 +1,5 @@
-package com.dematic.labs.toolkit_bigdata.simulators.diagnostics.configuration
+package com.dematic.labs.toolkit_bigdata.simulators.configuration
 
-import com.dematic.labs.toolkit_bigdata.simulators.configuration.MinimalProducerConfiguration
 import org.scalatest.FunSuite
 
 class ConfigurationSuite extends FunSuite {
@@ -11,6 +10,8 @@ class ConfigurationSuite extends FunSuite {
     // from throughput.conf
     val config = new MinimalProducerConfiguration.Builder().build
     assert("throughput" === config.getId)
+
+    println(config.getSignalIdRange)
     assert(3 === config.getDurationInMinutes)
     assert("localhost:9092" === config.getBootstrapServers)
     assert("test" === config.getTopics)
