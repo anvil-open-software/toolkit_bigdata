@@ -25,6 +25,7 @@ import java.util.stream.Stream;
 /**
  * All threads share single kafka client for increased performance through batching
  * Use OpcTagReadingExecutor if you want to simulate each device being it's own kafka client.
+ *
  */
 public final class OpcTagReadingExecutorSharedKafkaClient {
     private static final Logger LOGGER = LoggerFactory.getLogger(OpcTagReadingExecutorSharedKafkaClient.class);
@@ -51,13 +52,13 @@ public final class OpcTagReadingExecutorSharedKafkaClient {
         // Threadsafe and can be shared
         final KafkaProducer<String, byte[]> kafkaProducer = new KafkaProducer<>(properties);
 
-        final int opcTagRangeSize = config.getSignalIdRangeHigh() - config.getSignalIdRangeLow();
+        final int opcTagRangeSize = config.getOpcTagRangeMax() - config.getOpcTagRangeMin();
         final CountDownLatch latch = new CountDownLatch(opcTagRangeSize);
         final ForkJoinPool forkJoinPool =
                 new ForkJoinPool(opcTagRangeSize, ForkJoinPool.defaultForkJoinWorkerThreadFactory, null, true);
         try {
             final Stream<String> opcTagRangeIds =
-                    IntStream.range(config.getSignalIdRangeLow(), config.getSignalIdRangeHigh()).mapToObj(String::valueOf);
+                    IntStream.range(config.getOpcTagRangeMin(), config.getOpcTagRangeMax()).mapToObj(String::valueOf);
             opcTagRangeIds.forEach(opcTagId -> forkJoinPool.submit(() ->
                     dispatchPerOpcTagReading(kafkaProducer, opcTagId, latch)));
             // wait 5 minutes longer then duration
