@@ -5,6 +5,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 public class ProducerConfigurationTest {
+
     @Test
     public void opcTagReadingExecutorConfiguration() {
         // configuration comes from the opcTagReadingExecutor.conf for the producer,
