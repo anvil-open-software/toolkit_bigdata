@@ -38,11 +38,6 @@
             <groupId>org.apache.kafka</groupId>
             <artifactId>kafka_2.11</artifactId>
         </dependency>
-        <!-- json -->
-        <dependency>
-            <groupId>com.fasterxml.jackson.module</groupId>
-            <artifactId>jackson-module-scala_2.11</artifactId>
-        </dependency>
         <!-- configuration -->
         <dependency>
             <groupId>com.typesafe</groupId>
@@ -57,13 +52,6 @@
             <groupId>joda-time</groupId>
             <artifactId>joda-time</artifactId>
         </dependency>
-        <dependency>
-            <groupId>io.monix</groupId>
-            <artifactId>monix_2.11</artifactId>
-            <version>2.3.0</version>
-            <type>pom</type>
-        </dependency>
-
         <!-- logging -->
         <dependency>
             <groupId>org.slf4j</groupId>
@@ -89,46 +77,10 @@
             <artifactId>hamcrest-junit</artifactId>
             <scope>test</scope>
         </dependency>
-        <dependency>
-            <groupId>org.scalatest</groupId>
-            <artifactId>scalatest_2.11</artifactId>
-            <scope>test</scope>
-        </dependency>
     </dependencies>
 
     <build>
         <plugins>
-            <!-- compile scala code -->
-            <plugin>
-                <groupId>net.alchim31.maven</groupId>
-                <artifactId>scala-maven-plugin</artifactId>
-                <version>3.2.2</version>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>compile</goal>
-                            <goal>testCompile</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-            <!-- test scala -->
-            <plugin>
-                <groupId>org.scalatest</groupId>
-                <artifactId>scalatest-maven-plugin</artifactId>
-                <version>1.0</version>
-                <configuration>
-                    <parallel>false</parallel>
-                </configuration>
-                <executions>
-                    <execution>
-                        <id>test</id>
-                        <goals>
-                            <goal>test</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
             <!-- We use the maven-shade plugin to create a fat jar that contains all dependencies except transitive -->
             <!-- dependencies. Change the value of Program-Class if your program entry point changes. -->
             <plugin>
