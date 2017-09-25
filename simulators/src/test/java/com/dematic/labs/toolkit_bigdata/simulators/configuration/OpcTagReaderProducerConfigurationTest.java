@@ -4,8 +4,7 @@ import com.dematic.labs.toolkit_bigdata.simulators.configuration.grainger.OpcTag
 import org.junit.Assert;
 import org.junit.Test;
 
-public class ProducerConfigurationTest {
-
+public class OpcTagReaderProducerConfigurationTest {
     @Test
     public void opcTagReadingExecutorConfiguration() {
         // configuration comes from the opcTagReadingExecutor.conf for the producer,
