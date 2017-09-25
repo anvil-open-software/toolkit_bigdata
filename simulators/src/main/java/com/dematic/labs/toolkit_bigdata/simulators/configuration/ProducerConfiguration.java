@@ -1,19 +1,24 @@
 package com.dematic.labs.toolkit_bigdata.simulators.configuration;
 
+import com.google.common.collect.Iterables;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import org.apache.kafka.clients.producer.ProducerConfig;
+
+import java.util.List;
 
 public abstract class ProducerConfiguration {
     public static abstract class Builder<T extends Builder<T>> {
         // producer keys
         private static final String PRODUCER_ID = "producer.id";
+        private static final String PRODUCER_SIGNAL_ID_RANGE = "producer.signalIdRange";
         private static final String DURATION_IN_MINUTES = "producer.durationInMinutes";
 
         // loads all the producer configurations and the reference configuration
         private final Config config = ConfigFactory.load();
         // shared producer values
         private final String id;
+        private final List<Integer> signalIdRange;
         private final long durationInMinutes;
         // shared kafka values
         private final String bootstrapServers;
@@ -30,6 +35,7 @@ public abstract class ProducerConfiguration {
         protected Builder() {
             // all values come from external configuration
             id = config.getString(PRODUCER_ID);
+            signalIdRange = config.getIntList(PRODUCER_SIGNAL_ID_RANGE);
             durationInMinutes = config.getLong(DURATION_IN_MINUTES);
             // kafka configuration, using kafka keys when possible
             bootstrapServers = config.getString(String.format("kafka.%s", ProducerConfig.BOOTSTRAP_SERVERS_CONFIG));
@@ -52,6 +58,7 @@ public abstract class ProducerConfiguration {
     }
 
     private final String id;
+    private List<Integer> signalIdRange;
     private long durationInMinutes;
     // shared kafka values
     private final String bootstrapServers;
@@ -67,6 +74,7 @@ public abstract class ProducerConfiguration {
 
     protected ProducerConfiguration(final Builder builder) {
         id = builder.id;
+        signalIdRange = builder.signalIdRange;
         durationInMinutes = builder.durationInMinutes;
         bootstrapServers = builder.bootstrapServers;
         topics = builder.topics;
@@ -82,6 +90,18 @@ public abstract class ProducerConfiguration {
 
     public String getId() {
         return id;
+    }
+
+    public List<Integer> getSignalIdRange() {
+        return signalIdRange;
+    }
+
+    public Integer getSignalIdRangeLow() {
+        return Iterables.getFirst(signalIdRange, 0);
+    }
+
+    public Integer getSignalIdRangeHigh() {
+        return Iterables.getLast(signalIdRange, 0);
     }
 
     public long getDurationInMinutes() {
@@ -126,6 +146,25 @@ public abstract class ProducerConfiguration {
 
     public String getCompressionType() {
         return compressionType;
+    }
+
+    @Override
+    public String toString() {
+        return "ProducerConfiguration{" +
+                "id='" + id + '\'' +
+                ", signalIdRange=" + signalIdRange +
+                ", durationInMinutes=" + durationInMinutes +
+                ", bootstrapServers='" + bootstrapServers + '\'' +
+                ", topics='" + topics + '\'' +
+                ", keySerializer='" + keySerializer + '\'' +
+                ", valueSerializer='" + valueSerializer + '\'' +
+                ", acks='" + acks + '\'' +
+                ", retries=" + retries +
+                ", bufferMemory=" + bufferMemory +
+                ", batchSize=" + batchSize +
+                ", lingerMs=" + lingerMs +
+                ", compressionType='" + compressionType + '\'' +
+                '}';
     }
 }
 
