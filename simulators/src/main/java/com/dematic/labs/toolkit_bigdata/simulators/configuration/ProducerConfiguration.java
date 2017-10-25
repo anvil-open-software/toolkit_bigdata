@@ -38,16 +38,25 @@ public abstract class ProducerConfiguration {
             signalIdRange = config.getIntList(PRODUCER_SIGNAL_ID_RANGE);
             durationInMinutes = config.getLong(DURATION_IN_MINUTES);
             // kafka configuration, using kafka keys when possible
-            bootstrapServers = config.getString(String.format("kafka.%s", ProducerConfig.BOOTSTRAP_SERVERS_CONFIG));
-            topics = config.getString("kafka.topics");
-            keySerializer = config.getString(String.format("kafka.%s", ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG));
-            valueSerializer = config.getString(String.format("kafka.%s", ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG));
-            acks = config.getString(String.format("kafka.%s", ProducerConfig.ACKS_CONFIG));
-            retries = config.getInt(String.format("kafka.%s", ProducerConfig.RETRIES_CONFIG));
-            bufferMemory = config.getLong(String.format("kafka.%s", ProducerConfig.BUFFER_MEMORY_CONFIG));
-            batchSize = config.getInt(String.format("kafka.%s", ProducerConfig.BATCH_SIZE_CONFIG));
-            lingerMs = config.getInt(String.format("kafka.%s", ProducerConfig.LINGER_MS_CONFIG));
-            compressionType = config.getString(String.format("kafka.%s", ProducerConfig.COMPRESSION_TYPE_CONFIG));
+            final String bootstrapPath = String.format("kafka.%s", ProducerConfig.BOOTSTRAP_SERVERS_CONFIG);
+            bootstrapServers = config.hasPath(bootstrapPath) ? config.getString(bootstrapPath) : null;
+            topics = config.hasPath("kafka.topics") ? config.getString("kafka.topics") : null;
+            final String keySerializerPath = String.format("kafka.%s", ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG);
+            keySerializer = config.hasPath(keySerializerPath) ? config.getString(keySerializerPath) : null;
+            final String valueSerializerPath = String.format("kafka.%s", ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG);
+            valueSerializer = config.hasPath(valueSerializerPath) ? config.getString(valueSerializerPath) : null;
+            final String acksPath = String.format("kafka.%s", ProducerConfig.ACKS_CONFIG);
+            acks = config.hasPath(acksPath) ? config.getString(acksPath) : null;
+            final String retriesPath = String.format("kafka.%s", ProducerConfig.RETRIES_CONFIG);
+            retries = config.hasPath(retriesPath) ? config.getInt(retriesPath) : 0;
+            final String bufferMemoryPath = String.format("kafka.%s", ProducerConfig.BUFFER_MEMORY_CONFIG);
+            bufferMemory = config.hasPath(bufferMemoryPath) ? config.getLong(bufferMemoryPath) : 460000000;
+            final String batchSizePath = String.format("kafka.%s", ProducerConfig.BATCH_SIZE_CONFIG);
+            batchSize = config.hasPath(batchSizePath) ? config.getInt(batchSizePath) : 30000;
+            final String lingerPath = String.format("kafka.%s", ProducerConfig.LINGER_MS_CONFIG);
+            lingerMs = config.hasPath(lingerPath) ? config.getInt(lingerPath) : 20;
+            final String compressionTypePath = String.format("kafka.%s", ProducerConfig.COMPRESSION_TYPE_CONFIG);
+            compressionType = config.hasPath(compressionTypePath) ? config.getString(compressionTypePath) : null;
         }
 
         protected Config getConfig() {
