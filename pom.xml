@@ -18,7 +18,7 @@
     </modules>
 
     <scm>
-        <connection>scm:git:git@gitlab.ops.cld:Dematiclabs/toolkit_bigdata.git</connection>
+        <connection>scm:git:https://gitlab.dematic.com/Dematiclabs/toolkit_bigdata.git</connection>
         <developerConnection>${project.scm.connection}</developerConnection>
         <tag>HEAD</tag>
     </scm>
