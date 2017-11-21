@@ -16,10 +16,4 @@
         <module>bom/bigdata-dep</module>
         <module>simulators</module>
     </modules>
-
-    <scm>
-        <connection>scm:git:https://gitlab.dematic.com/Dematiclabs/toolkit_bigdata.git</connection>
-        <developerConnection>${project.scm.connection}</developerConnection>
-        <tag>HEAD</tag>
-    </scm>
 </project>
