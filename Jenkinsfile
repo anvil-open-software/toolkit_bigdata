@@ -1,6 +1,6 @@
-#!groovy​
+#!groovy
 
-@Library('jenkinsfile_library@v1.0.1') _
+@Library('jenkinsfile_library@v1.4.0') _
 
 buildWithMaven() {
     skipSonar = true
