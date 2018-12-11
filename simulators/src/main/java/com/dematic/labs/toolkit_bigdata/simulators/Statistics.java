@@ -1,3 +1,8 @@
+/*
+ *  Copyright 2018 Dematic, Corp.
+ * Licensed under the MIT Open Source License: https://opensource.org/licenses/MIT
+ */
+
 package com.dematic.labs.toolkit_bigdata.simulators;
 
 import com.google.common.collect.Maps;
