@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ~  Copyright 2018 Dematic, Corp.
+  ~ Licensed under the MIT Open Source License: https://opensource.org/licenses/MIT
+  -->
+
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.dematic.labs.toolkit.buildProcess</groupId>
+        <artifactId>parentPom</artifactId>
+        <version>2.3.2-SNAPSHOT</version>
+    </parent>
+
+    <groupId>com.dematic.labs</groupId>
+    <artifactId>toolkit_bigdata</artifactId>
+    <version>1.0.17-SNAPSHOT</version>
+    <packaging>pom</packaging>
+    <modules>
+        <module>bom/bigdata-dep</module>
+        <module>simulators</module>
+    </modules>
+</project>
